@@ -1,6 +1,25 @@
-# Welcome to your Expo app 👋
+# ECHO. 
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native Expo forum app built with TypeScript.
+
+## Features
+
+- 🔐 User Authentication (Login/Register)
+- 🏠 Forum-style Home Feed with posts and engagement
+- 🔍 Search functionality with popular topics
+- ✏️ Thread creation with media upload
+- 🏆 Leaderboard with user rankings
+- 👤 User profiles with activity tracking
+- 🎨 Modern UI with Anonymous Pro font
+- 📱 Optimized for iPhone 16 Pro Max
+
+## Tech Stack
+
+- **React Native** with Expo
+- **TypeScript** for type safety
+- **Expo Router** for navigation
+- **Zustand** for state management
+- **AsyncStorage** for data persistence
 
 ## Get started
 
@@ -25,15 +44,19 @@ In the output, you'll find options to open the app in a
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-## Get a fresh project
+## Project Structure
 
-When you're ready, run:
-
-```bash
-npm run reset-project
 ```
+app/
+├── (auth)/           # Authentication screens
+├── (splash)/         # Splash screen
+├── (tabs)/           # Main app tabs (Home, Search, Create, Leaderboard, Profile)
+└── _layout.tsx       # Root layout with navigation logic
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+src/
+├── components/       # Reusable UI components
+└── store/           # Zustand state management
+```
 
 ## Learn more
 
