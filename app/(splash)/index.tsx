@@ -1,6 +1,7 @@
 import { ThemedText } from '@components/ThemedText';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
