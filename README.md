@@ -1,4 +1,4 @@
-# ECHO. 
+# ECHO
 
 A React Native Expo forum app built with TypeScript.
 

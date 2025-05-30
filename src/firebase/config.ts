@@ -1,0 +1,26 @@
+// Import
+import { REACT_APP_APPID, REACT_APP_AUTH_DOMAIN, REACT_APP_FIREBASE_API_KEY, REACT_APP_MEASUREMENTID, REACT_APP_PROJECT_ID, REACT_APP_SENDERID, REACT_APP_STORAGE_BUCKET } from "@env";
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { initializeApp } from "firebase/app";
+import { getReactNativePersistence, initializeAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: REACT_APP_FIREBASE_API_KEY,
+  authDomain: REACT_APP_AUTH_DOMAIN,
+  projectId: REACT_APP_PROJECT_ID,
+  storageBucket: REACT_APP_STORAGE_BUCKET,
+  messagingSenderId: REACT_APP_SENDERID,
+  appId: REACT_APP_APPID,
+  measurementId: REACT_APP_MEASUREMENTID
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+});
+
+export { auth, db };

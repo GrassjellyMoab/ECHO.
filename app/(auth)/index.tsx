@@ -1,11 +1,13 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@components/ThemedText';
 import { ThemedInput } from '@components/ui/ThemedInput';
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../src/firebase/config';
 import { useAuthStore } from '../../src/store/authStore';
 
 interface FormData {
@@ -76,7 +78,7 @@ export default function AuthScreen() {
 
   const handleSubmit = async () => {
     console.log('Attempting submission with data:', formData);
-    
+  
     if (!validateForm()) {
       console.log('Form validation failed');
       return;
@@ -86,11 +88,22 @@ export default function AuthScreen() {
       let success = false;
       
       if (isLogin) {
+        await signInWithEmailAndPassword(auth, formData.username, formData.password);
+
         success = await login({
           username: formData.username,
           password: formData.password
         });
+        
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            console.log('User is signed in'); // can replace with states
+          }
+        });
       } else {
+        const res = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        const newUID = res.user.uid;
+
         success = await register({
           username: formData.username,
           email: formData.email,
