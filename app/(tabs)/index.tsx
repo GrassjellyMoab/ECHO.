@@ -1,6 +1,7 @@
 import { IconSymbol } from '@components/ui/IconSymbol';
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { AppHeader } from '@components/ui/AppHeader';
 
 interface PostData {
   id: string;
@@ -117,10 +118,8 @@ const PostCard = ({ post }: { post: PostData }) => (
 
 export default function HomeScreen() {
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.appTitle}>ECHO.</Text>
-      </View>
+    <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
+      <AppHeader />
       
       <View style={styles.highlightsSection}>
         <Text style={styles.sectionTitle}>TLDR.</Text>
@@ -141,29 +140,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  appTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#000',
-    fontFamily: 'AnonymousPro-Bold',
-  },
   highlightsSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 30,
+    paddingVertical: 20,
     backgroundColor: '#FFFFFF',
     marginBottom: 8,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 25,
     fontWeight: 'bold',
     color: '#000',
     fontFamily: 'AnonymousPro-Bold',
