@@ -3,7 +3,7 @@ import { PopularTopics } from '@components/ui/PopularTopics';
 import { RecentSearches } from '@components/ui/RecentSearches';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');

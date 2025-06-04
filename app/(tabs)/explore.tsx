@@ -1,169 +1,195 @@
-import { IconSymbol } from '@components/ui/IconSymbol';
+import { EmptyState, ExploreCard, FeedbackModal, Post } from '@/src/components/explore';
+import { IconSymbol } from '@/src/components/ui/IconSymbol';
+import { dummyPosts, tagColors } from '@/src/constants/posts';
 import { useRouter } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-    Animated,
-    Dimensions,
-    Image,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Animated,
+  Dimensions,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-// Mock forum post data
-const mockPosts = [
-  {
-    id: 1,
-    title: "Was our Singhealth Data leaked?",
-    views: 1200,
-    comments: 354,
-    votes: 539,
-    tags: ['Health', 'Cybersecurity', 'WhatsApp'],
-    excerpt: "A user sent me this viral rumour that has been spreading about WhatsApp chat groups about Singhealth data leaks. What are your thoughts?",
-    author: {
-      name: "@ongyekung",
-      verified: true,
-      avatar: "https://avatar.iran.liara.run/public/32",
-      timeAgo: "3 days ago",
-      readTime: "3 mins read"
-    }
-  },
-  {
-    id: 2,
-    title: "New AI breakthrough in healthcare diagnostics",
-    views: 890,
-    comments: 234,
-    votes: 456,
-    tags: ['Technology', 'Health', 'AI'],
-    excerpt: "Researchers have developed a new AI system that can diagnose diseases with 95% accuracy. This could revolutionize healthcare as we know it.",
-    author: {
-      name: "@techguru",
-      verified: false,
-      avatar: "https://avatar.iran.liara.run/public/45",
-      timeAgo: "1 day ago",
-      readTime: "5 mins read"
-    }
-  },
-  {
-    id: 3,
-    title: "Cryptocurrency market crash - What's next?",
-    views: 2100,
-    comments: 789,
-    votes: 1234,
-    tags: ['Finance', 'Crypto', 'Economy'],
-    excerpt: "The recent cryptocurrency market crash has left many investors wondering about the future. Let's discuss the potential implications and recovery strategies.",
-    author: {
-      name: "@cryptoanalyst",
-      verified: true,
-      avatar: "https://avatar.iran.liara.run/public/67",
-      timeAgo: "5 hours ago",
-      readTime: "7 mins read"
-    }
-  }
-];
-
-const tagColors: { [key: string]: string } = {
-  'Health': '#FF9999',
-  'Cybersecurity': '#FFD700',
-  'WhatsApp': '#87CEEB',
-  'Technology': '#98FB98',
-  'AI': '#DDA0DD',
-  'Finance': '#F0E68C',
-  'Crypto': '#FFB6C1',
-  'Economy': '#B0E0E6'
-};
-
 export default function ExploreScreen() {
   const router = useRouter();
-  const [currentPostIndex, setCurrentPostIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewedPosts, setViewedPosts] = useState<number[]>([]);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackData, setFeedbackData] = useState<{
+    userChoice: 'FAKE' | 'REAL';
+    isCorrect: boolean;
+    post: Post;
+  } | null>(null);
+  
+  // Animation state
+  const [animationKey, setAnimationKey] = useState(0);
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(1)).current;
 
-  const currentPost = mockPosts[currentPostIndex];
+  const availablePosts = dummyPosts.filter(post => !viewedPosts.includes(post.id));
+  const currentPost = availablePosts[0];
+  const nextPost = availablePosts[1];
 
+  // Reset animations whenever current post changes
+  const forceResetAnimations = () => {
+    translateX.setValue(0);
+    translateY.setValue(0);
+    scale.setValue(1);
+    setAnimationKey(prev => prev + 1);
+  };
+
+  useEffect(() => {
+    forceResetAnimations();
+  }, [currentPost?.id]);
+
+  // Gesture handlers
   const onGestureEvent = Animated.event(
     [{ nativeEvent: { translationX: translateX, translationY: translateY } }],
     { useNativeDriver: true }
   );
 
   const onHandlerStateChange = (event: any) => {
+    if (isAnimating) return;
+    
     if (event.nativeEvent.state === State.END) {
-      const { translationX, translationY, velocityX } = event.nativeEvent;
+      const { translationX, velocityX } = event.nativeEvent;
       
-      // Determine swipe direction
-      const swipeThreshold = screenWidth * 0.25;
-      const velocityThreshold = 500;
+      const swipeThreshold = screenWidth * 0.3;
+      const velocityThreshold = 600;
       
       if (Math.abs(translationX) > swipeThreshold || Math.abs(velocityX) > velocityThreshold) {
-        // Card swiped
+        setIsAnimating(true);
         const direction = translationX > 0 ? 'right' : 'left';
         handleSwipe(direction);
-        
-        // Animate card off screen
-        Animated.timing(translateX, {
-          toValue: direction === 'right' ? screenWidth : -screenWidth,
-          duration: 200,
-          useNativeDriver: true,
-        }).start(() => {
-          // Reset position and show next card
-          translateX.setValue(0);
-          translateY.setValue(0);
-          scale.setValue(1);
-          nextPost();
-        });
+        animateCardOffScreen(direction);
       } else {
-        // Snap back to center
-        Animated.spring(translateX, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
-        Animated.spring(translateY, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
+        animateCardToCenter();
       }
     }
   };
 
+  // Swipe logic
   const handleSwipe = (direction: 'left' | 'right') => {
-    console.log(`Swiped ${direction} on post: ${currentPost.title}`);
-    if (direction === 'left') {
-      console.log('Marked as FAKE');
-    } else {
-      console.log('Marked as REAL');
+    if (!currentPost) return;
+    
+    const userChoice = direction === 'left' ? 'FAKE' : 'REAL';
+    const isCorrect = userChoice === currentPost.groundTruth;
+    
+    // Store the feedback data but don't show modal yet
+    setFeedbackData({ userChoice, isCorrect, post: currentPost });
+  };
+
+  // Animation functions
+  const animateCardOffScreen = (direction: 'left' | 'right') => {
+    const rotateValue = direction === 'right' ? 30 : -30;
+    
+    Animated.parallel([
+      Animated.timing(translateX, {
+        toValue: direction === 'right' ? screenWidth * 1.5 : -screenWidth * 1.5,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 0.8,
+        duration: 300,
+        useNativeDriver: true,
+      })
+    ]).start(() => {
+      setIsAnimating(false);
+      nextPostAction();
+      forceResetAnimations();
+      // Show modal only after animation completes
+      setShowFeedback(true);
+    });
+  };
+
+  const animateCardToCenter = () => {
+    setIsAnimating(true);
+    
+    Animated.parallel([
+      Animated.spring(translateX, {
+        toValue: 0,
+        tension: 200,
+        friction: 10,
+        useNativeDriver: true,
+      }),
+      Animated.spring(translateY, {
+        toValue: 0,
+        tension: 200,
+        friction: 10,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        tension: 200,
+        friction: 10,
+        useNativeDriver: true,
+      })
+    ]).start(() => {
+      setIsAnimating(false);
+      forceResetAnimations();
+    });
+  };
+
+  // Action handlers
+  const nextPostAction = () => {
+    if (currentPost) {
+      setViewedPosts(prev => [...prev, currentPost.id]);
     }
   };
 
-  const nextPost = () => {
-    setCurrentPostIndex((prev) => (prev + 1) % mockPosts.length);
-  };
-
   const handleFakePress = () => {
+    if (!currentPost || isAnimating) return;
+    
+    setIsAnimating(true);
     handleSwipe('left');
-    nextPost();
+    animateCardOffScreen('left');
   };
 
   const handleRealPress = () => {
+    if (!currentPost || isAnimating) return;
+    
+    setIsAnimating(true);
     handleSwipe('right');
-    nextPost();
+    animateCardOffScreen('right');
   };
 
   const handleBackPress = () => {
     router.back();
   };
 
-  if (!currentPost) {
+  const handleRestart = () => {
+    setViewedPosts([]);
+    forceResetAnimations();
+  };
+
+  const handleCloseFeedback = () => {
+    setShowFeedback(false);
+    setFeedbackData(null);
+    // Check if there are more posts after closing the modal
+    // This ensures the modal shows even for the last card
+  };
+
+  const handleSeeThread = () => {
+    // TODO: Navigate to thread details
+    console.log('Navigate to thread');
+  };
+
+  // Render empty state only if no posts available AND no feedback is showing
+  if (!currentPost && !showFeedback) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.emptyState}>No more posts to explore!</Text>
-      </View>
+      <EmptyState 
+        onRestart={handleRestart}
+        onBack={handleBackPress}
+      />
     );
   }
 
@@ -195,123 +221,33 @@ export default function ExploreScreen() {
         </View>
       </View>
 
-      {/* Card Container */}
-      <View style={styles.cardContainer}>
-        <PanGestureHandler
-          onGestureEvent={onGestureEvent}
-          onHandlerStateChange={onHandlerStateChange}
-        >
-          <Animated.View
-            style={[
-              styles.card,
-              {
-                transform: [
-                  { translateX },
-                  { translateY },
-                  { scale },
-                ],
-              },
-            ]}
+      {/* Card Stack Container */}
+      <View style={styles.cardStackContainer}>
+        {/* Next Card (Behind) */}
+        {nextPost && (
+          <ExploreCard
+            post={nextPost}
+            isNext={true}
+            tagColors={tagColors}
+          />
+        )}
+        
+        {/* Current Card (On Top, Swipable) - Only render if currentPost exists */}
+        {currentPost && (
+          <PanGestureHandler
+            onGestureEvent={onGestureEvent}
+            onHandlerStateChange={onHandlerStateChange}
           >
-            {/* Chat Group Section */}
-            <View style={styles.chatSection}>
-              <View style={styles.chatHeader}>
-                <View style={styles.chatInfo}>
-                  <View style={styles.avatarContainer}>
-                    <Image source={{ uri: currentPost.author.avatar }} style={styles.chatAvatar} />
-                  </View>
-                  <View style={styles.chatDetails}>
-                    <Text style={styles.chatTitle}>Spotify Music Group T5</Text>
-                    <Text style={styles.chatSubtitle}>Siva Sakthi, ~EthnoG, ~Akaranna, ~Abi, ~Andy, ~Balangga, ~Deb, ~Desmond...</Text>
-                  </View>
-                </View>
-                <View style={styles.chatActions}>
-                  <IconSymbol name="doc.text" size={16} color="#666" />
-                  <IconSymbol name="phone" size={16} color="#666" />
-                  <IconSymbol name="magnifyingglass" size={16} color="#666" />
-                </View>
-              </View>
-              
-              <View style={styles.chatMessages}>
-                <View style={styles.messageItem}>
-                  <Text style={styles.messageText}>This is also what I want to&nbsp;speak</Text>
-                  <Text style={styles.messageTime}>10:25 AM</Text>
-                </View>
-                <View style={styles.messageItem}>
-                  <Text style={styles.senderName}>Sakura Handayani</Text>
-                  <Text style={styles.messageText}>What is done here?</Text>
-                  <Text style={styles.messageTime}>10:26 AM</Text>
-                </View>
-                <View style={styles.messageItem}>
-                  <Text style={styles.senderName}>Lye Hao Qiang</Text>
-                  <Text style={styles.messageText}>It seems to have something to do with music</Text>
-                  <Text style={styles.messageTime}>10:29 AM</Text>
-                </View>
-                <View style={styles.lastMessage}>
-                  <Text style={styles.senderName}>~Spo~ify</Text>
-                  <Text style={styles.messageText}>This is the Spotify Artisanal Benefits Group, and we need a lot of real users to help Spotify artists like specific songs to increase the popularity of artists' songs. You will be paid 5$D15 for completing the task and subsequent tasks. Simply click Like and we will pay you 5$D15.</Text>
-                  <Text style={styles.messageTime}>10:29 AM</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Main Post Content */}
-            <View style={styles.postContent}>
-              <Text style={styles.postTitle}>{currentPost.title}</Text>
-              
-              {/* Stats */}
-              <View style={styles.statsContainer}>
-                <View style={styles.statItem}>
-                  <IconSymbol name="eye" size={16} color="#666" />
-                  <Text style={styles.statText}>{currentPost.views.toLocaleString()} Views</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <IconSymbol name="message" size={16} color="#666" />
-                  <Text style={styles.statText}>{currentPost.comments} Comments</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <IconSymbol name="hand.thumbsup" size={16} color="#666" />
-                  <Text style={styles.statText}>{currentPost.votes} Votes</Text>
-                </View>
-              </View>
-
-              {/* Tags */}
-              <View style={styles.tagsContainer}>
-                {currentPost.tags.map((tag, index) => (
-                  <View key={index} style={[styles.tag, { backgroundColor: tagColors[tag] || '#E5E7EB' }]}>
-                    <Text style={styles.tagText}>{tag}</Text>
-                  </View>
-                ))}
-              </View>
-
-              {/* Post Excerpt */}
-              <Text style={styles.postExcerpt}>{currentPost.excerpt}</Text>
-
-              {/* Author Info */}
-              <View style={styles.authorContainer}>
-                <Image source={{ uri: currentPost.author.avatar }} style={styles.authorAvatar} />
-                <View style={styles.authorInfo}>
-                  <View style={styles.authorNameContainer}>
-                    <Text style={styles.authorName}>{currentPost.author.name}</Text>
-                    {currentPost.author.verified && (
-                      <IconSymbol name="checkmark.seal.fill" size={16} color="#9C27B0" />
-                    )}
-                  </View>
-                  <Text style={styles.authorMeta}>{currentPost.author.timeAgo} · {currentPost.author.readTime}</Text>
-                </View>
-                <TouchableOpacity style={styles.subscribeButton}>
-                  <Text style={styles.subscribeText}>Subscribe</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Animated.View>
-        </PanGestureHandler>
-      </View>
-
-      {/* Swipe Instructions */}
-      <View style={styles.swipeInstructions}>
-        <Text style={styles.swipeText}>swipe</Text>
-        <Text style={styles.swipeDirection}>left/right.</Text>
+            <ExploreCard
+              post={currentPost}
+              animationKey={animationKey}
+              translateX={translateX}
+              translateY={translateY}
+              scale={scale}
+              tagColors={tagColors}
+            />
+          </PanGestureHandler>
+        )}
       </View>
 
       {/* Bottom Actions */}
@@ -321,11 +257,28 @@ export default function ExploreScreen() {
           <Text style={styles.actionLabel}>FAKE</Text>
         </TouchableOpacity>
         
+        <View style={styles.swipeInstructions}>
+          <Text style={styles.swipeText}>swipe</Text>
+          <Text style={styles.swipeDirection}>left/right.</Text>
+        </View>
+        
         <TouchableOpacity style={styles.realButton} onPress={handleRealPress}>
           <IconSymbol name="checkmark" size={40} color="#000" />
           <Text style={styles.actionLabel}>REAL</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Feedback Modal */}
+      {feedbackData && (
+        <FeedbackModal
+          visible={showFeedback}
+          userChoice={feedbackData.userChoice}
+          isCorrect={feedbackData.isCorrect}
+          post={feedbackData.post}
+          onClose={handleCloseFeedback}
+          onSeeThread={handleSeeThread}
+        />
+      )}
     </View>
   );
 }
@@ -341,7 +294,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 60,
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 15,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
@@ -360,7 +313,10 @@ const styles = StyleSheet.create({
   },
   searchSection: {
     backgroundColor: '#FFFFFF',
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -379,221 +335,32 @@ const styles = StyleSheet.create({
     color: '#000',
     fontFamily: 'AnonymousPro-Bold',
   },
-  cardContainer: {
+  cardStackContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  card: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  chatSection: {
-    backgroundColor: '#E8E3FF',
-    padding: 16,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  chatHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  chatInfo: {
-    flexDirection: 'row',
-    flex: 1,
-  },
-  avatarContainer: {
-    marginRight: 8,
-  },
-  chatAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  chatDetails: {
-    flex: 1,
-  },
-  chatTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000',
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  chatSubtitle: {
-    fontSize: 11,
-    color: '#666',
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  chatActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  chatMessages: {
-    gap: 8,
-  },
-  messageItem: {
-    backgroundColor: '#FFFFFF',
-    padding: 8,
-    borderRadius: 8,
-    marginBottom: 4,
-  },
-  lastMessage: {
-    backgroundColor: '#FFFFFF',
-    padding: 12,
-    borderRadius: 8,
-  },
-  senderName: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#9C27B0',
-    marginBottom: 2,
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  messageText: {
-    fontSize: 11,
-    color: '#000',
-    lineHeight: 16,
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  messageTime: {
-    fontSize: 10,
-    color: '#999',
-    textAlign: 'right',
-    marginTop: 4,
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  postContent: {
-    padding: 20,
-  },
-  postTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 12,
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    gap: 20,
-    marginBottom: 12,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statText: {
-    fontSize: 12,
-    color: '#666',
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
-    flexWrap: 'wrap',
-  },
-  tag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  tagText: {
-    fontSize: 12,
-    color: '#000',
-    fontWeight: '600',
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  postExcerpt: {
-    fontSize: 14,
-    color: '#333',
-    lineHeight: 20,
-    marginBottom: 16,
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  authorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  authorAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  authorInfo: {
-    flex: 1,
-  },
-  authorNameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  authorName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000',
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  authorMeta: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  subscribeButton: {
-    backgroundColor: '#9C27B0',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  subscribeText: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  swipeInstructions: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  swipeText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  swipeDirection: {
-    fontSize: 14,
-    color: '#666',
-    fontFamily: 'AnonymousPro-Bold',
+    paddingHorizontal: 25,
+    paddingVertical: 30,
   },
   actionsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 40,
     paddingVertical: 30,
     backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
   },
   fakeButton: {
     alignItems: 'center',
     gap: 8,
+    flex: 1,
   },
   realButton: {
     alignItems: 'center',
     gap: 8,
+    flex: 1,
   },
   actionLabel: {
     fontSize: 16,
@@ -601,11 +368,19 @@ const styles = StyleSheet.create({
     color: '#000',
     fontFamily: 'AnonymousPro-Bold',
   },
-  emptyState: {
-    fontSize: 18,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 100,
+  swipeInstructions: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  swipeText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
     fontFamily: 'AnonymousPro-Bold',
   },
-}); 
+  swipeDirection: {
+    fontSize: 12,
+    color: '#666',
+    fontFamily: 'AnonymousPro-Bold',
+  },
+});
