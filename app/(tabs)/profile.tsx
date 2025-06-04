@@ -1,10 +1,11 @@
+import { useImagesStore } from '@/src/store/imgStore';
+import { AppHeader } from '@components/ui/AppHeader';
 import { IconSymbol } from '@components/ui/IconSymbol';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '../../src/store/authStore';
-import { AppHeader } from '@components/ui/AppHeader';
 
 interface ActivityItem {
   id: string;
@@ -41,7 +42,7 @@ const mockActivity: ActivityItem[] = [
     user: '@echoooo',
     action: 'posted a thread you might be interested in!',
     timeAgo: '1w',
-    avatar: 'https://via.placeholder.com/40x40/9C27B0/ffffff?text=E'
+    avatar: 'https://via.placeholder.com/40x40/662D91/ffffff?text=E'
   },
   {
     id: '3',
@@ -74,12 +75,12 @@ const mockActivity: ActivityItem[] = [
 
 const mockThreads: ThreadItem[] = [
   {
-    id: '1',
+    id: 't0003',
     title: 'Lady Gaga coming to Singapore??',
     timeAgo: '3 days ago',
     readTime: '1 mins read',
     content: 'Heard Lady Gaga is finally coming to Singapore!! I\'m so excited Is this true?',
-    image: 'https://via.placeholder.com/350x200/9C27B0/ffffff?text=Lady+Gaga'
+    image: 'https://via.placeholder.com/350x200/662D91/ffffff?text=Lady+Gaga'
   }
 ];
 
@@ -88,6 +89,10 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'threads' | 'activity'>('activity');
   const [debugTaps, setDebugTaps] = useState(0);
+  const { getImagesByFolder } = useImagesStore();
+
+  const threadImages = getImagesByFolder('threads');
+  const userImages = getImagesByFolder('users');
 
   const handleLogout = () => {
     Alert.alert(
@@ -176,7 +181,7 @@ export default function ProfileScreen() {
       <Text style={styles.timeSection}>Last 7 days</Text>
       {mockActivity.slice(0, 3).map((item) => (
         <View key={item.id} style={styles.activityItem}>
-          <Image source={{ uri: item.avatar }} style={styles.activityAvatar} />
+          <Image source={{ uri: userImages.find(img => img.name === `${item.user.replace("@", "")}.png`)?.url }} style={styles.activityAvatar} />
           <View style={styles.activityContent}>
             <Text style={styles.activityText}>
               <Text style={styles.activityUser}>{item.user}</Text> {item.action}
@@ -190,7 +195,7 @@ export default function ProfileScreen() {
       <Text style={styles.timeSection}>Last 30 days</Text>
       {mockActivity.slice(3).map((item) => (
         <View key={item.id} style={styles.activityItem}>
-          <Image source={{ uri: item.avatar }} style={styles.activityAvatar} />
+          <Image source={{ uri: userImages.find(img => img.name === `${item.user.replace("@", "")}.png`)?.url }} style={styles.activityAvatar} />
           <View style={styles.activityContent}>
             <Text style={styles.activityText}>
               <Text style={styles.activityUser}>{item.user}</Text> {item.action}
@@ -208,7 +213,7 @@ export default function ProfileScreen() {
       {mockThreads.map((thread) => (
         <TouchableOpacity key={thread.id} style={styles.threadCard}>
           {thread.image && (
-            <Image source={{ uri: thread.image }} style={styles.threadImage} />
+            <Image source={{ uri: threadImages.find(img => img.name === `${thread.id}.png`)?.url }} style={styles.threadImage} />
           )}
           <View style={styles.threadContent}>
             <Text style={styles.threadTitle}>{thread.title}</Text>
@@ -244,15 +249,15 @@ export default function ProfileScreen() {
       <View style={styles.profileSection}>
         <View style={styles.profileImageContainer}>
           <Image 
-            source={{ uri: user.avatar || 'https://via.placeholder.com/120x120/4FC3F7/ffffff?text=User' }}
+            source={{ uri: userImages.find(img => img.name === `${user.username.toLowerCase().replace("@gmail.com", "")}.png`)?.url || 'https://via.placeholder.com/120x120/4FC3F7/ffffff?text=User' }}
             style={styles.profileImage}
           />
         </View>
         
         <View style={styles.usernameContainer}>
-          <Text style={styles.username}>{user.username}</Text>
+          <Text style={styles.username}>{user.username.replace("@gmail.com", "")}</Text>
           {user.isVerified && (
-            <IconSymbol name="checkmark.circle.fill" size={20} color="#9C27B0" />
+            <IconSymbol name="checkmark.circle.fill" size={20} color="#662D91" />
           )}
         </View>
         
@@ -334,11 +339,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileImageContainer: {
+    marginTop: 20,
     marginBottom: 16,
   },
   profileImage: {
-    width: 120,
-    height: 120,
+    width: 100,
+    height: 100,
     borderRadius: 60,
   },
   usernameContainer: {
@@ -384,13 +390,13 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     borderWidth: 1,
-    borderColor: '#9C27B0',
+    borderColor: '#662D91',
     borderRadius: 20,
     paddingHorizontal: 20,
     paddingVertical: 8,
   },
   actionButtonText: {
-    color: '#9C27B0',
+    color: '#662D91',
     fontSize: 14,
     fontFamily: 'AnonymousPro-Bold',
   },
@@ -407,7 +413,7 @@ const styles = StyleSheet.create({
   },
   activeTab: {
     borderBottomWidth: 2,
-    borderBottomColor: '#9C27B0',
+    borderBottomColor: '#662D91',
   },
   tabText: {
     fontSize: 16,
@@ -415,7 +421,7 @@ const styles = StyleSheet.create({
     fontFamily: 'AnonymousPro-Bold',
   },
   activeTabText: {
-    color: '#9C27B0',
+    color: '#662D91',
     fontWeight: 'bold',
   },
   content: {
@@ -458,7 +464,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   activityThread: {
-    color: '#9C27B0',
+    color: '#662D91',
   },
   activityTime: {
     fontSize: 12,
@@ -474,6 +480,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 16,
+    boxShadow: '-4px 4px 8px #BEBEBE, 4px -4px 8px #FFFFFF',
   },
   threadImage: {
     width: '100%',

@@ -1,13 +1,13 @@
+import { useImagesStore } from '@/src/store/imgStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { useAuthStore } from '../src/store/authStore';
-import React from 'react';
 
 // Keep the splash screen visible while we fetch resources
 ExpoSplashScreen.preventAutoHideAsync();
@@ -69,6 +69,10 @@ export default function RootLayout() {
             setSplashComplete(true); // Skip splash for authenticated returning users
             console.log('⏭️ Skipping splash for authenticated returning user');
           }
+
+          // Load images
+          await useImagesStore.getState().loadImages();
+          console.log('🖼️ Firebase images loaded');
           
           // Hide the Expo splash screen
           await ExpoSplashScreen.hideAsync();

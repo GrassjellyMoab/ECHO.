@@ -1,7 +1,8 @@
+import { FirebaseImageData, useImagesStore } from '@/src/store/imgStore';
+import { AppHeader } from '@components/ui/AppHeader';
 import { IconSymbol } from '@components/ui/IconSymbol';
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { AppHeader } from '@components/ui/AppHeader';
 
 interface PostData {
   id: string;
@@ -19,9 +20,9 @@ interface PostData {
 
 const mockPosts: PostData[] = [
   {
-    id: '1',
+    id: 't0001',
     title: 'Has our Singapore data been leaked?',
-    author: '@Lebron James',
+    author: '@lebronjames',
     timeAgo: '3 days ago',
     readTime: '3 mins read',
     views: '1.2k',
@@ -32,16 +33,16 @@ const mockPosts: PostData[] = [
     isVerified: true,
   },
   {
-    id: '2',
+    id: 't0002',
     title: 'Are Ez-Link, SimplyGo Ads on Social Media may be Phishing Scams?',
-    author: '@techwatch',
+    author: '@truthseeker',
     timeAgo: '3 days ago',
     readTime: '3 mins read',
     views: '892',
     comments: '127',
     votes: '234',
     tags: ['Cybersecurity', 'Finance'],
-    hasImage: false,
+    hasImage: true,
     isVerified: false,
   },
 ];
@@ -49,10 +50,10 @@ const mockPosts: PostData[] = [
 const TagComponent = ({ tag }: { tag: string }) => {
   const getTagColor = (tagName: string) => {
     switch (tagName.toLowerCase()) {
-      case 'health': return '#FF6B6B';
-      case 'cybersecurity': return '#FFD93D';
-      case 'whatsapp': return '#4FC3F7';
-      case 'finance': return '#9C27B0';
+      case 'health': return '#FC8476';
+      case 'cybersecurity': return '#FFD574';
+      case 'whatsapp': return '#55C5D1';
+      case 'finance': return '#99AD52';
       default: return '#757575';
     }
   };
@@ -64,71 +65,85 @@ const TagComponent = ({ tag }: { tag: string }) => {
   );
 };
 
-const PostCard = ({ post }: { post: PostData }) => (
-  <TouchableOpacity style={styles.postCard}>
-    <View style={styles.postHeader}>
-      <View style={styles.authorContainer}>
-        <View style={styles.avatar} />
-        <View style={styles.authorInfo}>
-          <View style={styles.authorRow}>
-            <Text style={styles.authorName}>{post.author}</Text>
-            {post.isVerified && (
-              <IconSymbol name="checkmark.circle.fill" size={16} color="#007AFF" />
-            )}
+const PostCard = ({ post, userImages, threadImages }: { post: PostData, userImages: FirebaseImageData[], threadImages: FirebaseImageData[] }) => {
+  const userAvatar = userImages.find(img => img.name === `${post.author.toLowerCase().replace('@', '')}.png`);
+  const threadImage = threadImages.find(img => img.name === `${post.id}.png`);
+
+  return (
+    <TouchableOpacity style={styles.postCard}>
+      <View style={styles.postHeader}>
+        <View style={styles.authorContainer}>
+          {userAvatar ? (
+            <Image source={{ uri: userAvatar.url }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatar} />
+          )}
+          <View style={styles.authorInfo}>
+            <View style={styles.authorRow}>
+              <Text style={styles.authorName}>{post.author}</Text>
+              {post.isVerified && (
+                <IconSymbol name="checkmark.circle.fill" style={styles.icons} />
+              )}
+            </View>
+            <Text style={styles.postMeta}>{post.timeAgo} • {post.readTime}</Text>
           </View>
-          <Text style={styles.postMeta}>{post.timeAgo} • {post.readTime}</Text>
+        </View>
+        <TouchableOpacity style={styles.subscribeButton}>
+          <Text style={styles.subscribeText}>Subscribe</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.postTitle}>{post.title}</Text>
+
+      <View style={styles.tagsContainer}>
+        {post.tags.map((tag, index) => (
+          <TagComponent key={index} tag={tag} />
+        ))}
+      </View>
+
+      {post.hasImage && (
+        <Image
+          source={{ uri: threadImage ? threadImage.url : '' }}
+          style={styles.postImage}
+        />
+      )}
+
+      <View style={styles.postStats}>
+        <View style={styles.statItem}>
+          <IconSymbol name="eye" style={styles.icons} />
+          <Text style={styles.statText}>{post.views} Views</Text>
+        </View>
+        <View style={styles.statItem}>
+          <IconSymbol name="message" style={styles.icons} />
+          <Text style={styles.statText}>{post.comments} Comments</Text>
+        </View>
+        <View style={styles.statItem}>
+          <IconSymbol name="arrow.up" style={styles.icons} />
+          <Text style={styles.statText}>{post.votes} Votes</Text>
         </View>
       </View>
-      <TouchableOpacity style={styles.subscribeButton}>
-        <Text style={styles.subscribeText}>Subscribe</Text>
-      </TouchableOpacity>
-    </View>
-    
-    <Text style={styles.postTitle}>{post.title}</Text>
-    
-    <View style={styles.tagsContainer}>
-      {post.tags.map((tag, index) => (
-        <TagComponent key={index} tag={tag} />
-      ))}
-    </View>
-    
-    {post.hasImage && (
-      <Image 
-        source={{ uri: 'https://via.placeholder.com/350x200/4A5568/ffffff?text=Post+Image' }}
-        style={styles.postImage}
-      />
-    )}
-    
-    <View style={styles.postStats}>
-      <View style={styles.statItem}>
-        <IconSymbol name="eye" size={16} color="#666" />
-        <Text style={styles.statText}>{post.views} Views</Text>
-      </View>
-      <View style={styles.statItem}>
-        <IconSymbol name="message" size={16} color="#666" />
-        <Text style={styles.statText}>{post.comments} Comments</Text>
-      </View>
-      <View style={styles.statItem}>
-        <IconSymbol name="arrow.up" size={16} color="#666" />
-        <Text style={styles.statText}>{post.votes} Votes</Text>
-      </View>
-    </View>
-  </TouchableOpacity>
-);
+    </TouchableOpacity>
+  )
+}
 
 export default function HomeScreen() {
+  const { getImagesByFolder } = useImagesStore();
+
+  const threadImages = getImagesByFolder('threads');
+  const userImages = getImagesByFolder('users');
+
   return (
     <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
       <AppHeader />
-      
+
       <View style={styles.highlightsSection}>
         <Text style={styles.sectionTitle}>TLDR.</Text>
         <Text style={styles.sectionSubtitle}>this week's highlights</Text>
       </View>
-      
+
       <View style={styles.postsContainer}>
         {mockPosts.map((post) => (
-          <PostCard key={post.id} post={post} />
+          <PostCard key={post.id} post={post} userImages={userImages} threadImages={threadImages} />
         ))}
       </View>
     </ScrollView>
@@ -204,6 +219,10 @@ const styles = StyleSheet.create({
     color: '#000',
     fontFamily: 'AnonymousPro-Bold',
   },
+  icons: {
+    fontSize: 16,
+    color: "#662D91"
+  },
   postMeta: {
     fontSize: 12,
     color: '#666',
@@ -239,13 +258,12 @@ const styles = StyleSheet.create({
   tag: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 10,
   },
   tagText: {
-    color: '#FFFFFF',
+    color: '#000000',
     fontSize: 12,
-    fontWeight: '600',
-    fontFamily: 'AnonymousPro-Bold',
+    fontFamily: 'AnonymousPro',
   },
   postImage: {
     width: '100%',

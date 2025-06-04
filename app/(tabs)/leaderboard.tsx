@@ -1,7 +1,8 @@
+import { useImagesStore } from '@/src/store/imgStore';
+import { AppHeader } from '@components/ui/AppHeader';
 import { IconSymbol } from '@components/ui/IconSymbol';
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { AppHeader } from '@components/ui/AppHeader';
 
 interface LeaderUser {
   id: string;
@@ -64,6 +65,9 @@ const mockLeaderboard: LeaderUser[] = [
 ];
 
 const PodiumUser = ({ user, position, height }: { user: LeaderUser; position: 'left' | 'center' | 'right'; height: number }) => {
+  const { getImagesByFolder } = useImagesStore();
+  const userImages = getImagesByFolder('users');
+
   const getCrownColor = (rank: number) => {
     switch (rank) {
       case 1: return '#FFD700'; // Gold
@@ -82,13 +86,13 @@ const PodiumUser = ({ user, position, height }: { user: LeaderUser; position: 'l
   };
 
   const crownColor = getCrownColor(user.rank);
-  
+
   return (
     <View style={[styles.podiumUser, getPositionStyle(position)]}>
       <View style={styles.crownContainer}>
         <IconSymbol name="crown.fill" size={position === 'center' ? 32 : 24} color={crownColor} />
       </View>
-      <Image source={{ uri: user.avatar }} style={[styles.podiumAvatar, position === 'center' && styles.centerAvatar]} />
+      <Image source={{ uri: userImages.find(img => img.name === `${user.username.toLowerCase().replace("@", "")}.png`)?.url }} style={[styles.podiumAvatar, position === 'center' && styles.centerAvatar]} />
       <Text style={styles.podiumUsername}>{user.username}</Text>
       <View style={[styles.podiumBar, { height }]}>
         <Text style={styles.podiumRank}>{user.rank === 1 ? '1ST' : user.rank === 2 ? '2ND' : '3RD'}</Text>
@@ -98,19 +102,23 @@ const PodiumUser = ({ user, position, height }: { user: LeaderUser; position: 'l
   );
 };
 
-const ListUser = ({ user }: { user: LeaderUser }) => (
-  <View style={styles.listUser}>
-    <Text style={styles.listRank}>{user.rank.toString().padStart(2, '0')}</Text>
-    <Image source={{ uri: user.avatar }} style={styles.listAvatar} />
-    <Text style={styles.listUsername}>{user.username}</Text>
-    <Text style={styles.listPoints}>{user.points} pts</Text>
-  </View>
-);
+const ListUser = ({ user }: { user: LeaderUser }) => {
+  const { getImagesByFolder } = useImagesStore();
+  const userImages = getImagesByFolder('users');
+  return (
+    <View style={styles.listUser}>
+      <Text style={styles.listRank}>{user.rank.toString().padStart(2, '0')}</Text>
+      <Image source={{ uri: userImages.find(img => img.name === `${user.username.toLowerCase().replace("@", "")}.png`)?.url }} style={styles.listAvatar} />
+      <Text style={styles.listUsername}>{user.username}</Text>
+      <Text style={styles.listPoints}>{user.points} pts</Text>
+    </View>
+  )
+}
 
 export default function LeaderboardScreen() {
   const topThree = mockLeaderboard.slice(0, 3);
   const restOfUsers = mockLeaderboard.slice(3);
-  
+
   // Arrange podium: 2nd, 1st, 3rd
   const podiumOrder = [topThree[1], topThree[0], topThree[2]]; // 2nd, 1st, 3rd
   const podiumHeights = [120, 160, 100]; // Heights for 2nd, 1st, 3rd
@@ -118,23 +126,23 @@ export default function LeaderboardScreen() {
   return (
     <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
       <AppHeader />
-      
+
       <View style={styles.podiumSection}>
         <Text style={styles.podiumTitle}>PODIUM</Text>
         <Text style={styles.podiumDate}>13th - 19th May</Text>
-        
+
         <View style={styles.podiumContainer}>
           {podiumOrder.map((user, index) => (
-            <PodiumUser 
-              key={user.id} 
-              user={user} 
+            <PodiumUser
+              key={user.id}
+              user={user}
               position={index === 0 ? 'left' : index === 1 ? 'center' : 'right'}
               height={podiumHeights[index]}
             />
           ))}
         </View>
       </View>
-      
+
       <View style={styles.listSection}>
         {restOfUsers.map((user) => (
           <ListUser key={user.id} user={user} />
