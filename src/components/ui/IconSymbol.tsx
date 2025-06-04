@@ -28,6 +28,7 @@ const iconMap: Record<string, { name: IoniconsGlyph | AntDesignGlyph | MaterialI
   'person-outline': { name: 'person-outline', library: 'ionicons' },
   'chevron.up': { name: 'chevron-up', library: 'ionicons' },
   'chevron.down': { name: 'chevron-down', library: 'ionicons' },
+  'chevron.left': { name: 'chevron-left', library: 'ionicons' },
 
   'paperplane.fill': { name: 'paper-plane', library: 'ionicons' },
   'chevron.left.forwardslash.chevron.right': { name: 'code', library: 'ionicons' },

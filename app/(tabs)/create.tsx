@@ -1,7 +1,7 @@
-import { IconSymbol } from '@components/ui/IconSymbol';
+import { AppHeader } from '@/src/components/ui/AppHeader';
+import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { AppHeader } from '@components/ui/AppHeader';
 
 export default function CreateScreen() {
   const [title, setTitle] = useState('');
