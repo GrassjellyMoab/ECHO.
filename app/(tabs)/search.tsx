@@ -1,14 +1,24 @@
 import { IconSymbol } from '@components/ui/IconSymbol';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
+
+  const handleExplorePress = () => {
+    router.push('/(tabs)/explore');
+  };
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={handleExplorePress} style={styles.exploreButton}>
+          <IconSymbol name="safari" size={24} color="#9C27B0" />
+        </TouchableOpacity>
         <Text style={styles.appTitle}>ECHO.</Text>
+        <View style={styles.headerSpacer} />
       </View>
       
       <View style={styles.searchSection}>
@@ -53,6 +63,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 20,
@@ -60,10 +73,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
+  exploreButton: {
+    padding: 8,
+  },
   appTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    textAlign: 'center',
     color: '#000',
     fontFamily: 'AnonymousPro-Bold',
   },
@@ -130,5 +145,8 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 14,
     fontFamily: 'AnonymousPro-Bold',
+  },
+  headerSpacer: {
+    width: 32,
   },
 }); 
