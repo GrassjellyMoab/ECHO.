@@ -14,6 +14,7 @@ const iconMap: Record<string, string> = {
   'person-outline': 'person-outline',
   'chevron.up': 'chevron-up',
   'chevron.down': 'chevron-down',
+  'chevron.left': 'chevron-back',
 
   'paperplane.fill': 'paper-plane',
   'chevron.left.forwardslash.chevron.right': 'code',

@@ -1,10 +1,10 @@
-import { IconSymbol } from '@components/ui/IconSymbol';
+import { AppHeader } from '@/src/components/ui/AppHeader';
+import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '../../src/store/authStore';
-import { AppHeader } from '@components/ui/AppHeader';
 
 interface ActivityItem {
   id: string;

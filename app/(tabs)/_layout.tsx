@@ -1,10 +1,10 @@
 import { Tabs } from 'expo-router';
-import React, { useRef, useEffect } from 'react';
-import { Platform, TouchableOpacity, View, StyleSheet, Animated, Dimensions, Text } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Dimensions, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { IconSymbol } from '@components/ui/IconSymbol';
-import TabBarBackground from '@components/ui/TabBarBackground';
+import { IconSymbol } from '@/src/components/ui/IconSymbol';
+import TabBarBackground from '@/src/components/ui/TabBarBackground';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
    justifyContent: 'space-around',
    paddingHorizontal: 20,
    paddingTop: Platform.select({
-     ios: 15,
+     ios: 13,
      default: 0,
    }),
  },
