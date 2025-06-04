@@ -3,6 +3,7 @@ import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { PopularTopics } from '@/src/components/ui/PopularTopics';
 import { RecentSearches } from '@/src/components/ui/RecentSearches';
 import SwipeableCards from '@/src/components/ui/ThreadCards';
+import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useState, useRef } from 'react';
 import { ScrollView, StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
