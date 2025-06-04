@@ -1,3 +1,4 @@
+// do we delete this what is this for
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { MainTabScreenProps } from '../types/navigation';

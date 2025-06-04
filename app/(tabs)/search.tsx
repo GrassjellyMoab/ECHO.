@@ -1,12 +1,49 @@
-import { IconSymbol } from '@components/ui/IconSymbol';
-import { PopularTopics } from '@components/ui/PopularTopics';
-import { RecentSearches } from '@components/ui/RecentSearches';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { AppHeader } from '@/src/components/ui/AppHeader';
+import { IconSymbol } from '@/src/components/ui/IconSymbol';
+import { PopularTopics } from '@/src/components/ui/PopularTopics';
+import { RecentSearches } from '@/src/components/ui/RecentSearches';
+import SwipeableCards from '@/src/components/ui/ThreadCards';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useState, useRef } from 'react';
+import { ScrollView, StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchState, setIsSearchState] = useState(false);
+  const lastFocusTime = useRef(Date.now());
+  const searchInputRef = useRef<TextInput>(null);
+
+  // resets search state after not coming back for 30 seconds, else it preserves the state
+  useFocusEffect(
+    React.useCallback(() => {
+      const currentTime = Date.now();
+      const timeDifference = currentTime - lastFocusTime.current;
+      //set time here
+      if (timeDifference > 30000) {
+        setIsSearchState(false);
+        setSearchQuery('');
+      }
+      
+      lastFocusTime.current = currentTime;
+    }, [])
+  );
+
+  const handleSearchFocus = () => {
+    setIsSearchState(true);
+  };
+
+  const handleSearchBlur = () => {
+    // Only blur if there's no search text
+    if (!searchQuery.trim()) {
+      setIsSearchState(false);
+    }
+  };
+
+  const handleBackPress = () => {
+    searchInputRef.current?.blur();
+    setIsSearchState(false);
+    setSearchQuery('');
+  };
   const router = useRouter();
 
   const handleExplorePress = () => {
@@ -14,33 +51,51 @@ export default function SearchScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleExplorePress} style={styles.exploreButton}>
-          <IconSymbol name="safari" size={24} color="#9C27B0" />
-        </TouchableOpacity>
-        <Text style={styles.appTitle}>ECHO.</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+    <View style={styles.container}>
+      {/* Fixed header - always visible */}
+      <AppHeader />
       
+      {/* Fixed search section - always visible */}
       <View style={styles.searchSection}>
         <View style={styles.searchContainer}>
-          <IconSymbol name="magnifyingglass" size={20} color="#666" style={styles.searchIcon} />
+          {isSearchState && (
+            <TouchableOpacity onPress={handleBackPress}>
+              <IconSymbol name="chevron.left" size={20} color="#666" />
+            </TouchableOpacity>
+          )}
+          <IconSymbol name="search-outline" size={20} color="#666" style={styles.searchIcon} />
           <TextInput
+            ref={searchInputRef} 
             style={styles.searchInput}
             placeholder="Search threads, users, topics..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#999"
+            onFocus={handleSearchFocus}
+            onBlur={handleSearchBlur}
           />
         </View>
       </View>
 
-      <View style={styles.content}>
-        <PopularTopics />
-        <RecentSearches />
-      </View>
-    </ScrollView>
+      {/* Conditional content area */}
+      {isSearchState ? (
+        // Search mode: Enable scrolling for search results
+        <ScrollView 
+          style={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            <PopularTopics />
+            <RecentSearches />
+          </View>
+        </ScrollView>
+      ) : (
+        // Cards mode: NO scrolling, let cards handle all gestures
+        <View style={styles.cardsContainer}>
+          <SwipeableCards />
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -73,13 +128,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 20,
     marginBottom: 8,
+    // Ensure this doesn't interfere with touches
+    zIndex: 1,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8F9FA',
     borderRadius: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 12,
   },
   searchIcon: {
@@ -91,49 +148,15 @@ const styles = StyleSheet.create({
     color: '#000',
     fontFamily: 'AnonymousPro-Bold',
   },
+  scrollContent: {
+    flex: 1,
+  },
   content: {
     paddingHorizontal: 20,
   },
-  sectionContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+  cardsContainer: {
+    flex: 1,
+    // Remove any potential gesture blocking
+    backgroundColor: 'transparent',
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 12,
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  topicsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  topicTag: {
-    backgroundColor: '#9C27B0',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  topicText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  recentSearches: {
-    paddingVertical: 20,
-  },
-  emptyState: {
-    textAlign: 'center',
-    color: '#666',
-    fontSize: 14,
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  headerSpacer: {
-    width: 32,
-  },
-}); 
+});
