@@ -141,7 +141,7 @@ export default function AuthScreen() {
   return (
     <View style={styles.container}>
       <Image
-        source={require('@assets/Landing.png')}
+        source={require('@assets/images/Landing.png')}
         style={styles.backgroundImage}
         contentFit="cover"
       />

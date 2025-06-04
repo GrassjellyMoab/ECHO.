@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
  tabBarContainer: {
    position: 'relative',
    height: Platform.select({
-     ios: 90,
+     ios: 80,
      default: 70,
    }),
  },
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
    justifyContent: 'space-around',
    paddingHorizontal: 20,
    paddingTop: Platform.select({
-     ios: 3,
+     ios: 15,
      default: 0,
    }),
  },

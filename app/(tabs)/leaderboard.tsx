@@ -1,6 +1,7 @@
 import { IconSymbol } from '@components/ui/IconSymbol';
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppHeader } from '@components/ui/AppHeader';
 
 interface LeaderUser {
   id: string;
@@ -115,10 +116,8 @@ export default function LeaderboardScreen() {
   const podiumHeights = [120, 160, 100]; // Heights for 2nd, 1st, 3rd
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.appTitle}>ECHO.</Text>
-      </View>
+    <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
+      <AppHeader />
       
       <View style={styles.podiumSection}>
         <Text style={styles.podiumTitle}>PODIUM</Text>
@@ -150,20 +149,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-  },
-  appTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-    fontFamily: 'AnonymousPro-Bold',
-  },
   podiumSection: {
+    paddingTop: 20,
     paddingHorizontal: 20,
     paddingBottom: 40,
     backgroundColor: '#FFFFFF',
@@ -174,12 +161,14 @@ const styles = StyleSheet.create({
     color: '#000',
     fontFamily: 'AnonymousPro-Bold',
     marginBottom: 4,
+    textAlign: 'center',
   },
   podiumDate: {
     fontSize: 16,
     color: '#666',
     fontFamily: 'AnonymousPro-Bold',
     marginBottom: 40,
+    textAlign: 'center',
   },
   podiumContainer: {
     flexDirection: 'row',

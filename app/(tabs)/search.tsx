@@ -1,7 +1,9 @@
 import { IconSymbol } from '@components/ui/IconSymbol';
+import { PopularTopics } from '@components/ui/PopularTopics';
+import { RecentSearches } from '@components/ui/RecentSearches';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,25 +35,10 @@ export default function SearchScreen() {
           />
         </View>
       </View>
-      
+
       <View style={styles.content}>
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Popular Topics</Text>
-          <View style={styles.topicsContainer}>
-            {['Cybersecurity', 'Technology', 'Health', 'Finance', 'Politics', 'Sports'].map((topic, index) => (
-              <TouchableOpacity key={index} style={styles.topicTag}>
-                <Text style={styles.topicText}>{topic}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-        
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Recent Searches</Text>
-          <View style={styles.recentSearches}>
-            <Text style={styles.emptyState}>No recent searches</Text>
-          </View>
-        </View>
+        <PopularTopics />
+        <RecentSearches />
       </View>
     </ScrollView>
   );

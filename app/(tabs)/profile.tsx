@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '../../src/store/authStore';
+import { AppHeader } from '@components/ui/AppHeader';
 
 interface ActivityItem {
   id: string;
@@ -232,16 +233,12 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
       {/* Header with settings */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleDebugTap}>
-          <Text style={styles.appTitle}>ECHO.</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.settingsButton} onPress={handleLogout}>
-          <IconSymbol name="gearshape.fill" size={24} color="#000" />
-        </TouchableOpacity>
-      </View>
+      <AppHeader />
+      <TouchableOpacity style={styles.settingsButton} onPress={handleLogout}>
+        <IconSymbol name="gearshape.fill" size={24} color="#000" />
+      </TouchableOpacity>
       
       {/* Profile Section */}
       <View style={styles.profileSection}>
@@ -315,16 +312,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
-  },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
     backgroundColor: '#FFFFFF',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   appTitle: {
     fontSize: 24,
@@ -333,6 +321,10 @@ const styles = StyleSheet.create({
     fontFamily: 'AnonymousPro-Bold',
   },
   settingsButton: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    zIndex: 10,
     padding: 4,
   },
   profileSection: {

@@ -1,6 +1,7 @@
 import { IconSymbol } from '@components/ui/IconSymbol';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { AppHeader } from '@components/ui/AppHeader';
 
 export default function CreateScreen() {
   const [title, setTitle] = useState('');
@@ -30,10 +31,8 @@ export default function CreateScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.appTitle}>ECHO.</Text>
-      </View>
+    <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
+      <AppHeader />
       
       <View style={styles.content}>
         <View style={styles.createSection}>
@@ -106,7 +105,7 @@ export default function CreateScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     paddingTop: 60,

@@ -35,11 +35,12 @@
       "@styles/*": [
         "src/styles/*"
       ],
-      "@firebase/auth": ["./node_modules/@firebase/auth/dist/index.rn.d.ts"]
     }
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "env.d.ts", 
+    "src"
   ]
 }
