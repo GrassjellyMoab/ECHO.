@@ -49,7 +49,6 @@ export default function BadgesScreen() {
 
     const { getImagesByFolder } = useImagesStore();
     const badgeImages = getImagesByFolder('badges');
-    console.log(badgeImages)
 
     const badgesData: Badge[] = [
         {
