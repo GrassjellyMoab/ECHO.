@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useAuthStore } from '../../src/store/authStore';
+import { useAuthStore } from '../../../src/store/authStore';
 
 interface ActivityItem {
   id: string;
@@ -277,7 +277,10 @@ export default function ProfileScreen() {
         
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => router.push('/profile/badges')}
+          >
             <Text style={styles.actionButtonText}>View Badges</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton}>

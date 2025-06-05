@@ -3,10 +3,10 @@ import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { PopularTopics } from '@/src/components/ui/PopularTopics';
 import { RecentSearches } from '@/src/components/ui/RecentSearches';
 import SwipeableCards from '@/src/components/ui/ThreadCards';
-import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useState, useRef } from 'react';
-import { ScrollView, StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
+import React, { useRef, useState } from 'react';
+import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,7 +48,7 @@ export default function SearchScreen() {
   const router = useRouter();
 
   const handleExplorePress = () => {
-    router.push('/(tabs)/explore');
+    router.push('/search/explore');
   };
 
   return (
@@ -61,7 +61,7 @@ export default function SearchScreen() {
         <View style={styles.searchContainer}>
           {isSearchState && (
             <TouchableOpacity onPress={handleBackPress}>
-              <IconSymbol name="chevron.left" size={20} color="#666" />
+              <IconSymbol name="chevron.back" size={20} color="#666" />
             </TouchableOpacity>
           )}
           <IconSymbol name="search-outline" size={20} color="#666" style={styles.searchIcon} />

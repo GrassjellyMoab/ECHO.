@@ -18,7 +18,7 @@ export default function EmptyState({ onRestart, onBack }: EmptyStateProps) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <IconSymbol name="chevron.left" size={24} color="#000" />
+          <IconSymbol name="chevron.back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.appTitle}>ECHO.</Text>
         <View style={styles.headerSpacer} />
