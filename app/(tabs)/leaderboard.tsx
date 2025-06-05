@@ -1,16 +1,7 @@
+import { LeaderUser, ListUser, Podium } from '@/src/components/leaderboard';
 import { AppHeader } from '@/src/components/ui/AppHeader';
-import { IconSymbol } from '@/src/components/ui/IconSymbol';
-import { useImagesStore } from '@/src/store/imgStore';
 import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
-
-interface LeaderUser {
-  id: string;
-  rank: number;
-  username: string;
-  points: number;
-  avatar: string;
-}
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 const mockLeaderboard: LeaderUser[] = [
   {
@@ -64,220 +55,45 @@ const mockLeaderboard: LeaderUser[] = [
   },
 ];
 
-const PodiumUser = ({ user, position, height }: { user: LeaderUser; position: 'left' | 'center' | 'right'; height: number }) => {
-  const { getImagesByFolder } = useImagesStore();
-  const userImages = getImagesByFolder('users');
-
-  const getCrownColor = (rank: number) => {
-    switch (rank) {
-      case 1: return '#FFD700'; // Gold
-      case 2: return '#C0C0C0'; // Silver
-      case 3: return '#CD7F32'; // Bronze
-      default: return '#FFD700';
-    }
-  };
-
-  const getPositionStyle = (position: 'left' | 'center' | 'right') => {
-    switch (position) {
-      case 'left': return styles.podiumLeft;
-      case 'center': return styles.podiumCenter;
-      case 'right': return styles.podiumRight;
-    }
-  };
-
-  const crownColor = getCrownColor(user.rank);
-
-  return (
-    <View style={[styles.podiumUser, getPositionStyle(position)]}>
-      <View style={styles.crownContainer}>
-        <IconSymbol name="crown.fill" size={position === 'center' ? 32 : 24} color={crownColor} />
-      </View>
-      <Image source={{ uri: userImages.find(img => img.name === `${user.username.toLowerCase().replace("@", "")}.png`)?.url }} style={[styles.podiumAvatar, position === 'center' && styles.centerAvatar]} />
-      <Text style={styles.podiumUsername}>{user.username}</Text>
-      <View style={[styles.podiumBar, { height }]}>
-        <Text style={styles.podiumRank}>{user.rank === 1 ? '1ST' : user.rank === 2 ? '2ND' : '3RD'}</Text>
-        <Text style={styles.podiumPoints}>{user.points} pts</Text>
-      </View>
-    </View>
-  );
-};
-
-const ListUser = ({ user }: { user: LeaderUser }) => {
-  const { getImagesByFolder } = useImagesStore();
-  const userImages = getImagesByFolder('users');
-  return (
-    <View style={styles.listUser}>
-      <Text style={styles.listRank}>{user.rank.toString().padStart(2, '0')}</Text>
-      <Image source={{ uri: userImages.find(img => img.name === `${user.username.toLowerCase().replace("@", "")}.png`)?.url }} style={styles.listAvatar} />
-      <Text style={styles.listUsername}>{user.username}</Text>
-      <Text style={styles.listPoints}>{user.points} pts</Text>
-    </View>
-  )
-}
-
 export default function LeaderboardScreen() {
   const topThree = mockLeaderboard.slice(0, 3);
   const restOfUsers = mockLeaderboard.slice(3);
 
-  // Arrange podium: 2nd, 1st, 3rd
-  const podiumOrder = [topThree[1], topThree[0], topThree[2]]; // 2nd, 1st, 3rd
-  const podiumHeights = [120, 160, 100]; // Heights for 2nd, 1st, 3rd
-
   return (
-    <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
-      <AppHeader />
+    <View style={styles.container}>
+      <View style={styles.headerContainer}>
+        <AppHeader />
+      </View>
+      
+      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        <Podium topThree={topThree} />
 
-      <View style={styles.podiumSection}>
-        <Text style={styles.podiumTitle}>PODIUM</Text>
-        <Text style={styles.podiumDate}>13th - 19th May</Text>
-
-        <View style={styles.podiumContainer}>
-          {podiumOrder.map((user, index) => (
-            <PodiumUser
-              key={user.id}
-              user={user}
-              position={index === 0 ? 'left' : index === 1 ? 'center' : 'right'}
-              height={podiumHeights[index]}
-            />
+        <View style={styles.listSection}>
+          {restOfUsers.map((user) => (
+            <ListUser key={user.id} user={user} />
           ))}
         </View>
-      </View>
-
-      <View style={styles.listSection}>
-        {restOfUsers.map((user) => (
-          <ListUser key={user.id} user={user} />
-        ))}
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F9FA',
+    paddingTop: 0,
   },
-  podiumSection: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    backgroundColor: '#FFFFFF',
+  headerContainer: {
+    zIndex: 10,
+    elevation: 10,
   },
-  podiumTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-    fontFamily: 'AnonymousPro-Bold',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  podiumDate: {
-    fontSize: 16,
-    color: '#666',
-    fontFamily: 'AnonymousPro-Bold',
-    marginBottom: 40,
-    textAlign: 'center',
-  },
-  podiumContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    height: 280,
-  },
-  podiumUser: {
-    alignItems: 'center',
+  scrollContainer: {
     flex: 1,
-  },
-  podiumLeft: {
-    marginRight: 8,
-  },
-  podiumCenter: {
-    marginHorizontal: 8,
-  },
-  podiumRight: {
-    marginLeft: 8,
-  },
-  crownContainer: {
-    marginBottom: 8,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  podiumAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginBottom: 8,
-  },
-  centerAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  podiumUsername: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000',
-    fontFamily: 'AnonymousPro-Bold',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  podiumBar: {
-    backgroundColor: '#9C27B0',
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 16,
-  },
-  podiumRank: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    fontFamily: 'AnonymousPro-Bold',
-    marginBottom: 4,
-  },
-  podiumPoints: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontFamily: 'AnonymousPro-Bold',
   },
   listSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  listUser: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  listRank: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
-    fontFamily: 'AnonymousPro-Bold',
-    width: 40,
-  },
-  listAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginHorizontal: 16,
-  },
-  listUsername: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#9C27B0',
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  listPoints: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-    fontFamily: 'AnonymousPro-Bold',
+    paddingHorizontal: 30,
+    paddingBottom: 50,
+    backgroundColor: '#FFFFFF',
   },
 }); 

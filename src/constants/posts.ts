@@ -28,8 +28,8 @@ export const dummyPosts = [
     comments: 234,
     votes: 456,
     tags: ['Technology', 'Health', 'AI'],
-    excerpt: "Researchers have developed a new AI system that can diagnose diseases with 95% accuracy. This could revolutionize healthcare as we know it.",
-    author: {
+    excerpt: "Researchers have developed a new AI system that can diagnose diseases with 95% accuracy. This could revsolutionize healthcare as we know it.",
+    author: { 
       name: "@techguru",
       verified: false,
       avatar: "https://avatar.iran.liara.run/public/45",
