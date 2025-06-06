@@ -65,6 +65,62 @@ def leaderboardtable(df, collection):
         })
     print(f'Sucessfully created new leaderboard table.')
 
+def threadstable(df,collection):
+    for _, record in df.iterrows():
+        db.collection(collection).add({
+            "uid": record['uid'],
+            "title": record['title'],
+            "description": record['description'],
+            "num_views": record['num_views'],
+            "num_comments": record['num_comments'],
+            "num_votes": record['num_votes'],
+            "read_duration": record['read_duration'],
+            "posted_datetime": parse_date(record['posted_datetime']),
+            "topics": [topic.strip() for topic in str(record['topics']).split(',') if topic],
+            "profile_img": record.get('profile_img') or None,
+            "thread_img": record.get('thread_img') or None,
+            "is_real": str(record['is_real']).strip().upper() == "TRUE",
+            "ai_verdict": record.get('ai_verdict') or None,
+            "sources": [s.strip() for s in str(record.get('sources', '')).split(',') if s]
+        })
+    print(f'Sucessfully created new threads table.')
+
+def topicstable(df,collection):
+    for _, record in df.iterrows():
+        db.collection(collection).add({
+            "topic": record['topic'],
+            "is_trending": record['is_trending'],
+            "is_rising": record['is_rising'],
+            "num_vigilants": record['num_vigilants']
+        })
+    print(f'Sucessfully created new topics table.')
+
+def votingtable(df,collection):
+    for _, record in df.iterrows():
+        db.collection(collection).add({
+            "uid": record['uid'],
+            "tid": record['tid'],
+            "topic_id": [topic.strip() for topic in str(record['topic_id']).split(',') if topic],
+            "voted_real": [s.strip() for s in str(record['voted_real']).split(',') if s]
+        })
+    print(f'Sucessfully created new history table.')
+
+def commentstable(df,collection): 
+    for _, record in df.iterrows():
+        db.collection(collection).add({
+            "uid": record['uid'],
+            "tid": record['tid'],
+            "topic_id": record['topic_id'],
+            "text": record['text'],
+            "num_replies": record['num_replies'],
+            "num_likes": record['num_likes'],
+            "is_pinned": record['is_pinned'],
+            "date": parse_date(record['datetime']),
+            "reply_cid": record['reply_cid']
+        })
+    print(f'Sucessfully created new comments table.')
+
+
 # Parse Argument 
 args = parser.parse_args()
 collection = args.collection 
@@ -75,6 +131,14 @@ if (collection =='users'):
     registerusers(df,collection)
 elif(collection =='leaderboard'):
     leaderboardtable(df,collection)
+elif(collection == 'threads'):
+    threadstable(df,collection)
+elif(collection == 'topics'):
+    topicstable(df,collection)
+elif(collection =='vote_history'):
+    votingtable(df,collection)
+elif(collection =='comments'):
+    commentstable(df,collection)
 ## to add more 
 else: 
     print("Please enter a valid collection name")
