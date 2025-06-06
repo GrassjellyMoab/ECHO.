@@ -153,11 +153,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
   },
   highlightsSection: {
     paddingHorizontal: 30,
-    paddingVertical: 20,
+    paddingVertical: 8,
     backgroundColor: '#FFFFFF',
     marginBottom: 8,
   },
@@ -174,6 +174,8 @@ const styles = StyleSheet.create({
     fontFamily: 'AnonymousPro-Bold',
   },
   postsContainer: {
+    backgroundColor: '#F8F9FA',
+    paddingTop: 10,
     paddingHorizontal: 20,
   },
   postCard: {
@@ -230,7 +232,7 @@ const styles = StyleSheet.create({
     fontFamily: 'AnonymousPro-Bold',
   },
   subscribeButton: {
-    backgroundColor: '#9C27B0',
+    backgroundColor: '#662D91',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,

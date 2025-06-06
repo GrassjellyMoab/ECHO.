@@ -39,6 +39,7 @@ const iconMap: Record<string, { name: IoniconsGlyph | AntDesignGlyph | MaterialI
   'message': { name: 'message1', library: 'antdesign' },
   'arrow.up': { name: 'how-to-vote', library: 'materialicons' },
   'crown.fill': { name: 'crown', library: 'fontawesome6' },
+  'logout': { name: 'logout', library: 'materialicons' },    
 };
 
 export function IconSymbol({ name, size = 24, color = '#000000', style }: IconSymbolProps) {
