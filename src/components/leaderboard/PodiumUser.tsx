@@ -58,7 +58,7 @@ export const PodiumUser: React.FC<PodiumUserProps> = ({ user, position, height }
         />
         {/* User profile picture */}
         <Image 
-          source={require('@/src/assets/images/dummy_avatar.jpg')} 
+          source={{ uri:  user.avatar }} 
           style={[
             styles.podiumAvatar, 
             position === 'center' && styles.centerAvatar,
@@ -110,12 +110,14 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     zIndex: 1,
-    top: 0,
-    left: 0,
+    top: -3,
+    left: -3,
   },
   centerCrownBackground: {
     width: 80,
     height: 80,
+    top: -4,
+    left: -4,
   },
   podiumAvatar: {
     width: 50,

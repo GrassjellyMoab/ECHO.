@@ -242,7 +242,7 @@ export default function ProfileScreen() {
       {/* Header with settings */}
       <AppHeader />
       <TouchableOpacity style={styles.settingsButton} onPress={handleLogout}>
-        <IconSymbol name="gearshape.fill" size={24} color="#000" />
+        <IconSymbol name="logout" size={24} color="#000" />
       </TouchableOpacity>
       
       {/* Profile Section */}

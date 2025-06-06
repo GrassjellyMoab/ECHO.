@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     alignSelf: 'flex-start',
-    marginBottom: 0,
+    marginBottom: 20,
   },
   podiumTitle: {
     fontSize: 22,

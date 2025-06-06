@@ -10,6 +10,7 @@ export const ListUser: React.FC<ListUserProps> = ({ user }) => {
   return (
     <View style={styles.listUser}>
       <Text style={styles.listRank}>{user.rank.toString().padStart(2, '0')}</Text>
+      {/* TODO: EDIT SOURCE WHEN IMAGES ARE LOADED */}
       <Image 
         source={require('@/src/assets/images/dummy_avatar.jpg')} 
         style={styles.listAvatar} 
