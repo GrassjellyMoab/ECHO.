@@ -1,12 +1,13 @@
+import { PopularTopics } from '@/src/components/explore/PopularTopics';
+import { RecentSearches } from '@/src/components/explore/RecentSearches';
+import SwipeableCards from '@/src/components/explore/ThreadCards';
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
-import { PopularTopics } from '@/src/components/ui/PopularTopics';
-import { RecentSearches } from '@/src/components/ui/RecentSearches';
-import SwipeableCards from '@/src/components/ui/ThreadCards';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -14,12 +15,10 @@ export default function SearchScreen() {
   const lastFocusTime = useRef(Date.now());
   const searchInputRef = useRef<TextInput>(null);
 
-  // resets search state after not coming back for 30 seconds, else it preserves the state
   useFocusEffect(
     React.useCallback(() => {
       const currentTime = Date.now();
       const timeDifference = currentTime - lastFocusTime.current;
-      //set time here
       if (timeDifference > 30000) {
         setIsSearchState(false);
         setSearchQuery('');
@@ -53,10 +52,8 @@ export default function SearchScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Fixed header - always visible */}
       <AppHeader />
       
-      {/* Fixed search section - always visible */}
       <View style={styles.searchSection}>
         <View style={styles.searchContainer}>
           {isSearchState && (
@@ -77,10 +74,8 @@ export default function SearchScreen() {
           />
         </View>
       </View>
-
-      {/* Conditional content area */}
+  
       {isSearchState ? (
-        // Search mode: Enable scrolling for search results
         <ScrollView 
           style={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -91,7 +86,6 @@ export default function SearchScreen() {
           </View>
         </ScrollView>
       ) : (
-        // Cards mode: NO scrolling, let cards handle all gestures
         <View style={styles.cardsContainer}>
           <SwipeableCards />
         </View>
@@ -106,12 +100,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingTop: 60,
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingVertical: 20,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
@@ -129,7 +120,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 20,
     marginBottom: 8,
-    // Ensure this doesn't interfere with touches
     zIndex: 1,
   },
   searchContainer: {
@@ -157,7 +147,6 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     flex: 1,
-    // Remove any potential gesture blocking
     backgroundColor: 'transparent',
   },
 });
