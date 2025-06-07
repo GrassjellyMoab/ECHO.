@@ -330,9 +330,8 @@ const styles = StyleSheet.create({
   },
   settingsButton: {
     position: 'absolute',
-    top: 60,
+    top: 87,
     right: 20,
-    zIndex: 10,
     padding: 4,
   },
   profileSection: {

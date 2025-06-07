@@ -52,7 +52,9 @@ export default function SearchScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader />
+      <View style={styles.appHeaderWrapper}>
+        <AppHeader />
+      </View>
       
       <View style={styles.searchSection}>
         <View style={styles.searchContainer}>
@@ -97,7 +99,12 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: 'white',
+  },
+  appHeaderWrapper: {
+    position: 'relative',
+    zIndex: 10,
+    backgroundColor: 'white'
   },
   header: {
     paddingTop: 60,
