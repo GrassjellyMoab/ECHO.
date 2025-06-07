@@ -231,9 +231,12 @@ export default function AuthScreen() {
                   </ThemedText>
                 </View>
               ) : (
-                <ThemedText style={styles.submitButtonText}>
-                  {isLogin ? 'LOG IN→' : 'REGISTER→'}
-                </ThemedText>
+                <View style={styles.submitButtonContainer}>
+                  <ThemedText style={styles.submitButtonText}>
+                    {isLogin ? 'LOG IN' : 'REGISTER'}
+                  </ThemedText>
+                  <ThemedText>→</ThemedText>
+                </View>
               )}
             </Pressable>
 
@@ -251,10 +254,17 @@ export default function AuthScreen() {
               }}
               disabled={isLoading}
             >
-              <ThemedText style={[styles.switchText, isLoading && styles.switchTextDisabled]}>
-                {isLogin ? 'do not have an account?' : "have an existing account?"}{'\n'}
-                {isLogin ? 'REGISTER→' : 'LOG IN→'}
-              </ThemedText>
+              <View style={styles.switchTextContainer}>
+                <ThemedText style={[styles.switchText, isLoading && styles.switchTextDisabled]}>
+                  {isLogin ? 'do not have an account?' : 'have an existing account?'}
+                </ThemedText>
+                <View style={styles.submitButtonContainer}>
+                  <ThemedText style={[styles.submitButtonText, {marginTop:5}]}>
+                    {isLogin ? 'REGISTER' : 'LOGIN'}
+                  </ThemedText>
+                  <ThemedText>→</ThemedText>
+                </View>
+              </View>
             </Pressable>
           </View>
         </View>
@@ -266,7 +276,7 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: 'white',
   },
   backgroundImage: {
     ...StyleSheet.absoluteFillObject,
@@ -284,7 +294,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   logo: {
-    fontSize: 32,
+    fontSize: 43,
     fontWeight: 'bold',
     marginBottom: 8,
     fontFamily: 'AnonymousPro-Bold',
@@ -321,6 +331,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'center',
   },
+  submitButtonContainer : {
+    flexDirection: 'row', 
+    alignItems: 'center' 
+  },
   submitButton: {
     marginTop: 20,
   },
@@ -332,10 +346,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   submitButtonText: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
     fontFamily: 'AnonymousPro-Bold',
     textAlign: 'center',
+    borderBottomWidth: 2, 
+    borderBottomColor: 'black', 
+    flexDirection: 'row'
+  },
+  switchTextContainer: {
+    alignItems: 'center',
   },
   switchText: {
     marginTop: 20,
@@ -348,4 +368,5 @@ const styles = StyleSheet.create({
   switchTextDisabled: {
     opacity: 0.5,
   },
+  
 }); 
