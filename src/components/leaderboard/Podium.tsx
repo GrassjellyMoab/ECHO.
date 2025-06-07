@@ -16,7 +16,7 @@ export const Podium: React.FC<PodiumProps> = ({ topThree }) => {
     <View style={styles.podiumSection}>
       {/* Title positioned at top left */}
       <View style={styles.titleContainer}>
-        <Text style={styles.podiumTitle}>PODIUM</Text>
+        <Text style={styles.podiumTitle}>PODIUM.</Text>
         <Text style={styles.podiumDate}>13th - 19th May</Text>
       </View>
 
@@ -39,8 +39,8 @@ export const Podium: React.FC<PodiumProps> = ({ topThree }) => {
 
 const styles = StyleSheet.create({
   podiumSection: {
-    paddingTop: 15,
-    paddingHorizontal: 20,
+    paddingTop: 5,
+    paddingHorizontal: 30,
     paddingBottom: 5,
     backgroundColor: '#FFFFFF',
     marginBottom: 0,
@@ -51,14 +51,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   podiumTitle: {
-    fontSize: 22,
+    fontSize: 25,
     fontWeight: 'bold',
     color: '#000',
     fontFamily: 'AnonymousPro-Bold',
-    marginBottom: 4,
   },
   podiumDate: {
-    fontSize: 16,
+    fontSize: 14,
+    marginTop: 2,
     color: '#666',
     fontFamily: 'AnonymousPro-Bold',
   },
