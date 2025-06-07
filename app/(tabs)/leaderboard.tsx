@@ -70,11 +70,8 @@ export default function LeaderboardScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerContainer}>
+      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false} stickyHeaderIndices={[0]}>
         <AppHeader />
-      </View>
-
-      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <Podium topThree={topThree} />
 
         <View style={styles.listSection}>
@@ -93,12 +90,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
     paddingTop: 0,
   },
-  headerContainer: {
-    zIndex: 10,
-    elevation: 10,
-  },
   scrollContainer: {
     flex: 1,
+    backgroundColor: 'white'
   },
   listSection: {
     paddingHorizontal: 30,
