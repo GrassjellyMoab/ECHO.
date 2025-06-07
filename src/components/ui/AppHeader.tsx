@@ -1,73 +1,185 @@
+// 
+// import React from 'react';
+// import { Dimensions, StyleSheet, Text, View } from 'react-native';
+// import Svg, { Path } from 'react-native-svg';
+
+// const { width: screenWidth } = Dimensions.get('window');
+// // ${screenWidth*2/3},${baseline} C${screenWidth*5/6},${baseline-amplitude}
+// export const AppHeader = () => {
+//   const baseline = 10;
+//   const amplitude = 30;
+//   return (
+//     <View style={styles.container}>
+//       <View style={styles.header}>
+//         <Text style={styles.appTitle}>ECHO.</Text>
+//       </View>
+//       <Svg height="30" width={screenWidth} style={styles.wave}>
+//         {/* Shadow shape */}
+//         <Path
+//           d={`M0,${baseline} C${screenWidth / 4},${baseline - amplitude} ${screenWidth * 3 / 4},${baseline + amplitude} ${screenWidth},${baseline}`}
+//           fill="none"
+//           stroke="rgba(102, 45, 145, 0.3)"
+//           strokeWidth="6"
+//         />
+
+//         {/* Main stroke */}
+//         <Path
+//           d={`M0,${baseline} C${screenWidth / 4},${baseline - amplitude} ${screenWidth * 3 / 4},${baseline + amplitude} ${screenWidth},${baseline}`}
+//           fill="none"
+//           stroke="rgba(102, 45, 145, 0.5)"
+//           strokeWidth="3"
+//         />
+
+//                 {/* Shadow shape */}
+//         <Path
+//           d={`M0,${baseline - 10} C${screenWidth / 4},${baseline + amplitude} ${screenWidth * 3 / 4},${baseline - amplitude} ${screenWidth},${baseline + 10}`}
+//           fill="none"
+//           stroke="rgba(156, 39, 176, 0.3)"
+//           strokeWidth="6"
+//         />
+
+//         {/* Main stroke */}
+//         <Path
+//           d={`M0,${baseline - 10} C${screenWidth / 4},${baseline + amplitude} ${screenWidth * 3 / 4},${baseline - amplitude} ${screenWidth},${baseline + 10}`}
+//           fill="none"
+//           stroke="rgba(156, 39, 176, 0.5)"
+//           strokeWidth="3"
+//         />
+//       </Svg>
+//     </View>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   container: {
+//     position: 'relative',
+//   },
+//   header: {
+//     paddingTop: 60,
+//     paddingHorizontal: 20,
+//     paddingBottom: 10,
+//     backgroundColor: '#FFFFFF',
+//   },
+//   appTitle: {
+//     fontSize: 34,
+//     fontWeight: 'bold',
+//     textAlign: 'center',
+//     paddingLeft: 30,
+//     color: '#000',
+//     fontFamily: 'AnonymousPro-Bold',
+//   },
+//   wave: {
+//     backgroundColor: '#FFFFFF',
+//   },
+// });
+
 import React from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 const { width: screenWidth } = Dimensions.get('window');
-// ${screenWidth*2/3},${baseline} C${screenWidth*5/6},${baseline-amplitude}
+
+const amplitude = 25;
+const frequency = 1;
+const steps = 100;
+const waveHeight = amplitude * 7;
+
+const generateWavePath = ({
+  amplitude,
+  frequency,
+  baseline,
+  width,
+  steps,
+}: {
+  amplitude: number;
+  frequency: number;
+  baseline: number;
+  width: number;
+  steps: number;
+}) => {
+  let path = '';
+  for (let i = 0; i <= steps; i++) {
+    const x = (i / steps) * width;
+    const y = baseline + amplitude * Math.cos((i / steps) * frequency * Math.PI * 2);
+    path += i === 0 ? `M${x},${y}` : ` L${x},${y}`;
+  }
+  return path;
+};
+
+const generateWaveFillPath = ({
+  amplitude,
+  frequency,
+  baseline,
+  width,
+  steps,
+  height,
+}: {
+  amplitude: number;
+  frequency: number;
+  baseline: number;
+  width: number;
+  steps: number;
+  height: number;
+}) => {
+  const wavePath = generateWavePath({ amplitude, frequency, baseline, width, steps });
+  return `${wavePath} L${width},${height} L0,${height} Z`;
+};
+
 export const AppHeader = () => {
-  const baseline = 10;
-  const amplitude = 30;
+  const baseline = waveHeight / 2;
+
   return (
     <View style={styles.container}>
+      <View style={styles.emptyRectangle} />
       <View style={styles.header}>
         <Text style={styles.appTitle}>ECHO.</Text>
+
+        <Svg height={waveHeight} width={screenWidth} style={styles.wave}>
+          <Path
+            d={generateWavePath({
+              amplitude,
+              frequency,
+              baseline,
+              width: screenWidth,
+              steps,
+            })}
+            fill="white"
+            stroke="#662D91"
+            strokeWidth={2}
+          />
+        </Svg>
       </View>
-      <Svg height="30" width={screenWidth} style={styles.wave}>
-        {/* Shadow shape */}
-        <Path
-          d={`M0,${baseline} C${screenWidth / 4},${baseline - amplitude} ${screenWidth * 3 / 4},${baseline + amplitude} ${screenWidth},${baseline}`}
-          fill="none"
-          stroke="rgba(102, 45, 145, 0.3)"
-          strokeWidth="6"
-        />
-
-        {/* Main stroke */}
-        <Path
-          d={`M0,${baseline} C${screenWidth / 4},${baseline - amplitude} ${screenWidth * 3 / 4},${baseline + amplitude} ${screenWidth},${baseline}`}
-          fill="none"
-          stroke="rgba(102, 45, 145, 0.5)"
-          strokeWidth="3"
-        />
-
-                {/* Shadow shape */}
-        <Path
-          d={`M0,${baseline - 10} C${screenWidth / 4},${baseline + amplitude} ${screenWidth * 3 / 4},${baseline - amplitude} ${screenWidth},${baseline + 10}`}
-          fill="none"
-          stroke="rgba(156, 39, 176, 0.3)"
-          strokeWidth="6"
-        />
-
-        {/* Main stroke */}
-        <Path
-          d={`M0,${baseline - 10} C${screenWidth / 4},${baseline + amplitude} ${screenWidth * 3 / 4},${baseline - amplitude} ${screenWidth},${baseline + 10}`}
-          fill="none"
-          stroke="rgba(156, 39, 176, 0.5)"
-          strokeWidth="3"
-        />
-      </Svg>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
+  container:{
+    marginBottom:20
+  },
+  emptyRectangle: {
+    padding: 40,
+    backgroundColor: 'white',
   },
   header: {
-    paddingTop: 60,
     paddingHorizontal: 20,
-    paddingBottom: 10,
-    backgroundColor: '#FFFFFF',
+    position: 'relative',
   },
   appTitle: {
     fontSize: 34,
+    margin: -10,
     fontWeight: 'bold',
     textAlign: 'center',
-    paddingLeft: 30,
     color: '#000',
     fontFamily: 'AnonymousPro-Bold',
+    zIndex: 2,
   },
   wave: {
-    backgroundColor: '#FFFFFF',
+    position: 'absolute',
+    top: -70,
+    bottom:0, // anchor to bottom of header
+    left: 0,
+    transform: [{ scaleY: -1 }],
+    zIndex: 1,
   },
 });
