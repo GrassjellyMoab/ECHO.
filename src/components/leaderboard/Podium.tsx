@@ -39,7 +39,7 @@ export const Podium: React.FC<PodiumProps> = ({ topThree }) => {
 
 const styles = StyleSheet.create({
   podiumSection: {
-    paddingTop: 5,
+    paddingTop: 7,
     paddingHorizontal: 30,
     paddingBottom: 5,
     backgroundColor: '#FFFFFF',
