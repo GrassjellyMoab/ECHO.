@@ -22,7 +22,7 @@ DerivedData
 *.xcuserstate
 project.xcworkspace
 .xcode.env.local
-
+.xcworkspacedata
 # Bundle artifacts
 *.jsbundle
 
