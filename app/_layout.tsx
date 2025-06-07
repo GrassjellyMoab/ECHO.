@@ -1,3 +1,4 @@
+import { cleanupDataStore, initializeDataStore } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
@@ -35,34 +36,34 @@ export default function RootLayout() {
         try {
           // In development, treat each session as potentially first launch
           let isFirstLaunch = false;
-          
+
           if (__DEV__) {
             // In development mode, ALWAYS show splash on fresh start
             // This triggers whenever you run expo start --clear or restart the dev server
             isFirstLaunch = true;
-            
+
             console.log('🚀 DEV MODE - Always showing splash on dev restart');
           } else {
             // Production mode - normal first launch detection
             const hasLaunchedBefore = await AsyncStorage.getItem(FIRST_LAUNCH_KEY);
             isFirstLaunch = hasLaunchedBefore === null;
-            
+
             console.log('🚀 PROD MODE - App Initialize:', {
               isFirstLaunch,
               hasLaunchedBefore,
               isAuthenticated,
             });
-            
+
             // Mark as launched for future runs (only in production)
             if (isFirstLaunch) {
               await AsyncStorage.setItem(FIRST_LAUNCH_KEY, 'true');
             }
           }
-          
+
           // Show splash if first launch OR if not authenticated
           const showSplash = isFirstLaunch || !isAuthenticated;
           setShouldShowSplash(showSplash);
-          
+
           if (showSplash) {
             setSplashStartTime(Date.now()); // Start splash timer
             console.log('⏰ Starting splash timer - First launch:', isFirstLaunch, 'Not authenticated:', !isAuthenticated, 'Dev mode:', __DEV__);
@@ -71,13 +72,9 @@ export default function RootLayout() {
             console.log('⏭️ Skipping splash for authenticated returning user');
           }
 
-          // Load images
-          await useImagesStore.getState().loadImages();
-          console.log('🖼️ Firebase images loaded');
-          
           // Hide the Expo splash screen
           await ExpoSplashScreen.hideAsync();
-          
+
           // Mark app as ready after a small delay to ensure Slot is mounted
           setTimeout(() => {
             setAppReady(true);
@@ -91,7 +88,29 @@ export default function RootLayout() {
       }
     };
 
+    const loadFirebaseData = async () => {
+      if (!loaded || !isAuthenticated) return;
+
+      try {
+        await initializeDataStore();
+        console.log('📦 Firebase data loaded');
+
+        // Load images
+        await useImagesStore.getState().loadImages();
+        console.log('🖼️ Firebase images loaded');
+      } catch (e) {
+        console.error('🔥 Firebase load error:', e);
+      }
+    };
+
     initializeApp();
+    
+    loadFirebaseData();
+
+    return () => {
+      cleanupDataStore();
+      console.log('🧹 DataStore cleaned up');
+    };
   }, [loaded, isAuthenticated]); // Add isAuthenticated as dependency
 
   // Handle splash completion
@@ -121,13 +140,13 @@ export default function RootLayout() {
     const inTabsGroup = segments[0] === '(tabs)';
     const inSplashGroup = segments[0] === '(splash)';
 
-    console.log('🧭 Navigation check:', { 
-      isAuthenticated, 
+    console.log('🧭 Navigation check:', {
+      isAuthenticated,
       shouldShowSplash,
       splashComplete,
-      segments: segments[0], 
-      appReady, 
-      isLoading 
+      segments: segments[0],
+      appReady,
+      isLoading
     });
 
     // Navigation logic

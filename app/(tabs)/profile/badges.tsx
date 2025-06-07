@@ -47,7 +47,7 @@ const BadgeCard: React.FC<{ badge: Badge }> = ({ badge }) => {
 export default function BadgesScreen() {
     const router = useRouter();
 
-    const { getImagesByFolder } = useImagesStore();
+    const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
     const badgeImages = getImagesByFolder('badges');
 
     const badgesData: Badge[] = [

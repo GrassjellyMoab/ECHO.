@@ -89,7 +89,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'threads' | 'activity'>('activity');
   const [debugTaps, setDebugTaps] = useState(0);
-  const { getImagesByFolder } = useImagesStore();
+  const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
 
   const threadImages = getImagesByFolder('threads');
   const userImages = getImagesByFolder('users');
@@ -100,8 +100,8 @@ export default function ProfileScreen() {
       'Are you sure you want to sign out?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Sign Out', 
+        {
+          text: 'Sign Out',
           style: 'destructive',
           onPress: () => {
             logout();
@@ -116,15 +116,15 @@ export default function ProfileScreen() {
   const handleDebugTap = async () => {
     const newTaps = debugTaps + 1;
     setDebugTaps(newTaps);
-    
+
     if (newTaps >= 3) { // Reduced from 5 to 3 for easier testing
       Alert.alert(
         'Debug Mode',
         'Choose an option:\n\n"Reset First Launch" - Shows splash on next restart\n"Force Logout" - Shows splash immediately\n"Clear All Data" - Complete reset',
         [
           { text: 'Cancel', style: 'cancel', onPress: () => setDebugTaps(0) },
-          { 
-            text: 'Reset First Launch', 
+          {
+            text: 'Reset First Launch',
             onPress: async () => {
               try {
                 await AsyncStorage.removeItem('hasLaunchedBefore');
@@ -136,8 +136,8 @@ export default function ProfileScreen() {
               }
             }
           },
-          { 
-            text: 'Force Logout', 
+          {
+            text: 'Force Logout',
             style: 'destructive',
             onPress: async () => {
               try {
@@ -152,8 +152,8 @@ export default function ProfileScreen() {
               }
             }
           },
-          { 
-            text: 'Clear All Data', 
+          {
+            text: 'Clear All Data',
             style: 'destructive',
             onPress: async () => {
               try {
@@ -171,7 +171,7 @@ export default function ProfileScreen() {
         ]
       );
     }
-    
+
     // Reset tap count after 3 seconds
     setTimeout(() => setDebugTaps(0), 3000);
   };
@@ -191,7 +191,7 @@ export default function ProfileScreen() {
           </View>
         </View>
       ))}
-      
+
       <Text style={styles.timeSection}>Last 30 days</Text>
       {mockActivity.slice(3).map((item) => (
         <View key={item.id} style={styles.activityItem}>
@@ -241,28 +241,28 @@ export default function ProfileScreen() {
     <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
       {/* Header with settings */}
       <AppHeader />
-      <TouchableOpacity style={styles.settingsButton} onPress={handleLogout}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <IconSymbol name="logout" size={24} color="#000" />
       </TouchableOpacity>
-      
+
       {/* Profile Section */}
       <View style={styles.profileSection}>
         <View style={styles.profileImageContainer}>
-          <Image 
+          <Image
             source={{ uri: userImages.find(img => img.name === `${user.username.toLowerCase().replace("@gmail.com", "")}.png`)?.url || 'https://via.placeholder.com/120x120/4FC3F7/ffffff?text=User' }}
             style={styles.profileImage}
           />
         </View>
-        
+
         <View style={styles.usernameContainer}>
           <Text style={styles.username}>{user.username.replace("@gmail.com", "")}</Text>
           {user.isVerified && (
             <IconSymbol name="checkmark.circle.fill" size={20} color="#662D91" />
           )}
         </View>
-        
+
         <Text style={styles.displayName}>{user.displayName || 'User'}</Text>
-        
+
         {/* Followers/Following */}
         <View style={styles.followContainer}>
           <View style={styles.followItem}>
@@ -274,10 +274,10 @@ export default function ProfileScreen() {
             <Text style={styles.followLabel}>following</Text>
           </View>
         </View>
-        
+
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.actionButton}
             onPress={() => router.push('/profile/badges')}
           >
@@ -288,10 +288,10 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </View>
-      
+
       {/* Tab Toggle */}
       <View style={styles.tabContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'threads' && styles.activeTab]}
           onPress={() => setActiveTab('threads')}
         >
@@ -299,7 +299,7 @@ export default function ProfileScreen() {
             Threads
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'activity' && styles.activeTab]}
           onPress={() => setActiveTab('activity')}
         >
@@ -308,7 +308,7 @@ export default function ProfileScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-      
+
       {/* Content */}
       <View style={styles.content}>
         {activeTab === 'activity' ? <ActivitySection /> : <ThreadsSection />}
@@ -328,10 +328,11 @@ const styles = StyleSheet.create({
     color: '#000',
     fontFamily: 'AnonymousPro-Bold',
   },
-  settingsButton: {
+  logoutButton: {
     position: 'absolute',
-    top: 87,
+    top: 90,
     right: 20,
+    zIndex: 10,
     padding: 4,
   },
   profileSection: {
@@ -515,12 +516,6 @@ const styles = StyleSheet.create({
     color: '#666',
     fontFamily: 'AnonymousPro-Bold',
     marginBottom: 20,
-  },
-  logoutButton: {
-    backgroundColor: '#FF3B30',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
   },
   logoutButtonText: {
     color: '#FFFFFF',
