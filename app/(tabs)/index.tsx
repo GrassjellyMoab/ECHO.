@@ -78,7 +78,7 @@ export function useThreadData(): ThreadData[] {
           title: thread.title || 'Untitled Thread',
           timeAgo,
           dateCreated: thread.posted_datetime,
-          readTime: `${thread.read_duration} mins ago`,
+          readTime: `${thread.read_duration} mins read`,
           views: String(thread.num_views ?? 0),
           comments: String(thread.num_comments ?? 0),
           votes: String(thread.num_votes ?? 0),

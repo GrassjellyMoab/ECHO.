@@ -1,7 +1,7 @@
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { useCollectionData } from '@/src/store/dataStore';
-import { useImagesStore } from '@/src/store/imgStore';
+import { FirebaseImageData, useImagesStore } from '@/src/store/imgStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -74,27 +74,74 @@ const mockActivity: ActivityItem[] = [
   }
 ];
 
-const mockThreads: ThreadItem[] = [
-  {
-    id: 't0003',
-    title: 'Lady Gaga coming to Singapore??',
-    timeAgo: '3 days ago',
-    readTime: '1 mins read',
-    content: 'Heard Lady Gaga is finally coming to Singapore!! I\'m so excited Is this true?',
-    image: 'https://via.placeholder.com/350x200/662D91/ffffff?text=Lady+Gaga'
+// const mockThreads: ThreadItem[] = [
+//   {
+//     id: 't0003',
+//     title: 'Lady Gaga coming to Singapore??',
+//     timeAgo: '3 days ago',
+//     readTime: '1 mins read',
+//     content: 'Heard Lady Gaga is finally coming to Singapore!! I\'m so excited Is this true?',
+//     image: 'https://via.placeholder.com/350x200/662D91/ffffff?text=Lady+Gaga'
+//   }
+// ];
+
+function getThreadData(uid: string, threads: any[], threadImages: FirebaseImageData[]): ThreadItem[] {
+  if (uid === '' || !threads || threads.length === 0) {
+    return [];
   }
-];
+
+  const mockThreads = threads
+    .filter((thread: any) => thread.uid === uid)
+    .map((thread: any) => {
+      const timeAgo = thread.posted_datetime
+        ? calculateTimeAgo(thread.posted_datetime.toDate())
+        : 'Unknown time';
+
+      return {
+        id: thread.id,
+        title: thread.title,
+        timeAgo: timeAgo,
+        readTime: `${thread.read_duration} mins ago`,
+        content: thread.description,
+        image: threadImages.find(img => img.name === `${thread.id}.png`)?.url,
+      };
+    });
+
+  return mockThreads;
+}
+
+function calculateTimeAgo(timestamp: number | string | Date): string {
+  const now = new Date();
+  const time = typeof timestamp === 'number' ? new Date(timestamp) : new Date(timestamp);
+  const diffInMs = now.getTime() - time.getTime();
+
+  const minutes = Math.floor(diffInMs / (1000 * 60));
+  const hours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  const weeks = Math.floor(days / 7);
+  const months = Math.floor(days / 30.44); // Average days per month
+  const years = Math.floor(days / 365.25); // Account for leap years
+
+  if (years > 0) return `${years} year${years === 1 ? '' : 's'} ago`;
+  if (months > 0) return `${months} month${months === 1 ? '' : 's'} ago`;
+  if (weeks > 0) return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+  if (days > 0) return `${days} day${days === 1 ? '' : 's'} ago`;
+  if (hours > 0) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  if (minutes > 0) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  return 'Just now';
+}
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuthStore();
+  const { user, uid, logout } = useAuthStore();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'threads' | 'activity'>('activity');
   const [debugTaps, setDebugTaps] = useState(0);
   const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
 
-  const users = useCollectionData('users');
-  const threadImages = getImagesByFolder('threads');
+  const threads = useCollectionData('threads');
   const userImages = getImagesByFolder('users');
+  const threadImages = getImagesByFolder('threads');
+  const mockThreads = getThreadData(uid, threads, threadImages);
 
   const handleLogout = () => {
     Alert.alert(
@@ -125,8 +172,8 @@ export default function ProfileScreen() {
         <Text style={styles.timeSection}>Last 7 days</Text>
         {mockActivity.slice(0, 3).map((item) => (
           <View key={item.id} style={styles.activityItem}>
-            <Image 
-              source={getActivityAvatarUrl(item.user)} 
+            <Image
+              source={getActivityAvatarUrl(item.user)}
               style={styles.activityAvatar}
               cachePolicy="memory-disk"
             />
@@ -143,8 +190,8 @@ export default function ProfileScreen() {
         <Text style={styles.timeSection}>Last 30 days</Text>
         {mockActivity.slice(3).map((item) => (
           <View key={item.id} style={styles.activityItem}>
-            <Image 
-              source={getActivityAvatarUrl(item.user)} 
+            <Image
+              source={getActivityAvatarUrl(item.user)}
               style={styles.activityAvatar}
               cachePolicy="memory-disk"
             />
@@ -162,18 +209,13 @@ export default function ProfileScreen() {
   };
 
   const ThreadsSection = () => {
-    // Pre-compute thread image URLs
-    const getThreadImageUrl = (threadId: string) => {
-      return threadImages.find(img => img.name === `${threadId}.png`)?.url;
-    };
-
     return (
       <View style={styles.threadsContainer}>
         {mockThreads.map((thread) => (
           <TouchableOpacity key={thread.id} style={styles.threadCard}>
             {thread.image && (
-              <Image 
-                source={getThreadImageUrl(thread.id)} 
+              <Image
+                source={thread.image}
                 style={styles.threadImage}
                 cachePolicy="memory-disk"
               />
