@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
+import React, { useState } from 'react';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Discussion {
   id: number;
@@ -16,8 +16,8 @@ interface TopicsProps {
 }
 
 const Topics = ({ onBack }: TopicsProps) => {
-    const [selectedSort, setSelectedSort] = useState('MOST VOTERS');
-  
+  const [selectedSort, setSelectedSort] = useState('MOST VOTERS');
+
   const discussions: Discussion[] = [
     {
       id: 1,
@@ -30,7 +30,7 @@ const Topics = ({ onBack }: TopicsProps) => {
     {
       id: 2,
       title: "Worker's Party running against PM La...",
-      author: "User2", 
+      author: "User2",
       timeAgo: "6 days ago",
       voters: 793,
       avatar: "https://images.unsplash.com/photo-1494790108755-2616b2e70bb8?w=40&h=40&fit=crop&crop=face"
@@ -39,7 +39,7 @@ const Topics = ({ onBack }: TopicsProps) => {
       id: 3,
       title: "Lawrence Wong the new Prime Minister of...",
       author: "User3",
-      timeAgo: "2 days ago", 
+      timeAgo: "2 days ago",
       voters: 734,
       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
     },
@@ -72,7 +72,7 @@ const Topics = ({ onBack }: TopicsProps) => {
   return (
     <View style={styles.container}>
       {/* Navigation Header */}
-      <View style={styles.navigationHeader}>?
+      <View style={styles.navigationHeader}>
         <View style={styles.headerContent}>
           <IconSymbol name="person" size={20} color="#666" />
           <View style={styles.headerText}>
@@ -88,9 +88,9 @@ const Topics = ({ onBack }: TopicsProps) => {
       {/* Sort Filter */}
       <View style={styles.sortFilter}>
         <IconSymbol name="search-outline" size={20} color="#666" style={styles.searchIcon} />
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.sortButton}
-          onPress={() => {/* Handle sort change */}}
+          onPress={() => {/* Handle sort change */ }}
         >
           <Text style={styles.sortText}>{selectedSort}</Text>
           <IconSymbol name="chevron.down" size={20} color="#666" />
@@ -105,7 +105,7 @@ const Topics = ({ onBack }: TopicsProps) => {
               {discussion.title}
             </Text>
             <View style={styles.discussionMeta}>
-              <Image 
+              <Image
                 source={{ uri: discussion.avatar }}
                 style={styles.avatar}
               />

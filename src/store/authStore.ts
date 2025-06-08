@@ -10,11 +10,14 @@ export interface User {
   id: string;
   username: string;
   email?: string;
-  displayName?: string;
+  first_name?: string;
+  last_name?: string;
   avatar?: string;
   bio?: string;
   isVerified?: boolean;
   joinDate?: string;
+  followers?: number;
+  followees?: number;
   // stats: {
   //   threads: number;
   //   comments: number;
@@ -37,6 +40,7 @@ interface AuthState {
   isLoading: boolean;
   user: User | null;
   firebaseUser: FirebaseUser | null;
+  uid: string;
   
   // Authentication actions
   login: (credentials: { username: string; password: string }) => Promise<{ success: boolean; error?: string }>;
@@ -78,6 +82,7 @@ export const useAuthStore = create<AuthState>()(
       isLoading: true, // Start with loading true until auth state is determined
       user: null,
       firebaseUser: null,
+      uid: '',
       
       // Initialize Firebase Auth listener
       initializeAuth: () => {
@@ -104,6 +109,7 @@ export const useAuthStore = create<AuthState>()(
               user: null,
               firebaseUser: null,
               isLoading: false,
+              uid: '',
             });
           }
         });
@@ -118,7 +124,7 @@ export const useAuthStore = create<AuthState>()(
           try {
             console.log('🔥 Fetching user document for UID:', firebaseUser.uid);
             const userData = await getUserDocument(firebaseUser.uid);
-            
+            console.log(userData);
             if (userData) {
               console.log('✅ User document found:', userData.username);
               set({
@@ -126,6 +132,7 @@ export const useAuthStore = create<AuthState>()(
                 firebaseUser,
                 user: userData,
                 isLoading: false,
+                uid: firebaseUser.uid,
               });
             } else {
               // User document doesn't exist yet - this might happen if user is created
@@ -136,6 +143,7 @@ export const useAuthStore = create<AuthState>()(
                 firebaseUser,
                 user: null, // User will need to be created externally
                 isLoading: false,
+                uid: '',
               });
             }
           } catch (error) {
@@ -148,6 +156,7 @@ export const useAuthStore = create<AuthState>()(
             firebaseUser: null,
             user: null,
             isLoading: false,
+            uid: '',
           });
         }
       },
