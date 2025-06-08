@@ -198,7 +198,6 @@ const ThreadCard = ({ thread }: { thread: ThreadData }) => {
 
 export default function HomeScreen() {
   const mockThreads = useThreadData();
-  console.log(mockThreads)
 
   return (
     <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
