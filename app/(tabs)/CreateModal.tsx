@@ -157,7 +157,7 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
             {/* Header */}
             <View style={styles.header}>
               <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-                <IconSymbol name="close" size={28} color="#000" />
+                <IconSymbol name="close" size={28} color="#662D91" />
               </TouchableOpacity>
 
               <TouchableOpacity
