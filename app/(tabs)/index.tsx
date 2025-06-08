@@ -197,10 +197,7 @@ const ThreadCard = ({ thread }: { thread: ThreadData }) => {
 }
 
 export default function HomeScreen() {
-  const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
-
-  const threadImages = getImagesByFolder('threads');
-  const userImages = getImagesByFolder('users');
+  const mockThreads = useThreadData();
 
   return (
     <ScrollView style={styles.container} stickyHeaderIndices={[0]}>

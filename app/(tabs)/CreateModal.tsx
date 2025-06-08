@@ -20,7 +20,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, NavigatorScreenParams } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import * as ImagePicker from 'expo-image-picker';
+
 import { Image } from 'react-native';
+
 
 type TabsParamList = {
   home: undefined;
@@ -49,10 +51,11 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
   const [content, setContent] = useState('');
   const [slideAnim] = useState(new Animated.Value(screenHeight));
   const [imageUri, setImageUri] = useState('');
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const topics = ['Health', 'Politics', 'Jobs', 'Environment', 'Bank','Entertainment', 'Religion', 'Technology'];
 
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-
 
   useEffect(() => {
     if (visible) {
@@ -154,7 +157,7 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
             {/* Header */}
             <View style={styles.header}>
               <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-                <IconSymbol name="close" size={28} color="#000" />
+                <IconSymbol name="close" size={28} color="#662D91" />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -177,30 +180,64 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
                   value={title}
                   onChangeText={setTitle}
                   multiline
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#777"
                 />
-                {imageUri && (
-                <View style={styles.imageContainer}>
-                    <Image source={{ uri: imageUri }} style={styles.selectedImage} />
-                </View>
-                )}
+                
                 <TextInput
                   style={styles.contentInput}
                   placeholder="body text (optional)"
                   value={content}
                   onChangeText={setContent}
                   multiline
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#777"
                 />
+                <TouchableOpacity
+                  style={[styles.imagePickerBox, imageUri && styles.imagePickerBoxWithImage]}
+                  onPress={handlePickImage}
+                  activeOpacity={0.7}
+                >
+                  {imageUri ? (
+                    <View style={styles.imageContainer}>
+                      <Image source={{ uri: imageUri }} style={styles.selectedImage} />
+                      <TouchableOpacity
+                        style={styles.removeImageButton}
+                        onPress={() => setImageUri('')}
+                      >
+                        <Text style={styles.removeImageText}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <Text style={styles.imagePickerText}>+ Tap to add an image</Text>
+                  )}
+                </TouchableOpacity>
+                <View style={styles.topicSection}>
+                  <Text style={styles.topicTitle}>Select Topics</Text>
+                  <View style={styles.topicList}>
+                    {topics.map((item) => {
+                      const isSelected = selectedTopics.includes(item);
+                      return (
+                        <TouchableOpacity
+                          key={item}
+                          style={[styles.topicChip, isSelected && styles.topicChipSelected]}
+                          onPress={() => {
+                            if (isSelected) {
+                              setSelectedTopics(prev => prev.filter(t => t !== item));
+                            } else {
+                              setSelectedTopics(prev => [...prev, item]);
+                            }
+                          }}
+                        >
+                          <Text style={[styles.topicChipText, isSelected && styles.topicChipTextSelected]}>
+                            {item}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
               </View>
             </ScrollView>
-
-            {/* Bottom Toolbar */}
-            <View style={styles.toolbar}>
-              <TouchableOpacity style={styles.toolbarButton} onPress={handlePickImage}>
-                <IconSymbol name="photo" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
+            
           </KeyboardAvoidingView>
         </Animated.View>
       </TouchableWithoutFeedback>
@@ -262,6 +299,7 @@ const styles = StyleSheet.create({
     lineHeight: 25,
   },
   contentInput: {
+    padding: 10,
     fontSize: 16,
     color: '#000',
     fontFamily: 'SpaceMono-Regular',
@@ -269,24 +307,65 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     minHeight: 200,
     textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
   },
-  toolbar: {
+  topicSection: {
+    marginTop: 10
+  },
+  topicTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 10,
+    fontFamily: 'AnonymousPro-Bold',
+    color: '#000',
+  },
+  topicList: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  topicChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  topicChipSelected: {
+    backgroundColor: '#662D91',
+    borderColor: '#662D91',
+  },
+  topicChipText: {
+    color: '#777',
+    fontSize: 14,
+  },
+  topicChipTextSelected: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  imagePickerBox: {
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 20,
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    backgroundColor: '#FFFFFF',
-    gap: 20,
-  },
-  toolbarButton: {
-    padding: 8,
-  },
-  imageContainer: {
-  marginTop: 10,
-  marginBottom: 10,
-  alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
+    height: 200,
+    backgroundColor: '#f9f9f9',
+},
+imagePickerBoxWithImage: {
+  borderWidth: 0,
+  padding: 0,
+  backgroundColor: 'transparent',
+},
+imagePickerText: {
+  color: '#999',
+  fontSize: 16,
+  fontStyle: 'italic',
 },
 selectedImage: {
     width: '100%',
@@ -294,4 +373,29 @@ selectedImage: {
     borderRadius: 10,
     resizeMode: 'cover',
 },
+imageContainer: {
+  position: 'relative',
+  width: '100%',
+  height: 200,
+  borderRadius: 10,
+  overflow: 'hidden',
+},
+removeImageButton: {
+  position: 'absolute',
+  top: 8,
+  right: 8,
+  backgroundColor: 'rgba(0,0,0,0.6)',
+  borderRadius: 12,
+  width: 24,
+  height: 24,
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 10,
+},
+removeImageText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: 'bold',
+  lineHeight: 20,
+}
 });
