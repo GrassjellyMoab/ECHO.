@@ -10,7 +10,8 @@ export interface User {
   id: string;
   username: string;
   email?: string;
-  displayName?: string;
+  first_name?: string;
+  last_name?: string;
   avatar?: string;
   bio?: string;
   isVerified?: boolean;

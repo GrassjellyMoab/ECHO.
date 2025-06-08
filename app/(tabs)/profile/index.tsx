@@ -4,7 +4,7 @@ import { useCollectionData } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ImageSourcePropType, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '../../../src/store/authStore';
 
 interface ActivityItem {
@@ -14,7 +14,7 @@ interface ActivityItem {
   action: string;
   thread?: string;
   timeAgo: string;
-  avatar: string;
+  avatar: number;
 }
 
 interface ThreadItem {
@@ -34,7 +34,7 @@ const mockActivity: ActivityItem[] = [
     action: 'and others liked your thread',
     thread: '"Lady Gaga touring all over Asia??"',
     timeAgo: '1w',
-    avatar: 'https://via.placeholder.com/40x40/4A5568/ffffff?text=JD'
+    avatar: require('@/src/assets/avatars/johndoe.png')
   },
   {
     id: '2',
@@ -42,7 +42,7 @@ const mockActivity: ActivityItem[] = [
     user: '@echoooo',
     action: 'posted a thread you might be interested in!',
     timeAgo: '1w',
-    avatar: 'https://via.placeholder.com/40x40/662D91/ffffff?text=E'
+    avatar: require('@/src/assets/avatars/echoooo.png')
   },
   {
     id: '3',
@@ -51,7 +51,7 @@ const mockActivity: ActivityItem[] = [
     action: 'and others liked your thread',
     thread: '"Ez-link ...."',
     timeAgo: '1w',
-    avatar: 'https://via.placeholder.com/40x40/FF6B6B/ffffff?text=NS'
+    avatar: require('@/src/assets/avatars/notascammer.png')
   },
   {
     id: '4',
@@ -60,7 +60,7 @@ const mockActivity: ActivityItem[] = [
     action: 'commented on your thread',
     thread: '"Thanks for sharing!"',
     timeAgo: '1w',
-    avatar: 'https://via.placeholder.com/40x40/4FC3F7/ffffff?text=AC'
+    avatar: require('@/src/assets/avatars/amychong23.png')
   },
   {
     id: '5',
@@ -69,7 +69,7 @@ const mockActivity: ActivityItem[] = [
     action: 'commented on your thread',
     thread: '"Very reliable sources!"',
     timeAgo: '1w',
-    avatar: 'https://via.placeholder.com/40x40/FFD93D/ffffff?text=CT'
+    avatar: require('@/src/assets/avatars/chloe_tech.png')
   }
 ];
 
@@ -131,7 +131,7 @@ export default function ProfileScreen() {
       <Text style={styles.timeSection}>Last 30 days</Text>
       {mockActivity.slice(3).map((item) => (
         <View key={item.id} style={styles.activityItem}>
-          <Image source={{ uri: userImages.find(img => img.name === `${item.user.replace("@", "")}.png`)?.url }} style={styles.activityAvatar} />
+          <Image source={item.avatar as ImageSourcePropType} style={styles.activityAvatar} />
           <View style={styles.activityContent}>
             <Text style={styles.activityText}>
               <Text style={styles.activityUser}>{item.user}</Text> {item.action}
@@ -185,19 +185,19 @@ export default function ProfileScreen() {
       <View style={styles.profileSection}>
         <View style={styles.profileImageContainer}>
           <Image
-            source={{ uri: userImages.find(img => img.name === `${user.username.toLowerCase().replace("@gmail.com", "")}.png`)?.url || 'https://via.placeholder.com/120x120/4FC3F7/ffffff?text=User' }}
+            source={{ uri: userImages.find(img => img.name === `${user.username.toLowerCase()}.png`)?.url || 'https://via.placeholder.com/120x120/4FC3F7/ffffff?text=User' }}
             style={styles.profileImage}
           />
         </View>
 
         <View style={styles.usernameContainer}>
-          <Text style={styles.username}>{user.username.replace("@gmail.com", "")}</Text>
+          <Text style={styles.username}>{'@' + user.username}</Text>
           {user.isVerified && (
             <IconSymbol name="checkmark.circle.fill" size={20} color="#662D91" />
           )}
         </View>
 
-        <Text style={styles.displayName}>{user.displayName || 'User'}</Text>
+        <Text style={styles.displayName}>{user.first_name + ' ' + user.last_name || 'User'}</Text>
 
         {/* Followers/Following */}
         <View style={styles.followContainer}>
