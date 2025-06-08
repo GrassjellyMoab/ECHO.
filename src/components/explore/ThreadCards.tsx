@@ -1,17 +1,16 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, PanResponder, Animated, Dimensions, StyleSheet } from 'react-native';
+import { SwipeResultModal } from '@/src/components/explore/Justification';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
-import { SwipeResultModal, exampleResultData } from '@/src/components/explore/Justification';
+import { useCollectionData } from '@/src/store/dataStore';
+import { Image } from 'expo-image';
+import React, { useRef, useState } from 'react';
+import { Animated, Dimensions, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Card {
-  id: number;
-  chatMessages: Array<{
-    name: string;
-    avatar: string;
-    message: string;
-    time: string;
-    isGroup?: boolean;
-  }>;
+  id: string; // Changed to string to match Firebase ID
+  image: any; // Local image asset or URL
+  isReal: boolean; // Add isReal for swipe logic
+  aiVerdict: string; // Add AI verdict for results
+  sources: string[]; // Add sources for results
   article: {
     title: string;
     views: string;
@@ -26,10 +25,13 @@ interface Card {
 }
 
 const { width: screenWidth } = Dimensions.get('window');
-const SWIPE_THRESHOLD = screenWidth * 0.25;
+const SWIPE_THRESHOLD = screenWidth * 0.15;
 const SWIPE_OUT_DURATION = 250;
 
 const SwipeableCards: React.FC = () => {
+  const threads = useCollectionData('threads');
+  const topics = useCollectionData('topics');
+
   const [showResultModal, setShowResultModal] = useState(false);
   const [currentResult, setCurrentResult] = useState<{
     result: 'REAL' | 'FAKE';
@@ -37,113 +39,71 @@ const SwipeableCards: React.FC = () => {
     explanation: string;
     sources: string[];
   } | null>(null);
-  const [cards] = useState<Card[]>([
-    {
-      id: 1,
-      chatMessages: [
-        {
-          name: "Spotify Music Group TS",
-          avatar: "🎵",
-          message: "This is also what I want to speak",
-          time: "10:23 AM",
-          isGroup: true
-        },
-        {
-          name: "Sakura Handayani",
-          avatar: "👤",
-          message: "What is done here?",
-          time: "10:24 AM"
-        },
-        {
-          name: "Lye Hao Qiang",
-          avatar: "👤", 
-          message: "It seems to have something to do with music.",
-          time: "10:25 AM"
-        },
-        {
-          name: "Spo_tify",
-          avatar: "🎵",
-          message: "This is the Spotify Artisanal Benefits Group, and we need a lot of real users to help Spotify artists like specific songs to increase the popularity of artists' songs! You will be paid SGD15 for completing the task and subsequent tasks. Simply click like and we will pay you SGD15.",
-          time: "10:26 AM"
-        }
-      ],
-      article: {
-        title: "Was our Singhealth Data leaked?",
-        views: "1.2k Views",
-        comments: "354 Comments", 
-        votes: "539 Votes",
-        tags: ["Health", "Cybersecurity", "WhatsApp"],
-        content: "A user sent me this viral rumour that has been spreading about WhatsApp chat groups about Singhealth data leaks. What are your thoughts?",
-        author: "@ongyekung",
-        timeAgo: "3 days ago",
-        readTime: "3 mins read"
-      }
-    },
-    {
-      id: 2,
-      chatMessages: [
-        {
-          name: "Crypto Investment Group",
-          avatar: "₿",
-          message: "Amazing opportunity for early investors!",
-          time: "2:15 PM",
-          isGroup: true
-        },
-        {
-          name: "Mike Chen",
-          avatar: "👤",
-          message: "Is this legitimate?",
-          time: "2:16 PM"
-        },
-        {
-          name: "Sarah Wong",
-          avatar: "👤",
-          message: "Seems too good to be true...",
-          time: "2:17 PM"
-        }
-      ],
-      article: {
-        title: "New Cryptocurrency Scam Alert",
-        views: "892 Views",
-        comments: "156 Comments",
-        votes: "234 Votes", 
-        tags: ["Finance", "Scam", "Cryptocurrency"],
-        content: "Be aware of fake investment groups promising unrealistic returns. Always verify before investing your money.",
-        author: "@cryptowatch",
-        timeAgo: "1 day ago",
-        readTime: "2 mins read"
-      }
-    },
-    {
-      id: 3,
-      chatMessages: [
-        {
-          name: "Tech Support Team",
-          avatar: "🔧",
-          message: "Your computer needs immediate attention!",
-          time: "9:30 AM",
-          isGroup: true
-        },
-        {
-          name: "John Doe",
-          avatar: "👤",
-          message: "I didn't request any support...",
-          time: "9:31 AM"
-        }
-      ],
-      article: {
-        title: "Tech Support Scam Warning",
-        views: "2.1k Views", 
-        comments: "89 Comments",
-        votes: "445 Votes",
-        tags: ["Technology", "Scam", "Safety"],
-        content: "Legitimate tech companies will never contact you unsolicited. Learn how to identify and avoid tech support scams.",
-        author: "@techsafety",
-        timeAgo: "5 days ago",
-        readTime: "4 mins read"
-      }
+
+  // Helper function to format numbers
+  const formatNumber = (num: number): string => {
+    if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}k`;
     }
-  ]);
+    return num.toString();
+  };
+
+  // Helper function to format date
+  const formatTimeAgo = (date: any): string => {
+    try {
+      // Handle Firestore timestamp
+      const dateObj = date?.toDate ? date.toDate() : new Date(date);
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - dateObj.getTime());
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return '1 day ago';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+      return `${Math.floor(diffDays / 30)} months ago`;
+    } catch (error) {
+      return 'Recently';
+    }
+  };
+
+  // Helper function to get topic names from topic IDs
+  const getTopicNames = (topicIds: string[]): string[] => {
+    return topicIds
+      .map(topicId => {
+        const topic = topics.find(t => t.id === topicId);
+        return topic?.topic || 'Unknown';
+      })
+      .filter(name => name !== 'Unknown')
+      .slice(0, 3); // Limit to 3 tags
+  };
+
+  // Transform Firebase threads to Card format
+  const transformThreadsToCards = (): Card[] => {
+    return threads.map(thread => {
+      console.log('Thread AI predict:', thread.ai_verdict, 'Type:', typeof thread.ai_verdict);
+      return {
+        id: thread.id,
+        image: require('@assets/images/dummy_avatar.jpg'),
+        isReal: thread.is_real,
+        aiVerdict: thread.ai_verdict && thread.ai_verdict.trim() !== '' ? thread.ai_verdict : 'No AI verdict available',
+        sources: thread.sources || [],
+        article: {
+          title: thread.title,
+          views: `${formatNumber(thread.num_views)} Views`,
+          comments: `${formatNumber(thread.num_comments)} Comments`,
+          votes: `${formatNumber(thread.num_votes)} Votes`,
+          tags: getTopicNames(thread.topics || []),
+          content: thread.description,
+          author: `@user${thread.uid.slice(0, 6)}`, // Create a username from UID
+          timeAgo: formatTimeAgo(thread.posted_datetime),
+          readTime: `${thread.read_duration || 3} mins read`
+        }
+      };
+    });
+  };
+
+  const cards = transformThreadsToCards();
 
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const position = useRef(new Animated.ValueXY()).current;
@@ -186,20 +146,12 @@ const SwipeableCards: React.FC = () => {
     // Determine the result based on swipe direction
     const swipeResult = direction === 'left' ? 'FAKE' : 'REAL';
     
-    // Get the appropriate result data (you can expand this logic)
-    let resultData;
-    if (item.id === 1) {
-      resultData = exampleResultData.singhealth;
-    } else if (item.id === 2) {
-      resultData = exampleResultData.crypto;
-    } else {
-      resultData = exampleResultData.techSupport;
-    }
-  
-    // Show the result modal
+    // Use actual Firebase data for the result
     setCurrentResult({
-      ...resultData,
+      result: item.isReal ? 'REAL' : 'FAKE',
       title: item.article.title,
+      explanation: item.aiVerdict,
+      sources: item.sources.length > 0 ? item.sources : ['No sources available'],
     });
     setShowResultModal(true);
   
@@ -268,15 +220,19 @@ const SwipeableCards: React.FC = () => {
     onPanResponderMove: (evt, gestureState) => {
       position.setValue({ x: gestureState.dx, y: gestureState.dy });
       rotate.setValue(gestureState.dx);
+      console.log('Moving with dx:', gestureState.dx);
     },
     onPanResponderTerminationRequest: () => false,
     onPanResponderRelease: (evt, gestureState) => {
-      console.log('Released with dx:', gestureState.dx);
+      console.log('Released with dx:', gestureState.dx, 'threshold:', SWIPE_THRESHOLD);
       if (gestureState.dx > SWIPE_THRESHOLD) {
+        console.log('Triggering right swipe');
         forceSwipe('right');
       } else if (gestureState.dx < -SWIPE_THRESHOLD) {
+        console.log('Triggering left swipe');
         forceSwipe('left');
       } else {
+        console.log('Resetting position - not enough swipe distance');
         resetPosition();
       }
     },
@@ -301,31 +257,12 @@ const SwipeableCards: React.FC = () => {
         ]}
         {...(isCurrentCard ? panResponder.panHandlers : {})}
       >
-        <View style={styles.chatSection}>
-          <View style={styles.chatHeader}>
-            <View style={styles.chatHeaderContent}>
-              <Text style={styles.avatar}>{card.chatMessages[0].avatar}</Text>
-              <Text style={styles.groupName}>{card.chatMessages[0].name}</Text>
-              <Text style={styles.time}>{card.chatMessages[0].time}</Text>
-            </View>
-          </View>
-          
-          <View style={styles.messagesContainer}>
-            {card.chatMessages.slice(1, 3).map((msg, idx) => (
-              <View key={idx} style={styles.messageRow}>
-                <View style={styles.messageContent}>
-                  <Text style={styles.messageAvatar}>{msg.avatar}</Text>
-                  <View style={styles.messageTextContainer}>
-                    <View style={styles.messageHeader}>
-                      <Text style={styles.messageName}>{msg.name}</Text>
-                      <Text style={styles.messageTime}>{msg.time}</Text>
-                    </View>
-                    <Text style={styles.messageText} numberOfLines={2}>{msg.message}</Text>
-                  </View>
-                </View>
-              </View>
-            ))}
-          </View>
+        <View style={styles.imageSection}>
+          <Image 
+            source={card.image} 
+            style={styles.cardImage}
+            contentFit="cover"
+          />
         </View>
 
         {/* Article Section */}
@@ -428,6 +365,8 @@ const SwipeableCards: React.FC = () => {
     );
   };
 
+
+
   if (currentIndex >= cards.length) {
     return (
       <View style={styles.container}>
@@ -444,20 +383,29 @@ const SwipeableCards: React.FC = () => {
       <View style={styles.cardContainer}>
         {cards.map((card, index) => renderCard(card, index)).reverse()}
       </View>
+
       
       <View style={styles.instructionsContainer}>
-        <View style={styles.indicatorContainer}>
+        <TouchableOpacity 
+          style={styles.indicatorContainer}
+          onPress={() => forceSwipe('left')}
+          activeOpacity={0.7}
+        >
           <IconSymbol name="close-circle" size={43} color="#666" style={styles.swipeIcons} />
           <Text style={styles.instructionsText}>FAKE</Text>
-        </View>
+        </TouchableOpacity>
         <View style={styles.swipeTextContainer}>
           <Text style={styles.instructionsText}>Swipe</Text>
           <Text style={styles.instructionsText}>left / right</Text>
         </View>
-        <View style={styles.indicatorContainer}>
+        <TouchableOpacity 
+          style={styles.indicatorContainer}
+          onPress={() => forceSwipe('right')}
+          activeOpacity={0.7}
+        >
           <IconSymbol name="checkmark-circle" size={43} color="#666" style={styles.swipeIcons} />
           <Text style={styles.instructionsText}>REAL</Text>
-        </View>
+        </TouchableOpacity>
       </View>
       {currentResult && (
         <SwipeResultModal
@@ -479,7 +427,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f3f0ff',
+    // backgroundColor: '#f3f0ff',
     paddingBottom: 90,
   },
   cardContainer: {
@@ -498,82 +446,26 @@ const styles = StyleSheet.create({
     left: screenWidth * 0.075,
     shadowColor: '#000',
     shadowOffset: {
-      width: 0,
+      width: 3,
       height: 2,
     },
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowRadius: 6,
+    elevation: 10,
     overflow: 'hidden',
   },
   
-  // Chat Section Styles
-  chatSection: {
-    backgroundColor: '#e0b3d9',
-    padding: 12,
-    flexShrink: 0,
+  // Image Section Styles
+  imageSection: {
+    height: 150,
+    backgroundColor: '#f8f9fa',
+    overflow: 'hidden',
   },
-  chatHeader: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 8,
-  },
-  chatHeaderContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  avatar: {
-    fontSize: 12,
-  },
-  groupName: {
-    fontWeight: 'bold',
-    fontSize: 10,
-    flex: 1,
-  },
-  time: {
-    fontSize: 10,
-    color: '#666',
-  },
-  messagesContainer: {
-    maxHeight: 80,
-  },
-  messageRow: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 4,
-  },
-  messageContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-  },
-  messageAvatar: {
-    fontSize: 10,
-  },
-  messageTextContainer: {
-    flex: 1,
-  },
-  messageHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  messageName: {
-    fontWeight: '500',
-    fontSize: 10,
-    color: '#333',
-  },
-  messageTime: {
-    fontSize: 10,
-    color: '#999',
-  },
-  messageText: {
-    fontSize: 10,
-    color: '#666',
-    marginTop: 4,
+  cardImage: {
+    width: '100%',
+    height: '100%',
   },
   
   // Article Section Styles
@@ -582,10 +474,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   articleTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 8,
+    fontFamily: 'AnonymousPro-Bold',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -639,9 +532,9 @@ const styles = StyleSheet.create({
     color: '#2563eb',
   },
   articleContent: {
-    fontSize: 10,
+    fontSize: 15,
     color: '#666',
-    lineHeight: 14,
+    lineHeight: 20,
     marginBottom: 12,
     flex: 1,
   },
@@ -657,28 +550,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   authorAvatar: {
-    width: 24,
-    height: 24,
+    width: 40,
+    height: 40,
     backgroundColor: '#7c3aed',
-    borderRadius: 12,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   authorInitials: {
     color: 'white',
-    fontSize: 10,
+    fontSize: 17,
     fontWeight: 'bold',
   },
   authorDetails: {
     flex: 1,
   },
   authorName: {
-    fontSize: 10,
+    fontSize: 15,
     fontWeight: '500',
     color: '#333',
   },
   authorMeta: {
-    fontSize: 10,
+    fontSize: 13,
     color: '#666',
   },
   subscribeButton: {
@@ -689,7 +582,7 @@ const styles = StyleSheet.create({
   },
   subscribeText: {
     color: 'white',
-    fontSize: 10,
+    fontSize: 15,
     fontWeight: '500',
   },
   
@@ -785,6 +678,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#666',
   },
+
 });
 
 export default SwipeableCards;
