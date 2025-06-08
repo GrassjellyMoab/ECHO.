@@ -3,9 +3,14 @@ import { AppHeader } from '@/src/components/ui/AppHeader';
 import { useCollectionData } from '@/src/store/dataStore';
 import { FirebaseImageData, useImagesStore } from '@/src/store/imgStore';
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 function getData(users: any[], leaderboard: any[], userImages: FirebaseImageData[]): LeaderUser[] {
+
+  if (!users || !leaderboard || users.length === 0 || leaderboard.length === 0) {
+    return [];
+  }
+
   const userMap = new Map(users.map(user => [user.id, user]));
 
   // Join leaderboard with user data
@@ -16,7 +21,7 @@ function getData(users: any[], leaderboard: any[], userImages: FirebaseImageData
     })
     .filter((user): user is { username: string; points: number } => user !== null)
     .sort((a, b) => b.points - a.points);
-    
+
   const ranks: LeaderUser[] = rankedUsers.map((user, index) => ({
     id: (index + 1).toString(),
     rank: index + 1,
@@ -35,7 +40,18 @@ export default function LeaderboardScreen() {
 
   const users = useCollectionData('users');
   const leaderboard = useCollectionData('leaderboard');
-  
+
+  if (!users || !leaderboard || users.length === 0 || leaderboard.length === 0) {
+    return (
+      <View style={styles.container}>
+        <AppHeader />
+        <View>
+          <Text>Please log in to view the leaderboard</Text>
+        </View>
+      </View>
+    );
+  }
+
   const mockLeaderboard = getData(users, leaderboard, userImages);
 
   const topThree = mockLeaderboard.slice(0, 3);

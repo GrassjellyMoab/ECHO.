@@ -23,7 +23,7 @@ export const Podium: React.FC<PodiumProps> = ({ topThree }) => {
       <View style={styles.podiumContainer}>
         {podiumOrder.map((user, index) => (
           <PodiumUser
-            key={user.id}
+            key={index}
             user={user}
             position={index === 0 ? 'left' : index === 1 ? 'center' : 'right'}
             height={podiumHeights[index]}
