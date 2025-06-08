@@ -52,7 +52,7 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
   const [slideAnim] = useState(new Animated.Value(screenHeight));
   const [imageUri, setImageUri] = useState('');
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
-  const topics = ['Announcements', 'Events', 'Q&A', 'Lost & Found', 'Others'];
+  const topics = ['Health', 'Politics', 'Jobs', 'Environment', 'Bank','Entertainment', 'Religion', 'Technology'];
 
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -180,21 +180,36 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
                   value={title}
                   onChangeText={setTitle}
                   multiline
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#777"
                 />
-                {imageUri && (
-                <View style={styles.imageContainer}>
-                    <Image source={{ uri: imageUri }} style={styles.selectedImage} />
-                </View>
-                )}
+                
                 <TextInput
                   style={styles.contentInput}
                   placeholder="body text (optional)"
                   value={content}
                   onChangeText={setContent}
                   multiline
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#777"
                 />
+                <TouchableOpacity
+                  style={[styles.imagePickerBox, imageUri && styles.imagePickerBoxWithImage]}
+                  onPress={handlePickImage}
+                  activeOpacity={0.7}
+                >
+                  {imageUri ? (
+                    <View style={styles.imageContainer}>
+                      <Image source={{ uri: imageUri }} style={styles.selectedImage} />
+                      <TouchableOpacity
+                        style={styles.removeImageButton}
+                        onPress={() => setImageUri('')}
+                      >
+                        <Text style={styles.removeImageText}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <Text style={styles.imagePickerText}>+ Tap to add an image</Text>
+                  )}
+                </TouchableOpacity>
                 <View style={styles.topicSection}>
                   <Text style={styles.topicTitle}>Select Topics</Text>
                   <View style={styles.topicList}>
@@ -222,13 +237,6 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
                 </View>
               </View>
             </ScrollView>
-
-            {/* Bottom Toolbar */}
-            <View style={styles.toolbar}>
-              <TouchableOpacity style={styles.toolbarButton} onPress={handlePickImage}>
-                <IconSymbol name="photo" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
             
           </KeyboardAvoidingView>
         </Animated.View>
@@ -291,6 +299,7 @@ const styles = StyleSheet.create({
     lineHeight: 25,
   },
   contentInput: {
+    padding: 10,
     fontSize: 16,
     color: '#000',
     fontFamily: 'SpaceMono-Regular',
@@ -298,40 +307,19 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     minHeight: 200,
     textAlignVertical: 'top',
-  },
-  toolbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    backgroundColor: '#FFFFFF',
-    gap: 20,
-  },
-  toolbarButton: {
-    padding: 8,
-  },
-  imageContainer: {
-  marginTop: 10,
-  marginBottom: 10,
-  alignItems: 'center',
-},
-selectedImage: {
-    width: '100%',
-    height: 200,
+    borderWidth: 1,
+    borderColor: '#ccc',
     borderRadius: 10,
-    resizeMode: 'cover',
-},
-topicSection: {
-    marginTop: 20,
+  },
+  topicSection: {
+    marginTop: 10
   },
   topicTitle: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 10,
     fontFamily: 'AnonymousPro-Bold',
-    color: '#333',
+    color: '#000',
   },
   topicList: {
     flexDirection: 'row',
@@ -350,11 +338,64 @@ topicSection: {
     borderColor: '#662D91',
   },
   topicChipText: {
-    color: '#333',
+    color: '#777',
     fontSize: 14,
   },
   topicChipTextSelected: {
     color: '#fff',
     fontWeight: 'bold',
   },
+  imagePickerBox: {
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
+    height: 200,
+    backgroundColor: '#f9f9f9',
+},
+imagePickerBoxWithImage: {
+  borderWidth: 0,
+  padding: 0,
+  backgroundColor: 'transparent',
+},
+imagePickerText: {
+  color: '#999',
+  fontSize: 16,
+  fontStyle: 'italic',
+},
+selectedImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+    resizeMode: 'cover',
+},
+imageContainer: {
+  position: 'relative',
+  width: '100%',
+  height: 200,
+  borderRadius: 10,
+  overflow: 'hidden',
+},
+removeImageButton: {
+  position: 'absolute',
+  top: 8,
+  right: 8,
+  backgroundColor: 'rgba(0,0,0,0.6)',
+  borderRadius: 12,
+  width: 24,
+  height: 24,
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 10,
+},
+removeImageText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: 'bold',
+  lineHeight: 20,
+}
 });
