@@ -31,7 +31,7 @@ interface Topic {
 
 interface Thread {
     id: string;
-    ai_predict: string;
+    ai_verdict: string;
     description: string;
     is_real: boolean;
     num_comments: number;
