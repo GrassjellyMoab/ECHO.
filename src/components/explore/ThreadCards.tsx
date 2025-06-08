@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, PanResponder, Animated, Dimensions, StyleSheet } from 'react-native';
-import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { SwipeResultModal, exampleResultData } from '@/src/components/explore/Justification';
+import { IconSymbol } from '@/src/components/ui/IconSymbol';
+import React, { useRef, useState } from 'react';
+import { Animated, Dimensions, PanResponder, StyleSheet, Text, View } from 'react-native';
 
 interface Card {
   id: number;

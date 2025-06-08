@@ -26,7 +26,7 @@ export interface User {
   // preferences: {
   //   notifications: boolean;
   //   darkMode: boolean;
-  //   fontSize: 'small' | 'medium' | 'large';
+  //   fontSize: 'small' | 'medium' | 'large';r
   //   language: string;
   // };
 }
@@ -39,8 +39,8 @@ interface AuthState {
   firebaseUser: FirebaseUser | null;
   
   // Authentication actions
-  login: (credentials: { username: string; password: string }) => Promise<boolean>;
-  register: (userData: { username: string; email: string; password: string; confirmPassword: string }) => Promise<boolean>;
+  login: (credentials: { username: string; password: string }) => Promise<{ success: boolean; error?: string }>;
+  register: (userData: { username: string; email: string; password: string; confirmPassword: string }) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   
   // Firebase Auth management
@@ -168,11 +168,43 @@ export const useAuthStore = create<AuthState>()(
           console.log('Login successful, user:', userCredential.user.uid);
           
           // Firebase Auth state change will handle the rest
-          return true;
-        } catch (error) {
-          console.error('Login error:', error);
+          return { success: true };
+        } catch (error: any) {
+          console.log('🔐 Login failed:', error?.code || 'Unknown error');
           set({ isLoading: false });
-          return false;
+          
+          // Handle specific Firebase Auth errors
+          let errorMessage = 'Login failed. Please try again.';
+          
+          if (error?.code) {
+            switch (error.code) {
+              case 'auth/invalid-email':
+                errorMessage = 'Invalid email address format.';
+                break;
+              case 'auth/user-disabled':
+                errorMessage = 'This account has been disabled.';
+                break;
+              case 'auth/user-not-found':
+                errorMessage = 'No account found with this email.';
+                break;
+              case 'auth/wrong-password':
+                errorMessage = 'Incorrect password.';
+                break;
+              case 'auth/invalid-credential':
+                errorMessage = 'Invalid email or password.';
+                break;
+              case 'auth/too-many-requests':
+                errorMessage = 'Too many failed attempts. Please try again later.';
+                break;
+              case 'auth/network-request-failed':
+                errorMessage = 'Network error. Please check your connection.';
+                break;
+              default:
+                errorMessage = 'Login failed. Please check your credentials.';
+            }
+          }
+          
+          return { success: false, error: errorMessage };
         }
       },
       
@@ -188,11 +220,34 @@ export const useAuthStore = create<AuthState>()(
           
           // Firebase Auth state change will handle the rest
           // User document should already exist in Firestore (managed externally)
-          return true;
-        } catch (error) {
-          console.error('Registration error:', error);
+          return { success: true };
+        } catch (error: any) {
+          console.log('📝 Registration failed:', error?.code || 'Unknown error');
           set({ isLoading: false });
-          return false;
+          
+          // Handle specific Firebase Auth errors
+          let errorMessage = 'Registration failed. Please try again.';
+          
+          if (error?.code) {
+            switch (error.code) {
+              case 'auth/email-already-in-use':
+                errorMessage = 'An account with this email already exists.';
+                break;
+              case 'auth/invalid-email':
+                errorMessage = 'Invalid email address format.';
+                break;
+              case 'auth/weak-password':
+                errorMessage = 'Password is too weak. Please choose a stronger password.';
+                break;
+              case 'auth/network-request-failed':
+                errorMessage = 'Network error. Please check your connection.';
+                break;
+              default:
+                errorMessage = 'Registration failed. Please try again.';
+            }
+          }
+          
+          return { success: false, error: errorMessage };
         }
       },
       
