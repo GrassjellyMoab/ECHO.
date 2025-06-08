@@ -74,17 +74,6 @@ const mockActivity: ActivityItem[] = [
   }
 ];
 
-// const mockThreads: ThreadItem[] = [
-//   {
-//     id: 't0003',
-//     title: 'Lady Gaga coming to Singapore??',
-//     timeAgo: '3 days ago',
-//     readTime: '1 mins read',
-//     content: 'Heard Lady Gaga is finally coming to Singapore!! I\'m so excited Is this true?',
-//     image: 'https://via.placeholder.com/350x200/662D91/ffffff?text=Lady+Gaga'
-//   }
-// ];
-
 function getThreadData(uid: string, threads: any[], threadImages: FirebaseImageData[]): ThreadItem[] {
   if (uid === '' || !threads || threads.length === 0) {
     return [];
