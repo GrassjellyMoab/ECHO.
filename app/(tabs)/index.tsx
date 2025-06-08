@@ -129,7 +129,7 @@ const PostCard = ({ post, userImages, threadImages }: { post: PostData, userImag
 
 export default function HomeScreen() {
   const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
-  
+
   const threadImages = getImagesByFolder('threads');
   const userImages = getImagesByFolder('users');
 
