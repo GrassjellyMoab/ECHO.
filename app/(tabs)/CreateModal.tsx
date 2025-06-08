@@ -20,7 +20,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, NavigatorScreenParams } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import * as ImagePicker from 'expo-image-picker';
+
 import { Image } from 'react-native';
+
 
 type TabsParamList = {
   home: undefined;
@@ -49,10 +51,11 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
   const [content, setContent] = useState('');
   const [slideAnim] = useState(new Animated.Value(screenHeight));
   const [imageUri, setImageUri] = useState('');
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const topics = ['Announcements', 'Events', 'Q&A', 'Lost & Found', 'Others'];
 
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-
 
   useEffect(() => {
     if (visible) {
@@ -192,6 +195,31 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
                   multiline
                   placeholderTextColor="#999"
                 />
+                <View style={styles.topicSection}>
+                  <Text style={styles.topicTitle}>Select Topics</Text>
+                  <View style={styles.topicList}>
+                    {topics.map((item) => {
+                      const isSelected = selectedTopics.includes(item);
+                      return (
+                        <TouchableOpacity
+                          key={item}
+                          style={[styles.topicChip, isSelected && styles.topicChipSelected]}
+                          onPress={() => {
+                            if (isSelected) {
+                              setSelectedTopics(prev => prev.filter(t => t !== item));
+                            } else {
+                              setSelectedTopics(prev => [...prev, item]);
+                            }
+                          }}
+                        >
+                          <Text style={[styles.topicChipText, isSelected && styles.topicChipTextSelected]}>
+                            {item}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
               </View>
             </ScrollView>
 
@@ -201,6 +229,7 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
                 <IconSymbol name="photo" size={24} color="#666" />
               </TouchableOpacity>
             </View>
+            
           </KeyboardAvoidingView>
         </Animated.View>
       </TouchableWithoutFeedback>
@@ -294,4 +323,38 @@ selectedImage: {
     borderRadius: 10,
     resizeMode: 'cover',
 },
+topicSection: {
+    marginTop: 20,
+  },
+  topicTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 10,
+    fontFamily: 'AnonymousPro-Bold',
+    color: '#333',
+  },
+  topicList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  topicChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  topicChipSelected: {
+    backgroundColor: '#662D91',
+    borderColor: '#662D91',
+  },
+  topicChipText: {
+    color: '#333',
+    fontSize: 14,
+  },
+  topicChipTextSelected: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });
