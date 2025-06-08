@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedInput } from '@/src/components/ui/ThemedInput';
@@ -26,6 +26,7 @@ export default function AuthScreen() {
     confirmPassword: ''
   });
   const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [authError, setAuthError] = useState<string>('');
 
   const handleInput = (field: keyof FormData, value: string) => {
     setFormData(prev => ({
@@ -75,6 +76,9 @@ export default function AuthScreen() {
 
   const handleSubmit = async () => {
     console.log('Attempting submission with data:', formData);
+    
+    // Clear any previous auth errors
+    setAuthError('');
   
     if (!validateForm()) {
       console.log('Form validation failed');
@@ -82,15 +86,15 @@ export default function AuthScreen() {
     }
 
     try {
-      let success = false;
+      let result;
       
       if (isLogin) {
-        success = await login({
+        result = await login({
           username: formData.username,
           password: formData.password
         });
       } else {
-        success = await register({
+        result = await register({
           username: formData.username,
           email: formData.email,
           password: formData.password,
@@ -98,18 +102,16 @@ export default function AuthScreen() {
         });
       }
 
-      if (success) {
+      if (result.success) {
         console.log(`${isLogin ? 'Login' : 'Registration'} successful!`);
         // Navigation will be handled automatically by the layout
       } else {
-        Alert.alert(
-          'Authentication Failed', 
-          `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`
-        );
+        // Show the specific error message inline
+        setAuthError(result.error || 'Authentication failed. Please try again.');
       }
     } catch (error) {
-      console.error('Authentication error:', error);
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+      console.log('🔐 Unexpected auth error:', error);
+      setAuthError('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -204,6 +206,15 @@ export default function AuthScreen() {
               </View>
             )}
             
+            {/* Auth Error Display */}
+            {authError && (
+              <View style={styles.authErrorContainer}>
+                <ThemedText style={styles.authErrorText}>
+                  {authError}
+                </ThemedText>
+              </View>
+            )}
+            
             <Pressable 
               onPress={handleSubmit} 
               style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
@@ -237,6 +248,7 @@ export default function AuthScreen() {
                   confirmPassword: ''
                 });
                 setErrors({});
+                setAuthError(''); // Clear auth error when switching modes
               }}
               disabled={isLoading}
             >
@@ -316,6 +328,22 @@ const styles = StyleSheet.create({
     fontFamily: 'AnonymousPro-Bold',
     marginTop: 4,
     textAlign: 'center',
+  },
+  authErrorContainer: {
+    width: '75%',
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#FFF0F0',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FF6B6B',
+  },
+  authErrorText: {
+    color: '#FF6B6B',
+    fontSize: 14,
+    fontFamily: 'AnonymousPro-Bold',
+    textAlign: 'center',
+    lineHeight: 18,
   },
   submitButtonContainer : {
     flexDirection: 'row', 
