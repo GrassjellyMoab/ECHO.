@@ -5,9 +5,8 @@ import { useImagesStore } from '@/src/store/imgStore';
 import { Timestamp } from 'firebase/firestore';
 import React, { useMemo } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useNavigation} from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import ThreadPage from './thread';
-import { navigate } from 'expo-router/build/global-state/routing';
 
 interface ThreadData {
   id: string;
@@ -142,11 +141,13 @@ const TagComponent = ({ tag }: { tag: string }) => {
 };
 
 const ThreadCard = ({ thread }: { thread: ThreadData }) => {
-  const navigation = useNavigation();
+  const router = useRouter();
 
-  function navigateToThreadPage(thread: ThreadData) : void{
-    console.log(navigation.getState());
-    navigation.navigate('thread',{thread});
+  function navigateToThreadPage(thread: ThreadData){
+    router.push({
+    pathname: '/thread',
+    params: { thread: JSON.stringify(thread) }, // Or better: pass just an ID and fetch data on the thread page
+  });
   }
 
   return (
