@@ -16,7 +16,7 @@ function getData(users: any[], leaderboard: any[], userImages: FirebaseImageData
     })
     .filter((user): user is { username: string; points: number } => user !== null)
     .sort((a, b) => b.points - a.points);
-
+    
   const ranks: LeaderUser[] = rankedUsers.map((user, index) => ({
     id: (index + 1).toString(),
     rank: index + 1,

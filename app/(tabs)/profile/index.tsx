@@ -2,9 +2,10 @@ import { AppHeader } from '@/src/components/ui/AppHeader';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { useCollectionData } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '../../../src/store/authStore';
 
 interface ActivityItem {
@@ -112,54 +113,81 @@ export default function ProfileScreen() {
     );
   };
 
-  const ActivitySection = () => (
-    <View style={styles.activityContainer}>
-      <Text style={styles.timeSection}>Last 7 days</Text>
-      {mockActivity.slice(0, 3).map((item) => (
-        <View key={item.id} style={styles.activityItem}>
-          <Image source={{ uri: userImages.find(img => img.name === `${item.user.replace("@", "")}.png`)?.url }} style={styles.activityAvatar} />
-          <View style={styles.activityContent}>
-            <Text style={styles.activityText}>
-              <Text style={styles.activityUser}>{item.user}</Text> {item.action}
-              {item.thread && <Text style={styles.activityThread}> {item.thread}</Text>}
-            </Text>
-            <Text style={styles.activityTime}>{item.timeAgo}</Text>
-          </View>
-        </View>
-      ))}
+  const ActivitySection = () => {
+    // Pre-compute image URLs to prevent re-computation on every render
+    const getActivityAvatarUrl = (username: string) => {
+      const cleanUsername = username.replace("@", "");
+      return userImages.find(img => img.name === `${cleanUsername}.png`)?.url || `https://via.placeholder.com/40x40/4A5568/ffffff?text=${cleanUsername.slice(0, 2).toUpperCase()}`;
+    };
 
-      <Text style={styles.timeSection}>Last 30 days</Text>
-      {mockActivity.slice(3).map((item) => (
-        <View key={item.id} style={styles.activityItem}>
-          <Image source={{ uri: userImages.find(img => img.name === `${item.user.replace("@", "")}.png`)?.url }} style={styles.activityAvatar} />
-          <View style={styles.activityContent}>
-            <Text style={styles.activityText}>
-              <Text style={styles.activityUser}>{item.user}</Text> {item.action}
-              {item.thread && <Text style={styles.activityThread}> {item.thread}</Text>}
-            </Text>
-            <Text style={styles.activityTime}>{item.timeAgo}</Text>
+    return (
+      <View style={styles.activityContainer}>
+        <Text style={styles.timeSection}>Last 7 days</Text>
+        {mockActivity.slice(0, 3).map((item) => (
+          <View key={item.id} style={styles.activityItem}>
+            <Image 
+              source={getActivityAvatarUrl(item.user)} 
+              style={styles.activityAvatar}
+              cachePolicy="memory-disk"
+            />
+            <View style={styles.activityContent}>
+              <Text style={styles.activityText}>
+                <Text style={styles.activityUser}>{item.user}</Text> {item.action}
+                {item.thread && <Text style={styles.activityThread}> {item.thread}</Text>}
+              </Text>
+              <Text style={styles.activityTime}>{item.timeAgo}</Text>
+            </View>
           </View>
-        </View>
-      ))}
-    </View>
-  );
+        ))}
 
-  const ThreadsSection = () => (
-    <View style={styles.threadsContainer}>
-      {mockThreads.map((thread) => (
-        <TouchableOpacity key={thread.id} style={styles.threadCard}>
-          {thread.image && (
-            <Image source={{ uri: threadImages.find(img => img.name === `${thread.id}.png`)?.url }} style={styles.threadImage} />
-          )}
-          <View style={styles.threadContent}>
-            <Text style={styles.threadTitle}>{thread.title}</Text>
-            <Text style={styles.threadMeta}>{thread.timeAgo} • {thread.readTime}</Text>
-            <Text style={styles.threadText}>{thread.content}</Text>
+        <Text style={styles.timeSection}>Last 30 days</Text>
+        {mockActivity.slice(3).map((item) => (
+          <View key={item.id} style={styles.activityItem}>
+            <Image 
+              source={getActivityAvatarUrl(item.user)} 
+              style={styles.activityAvatar}
+              cachePolicy="memory-disk"
+            />
+            <View style={styles.activityContent}>
+              <Text style={styles.activityText}>
+                <Text style={styles.activityUser}>{item.user}</Text> {item.action}
+                {item.thread && <Text style={styles.activityThread}> {item.thread}</Text>}
+              </Text>
+              <Text style={styles.activityTime}>{item.timeAgo}</Text>
+            </View>
           </View>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
+        ))}
+      </View>
+    );
+  };
+
+  const ThreadsSection = () => {
+    // Pre-compute thread image URLs
+    const getThreadImageUrl = (threadId: string) => {
+      return threadImages.find(img => img.name === `${threadId}.png`)?.url;
+    };
+
+    return (
+      <View style={styles.threadsContainer}>
+        {mockThreads.map((thread) => (
+          <TouchableOpacity key={thread.id} style={styles.threadCard}>
+            {thread.image && (
+              <Image 
+                source={getThreadImageUrl(thread.id)} 
+                style={styles.threadImage}
+                cachePolicy="memory-disk"
+              />
+            )}
+            <View style={styles.threadContent}>
+              <Text style={styles.threadTitle}>{thread.title}</Text>
+              <Text style={styles.threadMeta}>{thread.timeAgo} • {thread.readTime}</Text>
+              <Text style={styles.threadText}>{thread.content}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
 
   // Show loading or fallback if no user data
   if (!user) {
@@ -185,8 +213,9 @@ export default function ProfileScreen() {
       <View style={styles.profileSection}>
         <View style={styles.profileImageContainer}>
           <Image
-            source={{ uri: userImages.find(img => img.name === `${user.username.toLowerCase().replace("@gmail.com", "")}.png`)?.url || 'https://via.placeholder.com/120x120/4FC3F7/ffffff?text=User' }}
+            source={userImages.find(img => img.name === `${user.username.toLowerCase().replace("@gmail.com", "")}.png`)?.url || 'https://via.placeholder.com/120x120/4FC3F7/ffffff?text=User'}
             style={styles.profileImage}
+            cachePolicy="memory-disk"
           />
         </View>
 
@@ -202,11 +231,11 @@ export default function ProfileScreen() {
         {/* Followers/Following */}
         <View style={styles.followContainer}>
           <View style={styles.followItem}>
-            <Text style={styles.followNumber}>0</Text>
+            <Text style={styles.followNumber}>{user.followers}</Text>
             <Text style={styles.followLabel}>followers</Text>
           </View>
           <View style={styles.followItem}>
-            <Text style={styles.followNumber}>0</Text>
+            <Text style={styles.followNumber}>{user.followees}</Text>
             <Text style={styles.followLabel}>following</Text>
           </View>
         </View>
