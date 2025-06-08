@@ -6,8 +6,6 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedInput } from '@/src/components/ui/ThemedInput';
 import { ThemedText } from '@components/ThemedText';
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../src/firebase/config';
 import { useAuthStore } from '../../src/store/authStore';
 
 interface FormData {
@@ -30,7 +28,6 @@ export default function AuthScreen() {
   const [errors, setErrors] = useState<Partial<FormData>>({});
 
   const handleInput = (field: keyof FormData, value: string) => {
-    console.log(`Field ${field} changed to:`, value);
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -88,22 +85,11 @@ export default function AuthScreen() {
       let success = false;
       
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, formData.username, formData.password);
-
         success = await login({
           username: formData.username,
           password: formData.password
         });
-        
-        onAuthStateChanged(auth, (user) => {
-          if (user) {
-            console.log('User is signed in'); // can replace with states
-          }
-        });
       } else {
-        const res = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-        const newUID = res.user.uid;
-
         success = await register({
           username: formData.username,
           email: formData.email,

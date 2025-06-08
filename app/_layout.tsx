@@ -19,10 +19,11 @@ const DEV_SESSION_KEY = 'devSessionId';
 const SPLASH_MINIMUM_DURATION = 2500; // Minimum time to show splash animation
 
 export default function RootLayout() {
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { isAuthenticated, isLoading, initializeAuth } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
   const [appReady, setAppReady] = useState(false);
+  const [authInitialized, setAuthInitialized] = useState(false);
   const [shouldShowSplash, setShouldShowSplash] = useState<boolean | null>(null);
   const [splashComplete, setSplashComplete] = useState(false);
   const [splashStartTime, setSplashStartTime] = useState<number | null>(null);
@@ -34,6 +35,11 @@ export default function RootLayout() {
     const initializeApp = async () => {
       if (loaded) {
         try {
+          // Initialize Firebase Auth listener (only once)
+          if (!authInitialized) {
+            initializeAuth();
+            setAuthInitialized(true);
+          }
           // In development, treat each session as potentially first launch
           let isFirstLaunch = false;
 
@@ -88,10 +94,27 @@ export default function RootLayout() {
       }
     };
 
-    const loadFirebaseData = async () => {
-      if (!loaded || !isAuthenticated) return;
+    initializeApp();
 
+    return () => {
+      cleanupDataStore();
+      console.log('🧹 DataStore cleaned up');
+    };
+  }, [loaded]); // Remove isAuthenticated dependency to prevent multiple calls
+
+  // Separate useEffect for loading Firebase data only when authenticated
+  useEffect(() => {
+    const loadFirebaseData = async () => {
+      if (!loaded || !isAuthenticated || isLoading) {
+        console.log('📦 Skipping Firebase data load:', { loaded, isAuthenticated, isLoading });
+        return;
+      }
+
+      // Add a small delay to ensure Firebase Auth token has propagated
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       try {
+        console.log('📦 Starting Firebase data load for authenticated user...');
         await initializeDataStore();
         console.log('📦 Firebase data loaded');
 
@@ -103,15 +126,8 @@ export default function RootLayout() {
       }
     };
 
-    initializeApp();
-    
     loadFirebaseData();
-
-    return () => {
-      cleanupDataStore();
-      console.log('🧹 DataStore cleaned up');
-    };
-  }, [loaded, isAuthenticated]); // Add isAuthenticated as dependency
+  }, [isAuthenticated, isLoading, loaded]); // Only run when auth state changes
 
   // Handle splash completion
   useEffect(() => {
