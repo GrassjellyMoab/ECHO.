@@ -1,7 +1,6 @@
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { useImagesStore } from '@/src/store/imgStore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -85,12 +84,12 @@ const mockThreads: ThreadItem[] = [
 ];
 
 export default function ProfileScreen() {
-  const { user, logout, updatePreferences } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'threads' | 'activity'>('activity');
   const [debugTaps, setDebugTaps] = useState(0);
   const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
-
+  
   const threadImages = getImagesByFolder('threads');
   const userImages = getImagesByFolder('users');
 
@@ -105,75 +104,10 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: () => {
             logout();
-            // Navigation will be handled by the layout
           }
         }
       ]
     );
-  };
-
-  // Hidden debug function for testing
-  const handleDebugTap = async () => {
-    const newTaps = debugTaps + 1;
-    setDebugTaps(newTaps);
-
-    if (newTaps >= 3) { // Reduced from 5 to 3 for easier testing
-      Alert.alert(
-        'Debug Mode',
-        'Choose an option:\n\n"Reset First Launch" - Shows splash on next restart\n"Force Logout" - Shows splash immediately\n"Clear All Data" - Complete reset',
-        [
-          { text: 'Cancel', style: 'cancel', onPress: () => setDebugTaps(0) },
-          {
-            text: 'Reset First Launch',
-            onPress: async () => {
-              try {
-                await AsyncStorage.removeItem('hasLaunchedBefore');
-                setDebugTaps(0);
-                Alert.alert('Reset Complete', 'Close and reopen the app to see splash animation.');
-              } catch (error) {
-                console.error('Error resetting first launch:', error);
-                Alert.alert('Error', 'Failed to reset first launch state');
-              }
-            }
-          },
-          {
-            text: 'Force Logout',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                // Clear auth data and logout
-                await AsyncStorage.removeItem('auth-storage');
-                logout();
-                setDebugTaps(0);
-                // The app should now show splash since user is not authenticated
-              } catch (error) {
-                console.error('Error logging out:', error);
-                Alert.alert('Error', 'Failed to logout');
-              }
-            }
-          },
-          {
-            text: 'Clear All Data',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                // Clear ALL AsyncStorage data
-                await AsyncStorage.clear();
-                logout();
-                setDebugTaps(0);
-                Alert.alert('Complete Reset', 'All app data cleared. App will restart as if first install.');
-              } catch (error) {
-                console.error('Error clearing all data:', error);
-                Alert.alert('Error', 'Failed to clear app data');
-              }
-            }
-          }
-        ]
-      );
-    }
-
-    // Reset tap count after 3 seconds
-    setTimeout(() => setDebugTaps(0), 3000);
   };
 
   const ActivitySection = () => (
@@ -266,11 +200,11 @@ export default function ProfileScreen() {
         {/* Followers/Following */}
         <View style={styles.followContainer}>
           <View style={styles.followItem}>
-            <Text style={styles.followNumber}>{user.stats.followers}</Text>
+            <Text style={styles.followNumber}>0</Text>
             <Text style={styles.followLabel}>followers</Text>
           </View>
           <View style={styles.followItem}>
-            <Text style={styles.followNumber}>{user.stats.following}</Text>
+            <Text style={styles.followNumber}>0</Text>
             <Text style={styles.followLabel}>following</Text>
           </View>
         </View>
