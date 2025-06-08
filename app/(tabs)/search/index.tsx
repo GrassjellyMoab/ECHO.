@@ -1,6 +1,7 @@
 import { PopularTopics } from '@/src/components/explore/PopularTopics';
 import { RecentSearches } from '@/src/components/explore/RecentSearches';
 import SwipeableCards from '@/src/components/explore/ThreadCards';
+import Topics from '@/src/components/explore/Topic'; 
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { useFocusEffect } from '@react-navigation/native';
@@ -11,6 +12,7 @@ import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchState, setIsSearchState] = useState(false);
+  const [showTopics, setShowTopics] = useState(false); // Add this state
   const lastFocusTime = useRef(Date.now());
   const searchInputRef = useRef<TextInput>(null);
 
@@ -21,6 +23,7 @@ export default function SearchScreen() {
       if (timeDifference > 30000) {
         setIsSearchState(false);
         setSearchQuery('');
+        setShowTopics(false); // Reset topics view too
       }
       
       lastFocusTime.current = currentTime;
@@ -32,17 +35,26 @@ export default function SearchScreen() {
   };
 
   const handleSearchBlur = () => {
-    // Only blur if there's no search text
     if (!searchQuery.trim()) {
       setIsSearchState(false);
     }
   };
 
   const handleBackPress = () => {
-    searchInputRef.current?.blur();
-    setIsSearchState(false);
-    setSearchQuery('');
+    if (showTopics) {
+      setShowTopics(false);
+    } else {
+      searchInputRef.current?.blur();
+      setIsSearchState(false);
+      setSearchQuery('');
+    }
   };
+
+  // Add this function to handle topic selection
+  const handleTopicPress = (topic: string) => {
+    setShowTopics(true);
+  };
+
   const router = useRouter();
 
   const handleExplorePress = () => {
@@ -57,7 +69,7 @@ export default function SearchScreen() {
       
       <View style={styles.searchSection}>
         <View style={styles.searchContainer}>
-          {isSearchState && (
+          {(isSearchState || showTopics) && (
             <TouchableOpacity onPress={handleBackPress}>
               <IconSymbol name="chevron.back" size={20} color="#666" />
             </TouchableOpacity>
@@ -76,13 +88,16 @@ export default function SearchScreen() {
         </View>
       </View>
   
-      {isSearchState ? (
+      {showTopics ? (
+        // Show Topics component
+        <Topics onBack={() => setShowTopics(false)} />
+      ) : isSearchState ? (
         <ScrollView 
           style={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
-            <PopularTopics />
+            <PopularTopics onTopicPress={handleTopicPress} />
             <RecentSearches />
           </View>
         </ScrollView>
@@ -95,6 +110,8 @@ export default function SearchScreen() {
   );
 }
 
+// Your existing styles remain the same
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -102,7 +119,6 @@ const styles = StyleSheet.create({
   },
   appHeaderWrapper: {
     position: 'relative',
-    zIndex: 10,
     backgroundColor: 'white'
   },
   header: {
@@ -124,8 +140,8 @@ const styles = StyleSheet.create({
   },
   searchSection: {
     backgroundColor: '#FFFFFF',
-    padding: 20,
-    marginBottom: 8,
+    paddingHorizontal: 10,
+    marginTop: 25,
     zIndex: 1,
   },
   searchContainer: {

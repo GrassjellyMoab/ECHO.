@@ -444,7 +444,6 @@ const SwipeableCards: React.FC = () => {
       <View style={styles.cardContainer}>
         {cards.map((card, index) => renderCard(card, index)).reverse()}
       </View>
-      
       <View style={styles.instructionsContainer}>
         <View style={styles.indicatorContainer}>
           <IconSymbol name="close-circle" size={43} color="#666" style={styles.swipeIcons} />
@@ -479,7 +478,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f3f0ff',
+    // backgroundColor: '#f3f0ff',
     paddingBottom: 90,
   },
   cardContainer: {
@@ -498,12 +497,14 @@ const styles = StyleSheet.create({
     left: screenWidth * 0.075,
     shadowColor: '#000',
     shadowOffset: {
-      width: 0,
+      width: 3,
       height: 2,
     },
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowRadius: 6,
+    elevation: 10,
     overflow: 'hidden',
   },
   
