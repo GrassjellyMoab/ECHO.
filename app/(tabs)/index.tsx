@@ -7,6 +7,7 @@ import React, { useMemo } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation} from '@react-navigation/native';
 import ThreadPage from './thread';
+import { navigate } from 'expo-router/build/global-state/routing';
 
 interface ThreadData {
   id: string;
@@ -140,12 +141,14 @@ const TagComponent = ({ tag }: { tag: string }) => {
   );
 };
 
-function navigateToThreadPage(thread: ThreadData) : void{
-  const navigation = useNavigation();
-  navigation.navigate('thread',{thread});
-}
-
 const ThreadCard = ({ thread }: { thread: ThreadData }) => {
+  const navigation = useNavigation();
+
+  function navigateToThreadPage(thread: ThreadData) : void{
+    console.log(navigation.getState());
+    navigation.navigate('thread',{thread});
+  }
+
   return (
     <TouchableOpacity style={styles.threadCard} onPress={() => navigateToThreadPage(thread)}>
       <View style={styles.threadHeader}>
