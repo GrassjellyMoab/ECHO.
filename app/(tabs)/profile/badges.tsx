@@ -1,8 +1,9 @@
+import { IconSymbol } from '@/src/components';
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { useImagesStore } from '@/src/store/imgStore';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Badge {
     id: string;
@@ -36,7 +37,7 @@ const BadgeCard: React.FC<{ badge: Badge }> = ({ badge }) => {
     return (
         <View style={[styles.badgeCard, getRarityGlow(badge.rarity)]}>
             <View style={{ borderColor: getRarityColor(badge.rarity) }}>
-                <Image source={{ uri: badge.image}} style={styles.badgeImage} />
+                <Image source={{ uri: badge.image }} style={styles.badgeImage} />
             </View>
             <Text style={styles.badgeName}>{badge.name}</Text>
             <Text style={styles.badgeDescription}>{badge.description}</Text>
@@ -119,6 +120,9 @@ export default function BadgesScreen() {
         <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
             {/* Header */}
             <AppHeader />
+            <TouchableOpacity style={styles.backBtn} onPress={handleBackPress}>
+                <IconSymbol name="chevron.back" size={20} color="#666" />
+            </TouchableOpacity>
 
             {/* Badges Title */}
             <View style={styles.titleContainer}>
@@ -194,6 +198,13 @@ const styles = StyleSheet.create({
         color: '#666',
         textAlign: 'center',
         lineHeight: 16,
+    },
+    backBtn: {
+        position: 'absolute',
+        top: 90,
+        left: 20,
+        zIndex: 10,
+        padding: 4,
     },
     epicGlow: {
         shadowColor: '#9C27B0',
