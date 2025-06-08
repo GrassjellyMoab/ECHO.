@@ -304,6 +304,7 @@ const styles = StyleSheet.create({
     color: '#000',
     fontFamily: 'SpaceMono-Regular',
     marginTop:7,
+    marginBottom: 8,
     lineHeight: 17,
     minHeight: 200,
     textAlignVertical: 'top',
