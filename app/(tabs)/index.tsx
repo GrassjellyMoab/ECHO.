@@ -18,6 +18,7 @@ interface PostData {
   isVerified?: boolean;
 }
 
+
 const mockPosts: PostData[] = [
   {
     id: 't0001',
@@ -128,7 +129,7 @@ const PostCard = ({ post, userImages, threadImages }: { post: PostData, userImag
 
 export default function HomeScreen() {
   const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
-
+  
   const threadImages = getImagesByFolder('threads');
   const userImages = getImagesByFolder('users');
 
