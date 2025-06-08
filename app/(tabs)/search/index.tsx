@@ -1,7 +1,7 @@
 import { PopularTopics } from '@/src/components/explore/PopularTopics';
 import { RecentSearches } from '@/src/components/explore/RecentSearches';
 import SwipeableCards from '@/src/components/explore/ThreadCards';
-import Topics from '@/src/components/explore/Topic'; 
+import Topics from '@/src/components/explore/Topic';
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { useFocusEffect } from '@react-navigation/native';
