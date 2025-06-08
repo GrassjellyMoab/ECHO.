@@ -1,6 +1,7 @@
 import { SwipeResultModal } from '@/src/components/explore/Justification';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { useCollectionData } from '@/src/store/dataStore';
+import { useImagesStore } from '@/src/store/imgStore';
 import { Image } from 'expo-image';
 import React, { useRef, useState } from 'react';
 import { Animated, Dimensions, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -12,15 +13,17 @@ interface Card {
   aiVerdict: string; // Add AI verdict for results
   sources: string[]; // Add sources for results
   article: {
+    author: string;
     title: string;
     views: string;
     comments: string;
     votes: string;
     tags: string[];
     content: string;
-    author: string;
     timeAgo: string;
     readTime: string;
+    isVerified?: boolean;
+    avatar?: string;
   };
 }
 
@@ -31,6 +34,11 @@ const SWIPE_OUT_DURATION = 250;
 const SwipeableCards: React.FC = () => {
   const threads = useCollectionData('threads');
   const topics = useCollectionData('topics');
+  const users = useCollectionData('users');
+
+  const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
+  const userImages = getImagesByFolder('users');
+  const threadImages = getImagesByFolder('threads');
 
   const [showResultModal, setShowResultModal] = useState(false);
   const [currentResult, setCurrentResult] = useState<{
@@ -56,7 +64,7 @@ const SwipeableCards: React.FC = () => {
       const now = new Date();
       const diffTime = Math.abs(now.getTime() - dateObj.getTime());
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
+
       if (diffDays === 0) return 'Today';
       if (diffDays === 1) return '1 day ago';
       if (diffDays < 7) return `${diffDays} days ago`;
@@ -82,22 +90,25 @@ const SwipeableCards: React.FC = () => {
   const transformThreadsToCards = (): Card[] => {
     return threads.map(thread => {
       console.log('Thread AI predict:', thread.ai_verdict, 'Type:', typeof thread.ai_verdict);
+      const user = users.find(u => u.id === thread.uid);
       return {
         id: thread.id,
-        image: require('@assets/images/dummy_avatar.jpg'),
+        image: threadImages.filter(img => img.name === `${thread.id}.png`)[0]?.url,
         isReal: thread.is_real,
         aiVerdict: thread.ai_verdict && thread.ai_verdict.trim() !== '' ? thread.ai_verdict : 'No AI verdict available',
         sources: thread.sources || [],
         article: {
+          author: '@' + user?.username,
           title: thread.title,
           views: `${formatNumber(thread.num_views)} Views`,
           comments: `${formatNumber(thread.num_comments)} Comments`,
           votes: `${formatNumber(thread.num_votes)} Votes`,
           tags: getTopicNames(thread.topics || []),
           content: thread.description,
-          author: `@user${thread.uid.slice(0, 6)}`, // Create a username from UID
           timeAgo: formatTimeAgo(thread.posted_datetime),
-          readTime: `${thread.read_duration || 3} mins read`
+          readTime: `${thread.read_duration || 3} mins read`,
+          isVerified: user?.role === 'admin' || user?.role === 'moderator',
+          avatar: userImages.filter(img => img.name === `${user?.username}.png`)[0]?.url,
         }
       };
     });
@@ -142,10 +153,10 @@ const SwipeableCards: React.FC = () => {
   const onSwipeComplete = (direction: 'left' | 'right'): void => {
     const item = cards[currentIndex];
     console.log(`Swiped ${direction} on:`, item.article.title);
-  
+
     // Determine the result based on swipe direction
     const swipeResult = direction === 'left' ? 'FAKE' : 'REAL';
-    
+
     // Use actual Firebase data for the result
     setCurrentResult({
       result: item.isReal ? 'REAL' : 'FAKE',
@@ -154,7 +165,7 @@ const SwipeableCards: React.FC = () => {
       sources: item.sources.length > 0 ? item.sources : ['No sources available'],
     });
     setShowResultModal(true);
-  
+
     // Proceed to next card after a short delay
     setTimeout(() => {
       setCurrentIndex(prev => prev + 1);
@@ -168,7 +179,7 @@ const SwipeableCards: React.FC = () => {
     setShowResultModal(false);
     setCurrentResult(null);
   };
-  
+
   // Add this function to handle "See Thread" button
   const handleSeeThread = () => {
     // Navigate to thread details or perform desired action
@@ -258,8 +269,8 @@ const SwipeableCards: React.FC = () => {
         {...(isCurrentCard ? panResponder.panHandlers : {})}
       >
         <View style={styles.imageSection}>
-          <Image 
-            source={card.image} 
+          <Image
+            source={card.image}
             style={styles.cardImage}
             contentFit="cover"
           />
@@ -268,18 +279,18 @@ const SwipeableCards: React.FC = () => {
         {/* Article Section */}
         <View style={styles.articleSection}>
           <Text style={styles.articleTitle} numberOfLines={2}>{card.article.title}</Text>
-          
+
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statIcon}>👁</Text>
+              <IconSymbol name="eye" style={styles.icons} />
               <Text style={styles.statText}>{card.article.views}</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statIcon}>💬</Text>
+              <IconSymbol name="message" style={styles.icons} />
               <Text style={styles.statText}>{card.article.comments}</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statIcon}>👍</Text>
+              <IconSymbol name="arrow.up" style={styles.icons} />
               <Text style={styles.statText}>{card.article.votes}</Text>
             </View>
           </View>
@@ -291,15 +302,15 @@ const SwipeableCards: React.FC = () => {
                 style={[
                   styles.tag,
                   idx === 0 ? styles.tagRed :
-                  idx === 1 ? styles.tagYellow :
-                  styles.tagBlue
+                    idx === 1 ? styles.tagYellow :
+                      styles.tagBlue
                 ]}
               >
                 <Text style={[
                   styles.tagText,
                   idx === 0 ? styles.tagTextRed :
-                  idx === 1 ? styles.tagTextYellow :
-                  styles.tagTextBlue
+                    idx === 1 ? styles.tagTextYellow :
+                      styles.tagTextBlue
                 ]}>
                   {tag}
                 </Text>
@@ -311,11 +322,20 @@ const SwipeableCards: React.FC = () => {
 
           <View style={styles.authorSection}>
             <View style={styles.authorInfo}>
-              <View style={styles.authorAvatar}>
-                <Text style={styles.authorInitials}>OY</Text>
+              <View>
+                {card.article.avatar ? (
+                  <Image source={{ uri: card.article.avatar }} style={styles.authorAvatar} />
+                ) : (
+                  <View style={styles.authorAvatar} />
+                )}
               </View>
               <View style={styles.authorDetails}>
-                <Text style={styles.authorName}>{card.article.author}</Text>
+                <View style={styles.authorRow}>
+                  <Text style={styles.authorName}>{card.article.author}</Text>
+                  {card.article.isVerified && (
+                    <IconSymbol name="checkmark.circle.fill" style={styles.icons} />
+                  )}
+                </View>
                 <Text style={styles.authorMeta}>{card.article.timeAgo} • {card.article.readTime}</Text>
               </View>
             </View>
@@ -384,9 +404,9 @@ const SwipeableCards: React.FC = () => {
         {cards.map((card, index) => renderCard(card, index)).reverse()}
       </View>
 
-      
+
       <View style={styles.instructionsContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.indicatorContainer}
           onPress={() => forceSwipe('left')}
           activeOpacity={0.7}
@@ -398,7 +418,7 @@ const SwipeableCards: React.FC = () => {
           <Text style={styles.instructionsText}>Swipe</Text>
           <Text style={styles.instructionsText}>left / right</Text>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.indicatorContainer}
           onPress={() => forceSwipe('right')}
           activeOpacity={0.7}
@@ -436,6 +456,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     height: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 3, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 10,
   },
   card: {
     position: 'absolute',
@@ -444,19 +469,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 20,
     left: screenWidth * 0.075,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 3,
-      height: 2,
-    },
     borderWidth: 1.5,
     borderColor: '#e5e7eb',
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 10,
     overflow: 'hidden',
   },
-  
+
   // Image Section Styles
   imageSection: {
     height: 150,
@@ -467,7 +484,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  
+
   // Article Section Styles
   articleSection: {
     padding: 12,
@@ -480,9 +497,20 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontFamily: 'AnonymousPro-Bold',
   },
+  authorAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#9C27B0',
+  },
+  icons: {
+    fontSize: 16,
+    color: "#662D91"
+  },
   statsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
     marginBottom: 8,
   },
@@ -535,7 +563,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#666',
     lineHeight: 20,
-    marginBottom: 12,
     flex: 1,
   },
   authorSection: {
@@ -546,16 +573,8 @@ const styles = StyleSheet.create({
   authorInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     flex: 1,
-  },
-  authorAvatar: {
-    width: 40,
-    height: 40,
-    backgroundColor: '#7c3aed',
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   authorInitials: {
     color: 'white',
@@ -564,6 +583,12 @@ const styles = StyleSheet.create({
   },
   authorDetails: {
     flex: 1,
+  },
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 4,
   },
   authorName: {
     fontSize: 15,
@@ -575,17 +600,17 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   subscribeButton: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#662D91',
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   subscribeText: {
-    color: 'white',
-    fontSize: 15,
-    fontWeight: '500',
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: 'AnonymousPro-Bold',
   },
-  
   // Swipe Indicators
   swipeIndicator: {
     position: 'absolute',
@@ -610,7 +635,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'black',
   },
-  
+
   // End state
   noMoreCards: {
     flex: 1,
@@ -621,13 +646,15 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
+    fontFamily: 'AnonymousPro-Bold',
   },
   noMoreSubtext: {
     fontSize: 16,
     color: '#666',
-    marginTop: 8,
+    marginTop: 14,
+    fontFamily: 'AnonymousPro-Bold',
   },
-  
+
   // Instructions
   instructionsContainer: {
     flexDirection: 'row',
