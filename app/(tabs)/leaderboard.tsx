@@ -20,7 +20,7 @@ function getData(users: any[], leaderboard: any[], userImages: FirebaseImageData
   const ranks: LeaderUser[] = rankedUsers.map((user, index) => ({
     id: (index + 1).toString(),
     rank: index + 1,
-    username: user.username,
+    username: '@' + user.username,
     points: user.points,
     avatar: userImages.find(img => img.name === `${user.username.toLowerCase().replace("@", "")}.png`)?.url || 'https://via.placeholder.com/80x80/4FC3F7/ffffff?text=EL',
   }));
@@ -30,12 +30,11 @@ function getData(users: any[], leaderboard: any[], userImages: FirebaseImageData
 
 
 export default function LeaderboardScreen() {
-  // const { loading, error, initialized } = useDataStore();
   const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
+  const userImages = getImagesByFolder('users');
 
   const users = useCollectionData('users');
   const leaderboard = useCollectionData('leaderboard');
-  const userImages = getImagesByFolder('users');
   
   const mockLeaderboard = getData(users, leaderboard, userImages);
 

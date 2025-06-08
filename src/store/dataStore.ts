@@ -3,7 +3,8 @@ import {
     DocumentChange,
     getDocs,
     onSnapshot,
-    QuerySnapshot
+    QuerySnapshot,
+    Timestamp
 } from 'firebase/firestore';
 import { isEqual } from 'lodash';
 import { useMemo } from 'react';
@@ -37,11 +38,9 @@ interface Thread {
     num_comments: number;
     num_views: number;
     num_votes: number;
-    posted_datetime: Date;
-    profile_img: string;
+    posted_datetime: Timestamp;
     read_duration: number;
     sources: string[];
-    thread_img: string;
     title: string;
     topics: string[];
     uid: string;

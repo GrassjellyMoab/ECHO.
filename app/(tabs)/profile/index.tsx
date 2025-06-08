@@ -1,5 +1,6 @@
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
+import { useCollectionData } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -89,7 +90,8 @@ export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<'threads' | 'activity'>('activity');
   const [debugTaps, setDebugTaps] = useState(0);
   const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
-  
+
+  const users = useCollectionData('users');
   const threadImages = getImagesByFolder('threads');
   const userImages = getImagesByFolder('users');
 

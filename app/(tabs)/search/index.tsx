@@ -140,8 +140,8 @@ const styles = StyleSheet.create({
   },
   searchSection: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 10,
-    marginTop: 25,
+    padding: 20,
+    marginVertical: 10,
     zIndex: 1,
   },
   searchContainer: {
