@@ -582,10 +582,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   articleTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 8,
+    fontFamily: 'AnonymousPro-Bold',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -639,9 +640,9 @@ const styles = StyleSheet.create({
     color: '#2563eb',
   },
   articleContent: {
-    fontSize: 10,
+    fontSize: 15,
     color: '#666',
-    lineHeight: 14,
+    lineHeight: 20,
     marginBottom: 12,
     flex: 1,
   },
@@ -657,28 +658,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   authorAvatar: {
-    width: 24,
-    height: 24,
+    width: 40,
+    height: 40,
     backgroundColor: '#7c3aed',
-    borderRadius: 12,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   authorInitials: {
     color: 'white',
-    fontSize: 10,
+    fontSize: 17,
     fontWeight: 'bold',
   },
   authorDetails: {
     flex: 1,
   },
   authorName: {
-    fontSize: 10,
+    fontSize: 15,
     fontWeight: '500',
     color: '#333',
   },
   authorMeta: {
-    fontSize: 10,
+    fontSize: 13,
     color: '#666',
   },
   subscribeButton: {
@@ -689,7 +690,7 @@ const styles = StyleSheet.create({
   },
   subscribeText: {
     color: 'white',
-    fontSize: 10,
+    fontSize: 15,
     fontWeight: '500',
   },
   
