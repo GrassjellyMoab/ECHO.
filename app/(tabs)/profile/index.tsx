@@ -1,5 +1,6 @@
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
+import { useCollectionData } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -91,6 +92,7 @@ export default function ProfileScreen() {
   const [debugTaps, setDebugTaps] = useState(0);
   const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
 
+  const users = useCollectionData('users');
   const threadImages = getImagesByFolder('threads');
   const userImages = getImagesByFolder('users');
 

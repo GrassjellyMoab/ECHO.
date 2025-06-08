@@ -17,7 +17,7 @@ export const Podium: React.FC<PodiumProps> = ({ topThree }) => {
       {/* Title positioned at top left */}
       <View style={styles.titleContainer}>
         <Text style={styles.podiumTitle}>PODIUM</Text>
-        <Text style={styles.podiumDate}>13th - 19th May</Text>
+        <Text style={styles.podiumDate}>9th - 15th Jun</Text>
       </View>
 
       <View style={styles.podiumContainer}>

@@ -1,14 +1,17 @@
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
-import { FirebaseImageData, useImagesStore } from '@/src/store/imgStore';
-import React from 'react';
+import { useCollectionData } from '@/src/store/dataStore';
+import { useImagesStore } from '@/src/store/imgStore';
+import { Timestamp } from 'firebase/firestore';
+import React, { useMemo } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-interface PostData {
+interface ThreadData {
   id: string;
-  title: string;
   author: string;
+  title: string;
   timeAgo: string;
+  dateCreated: Timestamp;
   readTime: string;
   views: string;
   comments: string;
@@ -16,44 +19,114 @@ interface PostData {
   tags: string[];
   hasImage?: boolean;
   isVerified?: boolean;
+  avatar?: string;
+  threadImageUrl?: string;
 }
 
-const mockPosts: PostData[] = [
-  {
-    id: 't0001',
-    title: 'Has our Singapore data been leaked?',
-    author: '@lebronjames',
-    timeAgo: '3 days ago',
-    readTime: '3 mins read',
-    views: '1.2k',
-    comments: '354',
-    votes: '539',
-    tags: ['Health', 'Cybersecurity', 'WhatsApp'],
-    hasImage: true,
-    isVerified: true,
-  },
-  {
-    id: 't0002',
-    title: 'Are Ez-Link, SimplyGo Ads on Social Media may be Phishing Scams?',
-    author: '@truthseeker',
-    timeAgo: '3 days ago',
-    readTime: '3 mins read',
-    views: '892',
-    comments: '127',
-    votes: '234',
-    tags: ['Cybersecurity', 'Finance'],
-    hasImage: true,
-    isVerified: false,
-  },
-];
+export function useThreadData(): ThreadData[] {
+  const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
+  const userImages = getImagesByFolder('users');
+  const threadImages = getImagesByFolder('threads');
+
+  const users = useCollectionData('users');
+  const threads = useCollectionData('threads');
+  const topics = useCollectionData('topics');
+
+  const processedThreads = useMemo(() => {
+    const userMap = new Map(users.map(user => [user.id, user]));
+    const topicMap = new Map(topics.map(topic => [topic.id, topic]));
+
+    const userImageMap = new Map(
+      userImages.map(img => {
+        const username = img.name.replace('.png', '').toLowerCase();
+        return [username, img.url];
+      })
+    );
+
+    const threadImageMap = new Map(
+      threadImages.map(img => {
+        const threadId = img.name.replace('.png', '');
+        return [threadId, img.url];
+      })
+    );
+
+    return threads
+      .map(thread => {
+        const user = userMap.get(thread.uid);
+        if (!user) return null;
+
+        const threadTopics = thread.topics?.map((topicId: string) => {
+          const topic = topicMap.get(topicId);
+          return topic?.topic || { name: 'Unknown Topic', id: topicId };
+        }) || [];
+
+        const authorUsername = user.username || 'unknown';
+        const authorKey = authorUsername.toLowerCase().replace('@', '');
+
+        const avatar = userImageMap.get(authorKey) ||
+          `https://via.placeholder.com/80x80/4FC3F7/ffffff?text=${authorUsername.charAt(0).toUpperCase()}`;
+
+        const threadImageUrl = threadImageMap.get(thread.id);
+
+        const timeAgo = thread.posted_datetime
+          ? calculateTimeAgo(thread.posted_datetime.toDate())
+          : 'Unknown time';
+
+        return {
+          id: thread.id,
+          author: authorUsername.startsWith('@') ? authorUsername : '@' + authorUsername,
+          title: thread.title || 'Untitled Thread',
+          timeAgo,
+          dateCreated: thread.posted_datetime,
+          readTime: `${thread.read_duration} mins ago`,
+          views: String(thread.num_views ?? 0),
+          comments: String(thread.num_comments ?? 0),
+          votes: String(thread.num_votes ?? 0),
+          tags: threadTopics,
+          hasImage: Boolean(threadImageUrl),
+          isVerified: user.role === 'admin' || user.role === 'moderator',
+          avatar,
+          threadImageUrl
+        } as ThreadData;
+      })
+      .filter((thread): thread is ThreadData => thread !== null)
+      .sort((a, b) => (b.dateCreated?.seconds ?? 0) - (a.dateCreated?.seconds ?? 0));
+  }, [users, threads, topics, userImages, threadImages]); // Only recalculate when these change
+
+  return processedThreads;
+}
+
+function calculateTimeAgo(timestamp: number | string | Date): string {
+  const now = new Date();
+  const time = typeof timestamp === 'number' ? new Date(timestamp) : new Date(timestamp);
+  const diffInMs = now.getTime() - time.getTime();
+
+  const minutes = Math.floor(diffInMs / (1000 * 60));
+  const hours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  const weeks = Math.floor(days / 7);
+  const months = Math.floor(days / 30.44); // Average days per month
+  const years = Math.floor(days / 365.25); // Account for leap years
+
+  if (years > 0) return `${years} year${years === 1 ? '' : 's'} ago`;
+  if (months > 0) return `${months} month${months === 1 ? '' : 's'} ago`;
+  if (weeks > 0) return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+  if (days > 0) return `${days} day${days === 1 ? '' : 's'} ago`;
+  if (hours > 0) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  if (minutes > 0) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  return 'Just now';
+}
 
 const TagComponent = ({ tag }: { tag: string }) => {
   const getTagColor = (tagName: string) => {
     switch (tagName.toLowerCase()) {
       case 'health': return '#FC8476';
       case 'cybersecurity': return '#FFD574';
+      case 'politics': return '#99AD43';
       case 'whatsapp': return '#55C5D1';
+      case 'elections': return '#DBAFDA';
       case 'finance': return '#99AD52';
+      case 'concerts': return '#DDA35F';
       default: return '#757575';
     }
   };
@@ -65,27 +138,24 @@ const TagComponent = ({ tag }: { tag: string }) => {
   );
 };
 
-const PostCard = ({ post, userImages, threadImages }: { post: PostData, userImages: FirebaseImageData[], threadImages: FirebaseImageData[] }) => {
-  const userAvatar = userImages.find(img => img.name === `${post.author.toLowerCase().replace('@', '')}.png`);
-  const threadImage = threadImages.find(img => img.name === `${post.id}.png`);
-
+const ThreadCard = ({ thread }: { thread: ThreadData }) => {
   return (
-    <TouchableOpacity style={styles.postCard}>
-      <View style={styles.postHeader}>
+    <TouchableOpacity style={styles.threadCard}>
+      <View style={styles.threadHeader}>
         <View style={styles.authorContainer}>
-          {userAvatar ? (
-            <Image source={{ uri: userAvatar.url }} style={styles.avatar} />
+          {thread.avatar ? (
+            <Image source={{ uri: thread.avatar }} style={styles.avatar} />
           ) : (
             <View style={styles.avatar} />
           )}
           <View style={styles.authorInfo}>
             <View style={styles.authorRow}>
-              <Text style={styles.authorName}>{post.author}</Text>
-              {post.isVerified && (
+              <Text style={styles.authorName}>{thread.author}</Text>
+              {thread.isVerified && (
                 <IconSymbol name="checkmark.circle.fill" style={styles.icons} />
               )}
             </View>
-            <Text style={styles.postMeta}>{post.timeAgo} • {post.readTime}</Text>
+            <Text style={styles.threadMeta}>{thread.timeAgo} • {thread.readTime}</Text>
           </View>
         </View>
         <TouchableOpacity style={styles.subscribeButton}>
@@ -93,33 +163,33 @@ const PostCard = ({ post, userImages, threadImages }: { post: PostData, userImag
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.postTitle}>{post.title}</Text>
+      <Text style={styles.threadTitle}>{thread.title}</Text>
 
       <View style={styles.tagsContainer}>
-        {post.tags.map((tag, index) => (
+        {thread.tags.map((tag, index) => (
           <TagComponent key={index} tag={tag} />
         ))}
       </View>
 
-      {post.hasImage && (
+      {thread.hasImage && (
         <Image
-          source={{ uri: threadImage ? threadImage.url : '' }}
-          style={styles.postImage}
+          source={{ uri: thread.threadImageUrl ? thread.threadImageUrl : '' }}
+          style={styles.threadImage}
         />
       )}
 
-      <View style={styles.postStats}>
+      <View style={styles.threadStats}>
         <View style={styles.statItem}>
           <IconSymbol name="eye" style={styles.icons} />
-          <Text style={styles.statText}>{post.views} Views</Text>
+          <Text style={styles.statText}>{thread.views} Views</Text>
         </View>
         <View style={styles.statItem}>
           <IconSymbol name="message" style={styles.icons} />
-          <Text style={styles.statText}>{post.comments} Comments</Text>
+          <Text style={styles.statText}>{thread.comments} Comments</Text>
         </View>
         <View style={styles.statItem}>
           <IconSymbol name="arrow.up" style={styles.icons} />
-          <Text style={styles.statText}>{post.votes} Votes</Text>
+          <Text style={styles.statText}>{thread.votes} Votes</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -127,10 +197,8 @@ const PostCard = ({ post, userImages, threadImages }: { post: PostData, userImag
 }
 
 export default function HomeScreen() {
-  const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
-
-  const threadImages = getImagesByFolder('threads');
-  const userImages = getImagesByFolder('users');
+  const mockThreads = useThreadData();
+  console.log(mockThreads)
 
   return (
     <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
@@ -141,9 +209,9 @@ export default function HomeScreen() {
         <Text style={styles.sectionSubtitle}>this week's highlights</Text>
       </View>
 
-      <View style={styles.postsContainer}>
-        {mockPosts.map((post) => (
-          <PostCard key={post.id} post={post} userImages={userImages} threadImages={threadImages} />
+      <View style={styles.threadsContainer}>
+        {mockThreads.map((thread) => (
+          <ThreadCard key={thread.id} thread={thread} />
         ))}
       </View>
     </ScrollView>
@@ -173,12 +241,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontFamily: 'AnonymousPro-Bold',
   },
-  postsContainer: {
+  threadsContainer: {
     backgroundColor: '#F8F9FA',
     paddingTop: 10,
     paddingHorizontal: 20,
   },
-  postCard: {
+  threadCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
@@ -189,7 +257,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  postHeader: {
+  threadHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
@@ -225,7 +293,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#662D91"
   },
-  postMeta: {
+  threadMeta: {
     fontSize: 12,
     color: '#666',
     marginTop: 2,
@@ -243,7 +311,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: 'AnonymousPro-Bold',
   },
-  postTitle: {
+  threadTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#000',
@@ -267,13 +335,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'AnonymousPro',
   },
-  postImage: {
+  threadImage: {
     width: '100%',
     height: 180,
     borderRadius: 8,
     marginBottom: 12,
   },
-  postStats: {
+  threadStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingTop: 12,
