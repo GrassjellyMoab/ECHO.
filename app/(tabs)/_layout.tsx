@@ -1,23 +1,44 @@
 import { Tabs } from 'expo-router';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import TabBarBackground from '@/src/components/ui/TabBarBackground';
+import CreateModal from './CreateModal';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 const SlidingTabBar = ({ state, descriptors, navigation }: any) => {
  const insets = useSafeAreaInsets();
  const slideAnimation = useRef(new Animated.Value(0)).current;
+ const [showCreateModal, setShowCreateModal] = useState(false);
  
  const marginHorizontal = 20;
- const tabWidth = (screenWidth - marginHorizontal * 2) / state.routes.length;
+ // Now we have 4 regular tabs + 1 create button in the middle
+ const tabWidth = (screenWidth - marginHorizontal * 2) / 5;
 
  useEffect(() => {
+   // Calculate position for sliding highlight
+   let targetPosition = 0;
+   
+   switch (state.index) {
+     case 0: // index (home)
+       targetPosition = 0 * tabWidth + marginHorizontal;
+       break;
+     case 1: // search  
+       targetPosition = 1 * tabWidth + marginHorizontal;
+       break;
+     case 2: // leaderboard
+       targetPosition = 3 * tabWidth + marginHorizontal;
+       break;
+     case 3: // profile
+       targetPosition = 4 * tabWidth + marginHorizontal;
+       break;
+   }
+   
    Animated.spring(slideAnimation, {
-     toValue: state.index * tabWidth + marginHorizontal,
+     toValue: targetPosition,
      useNativeDriver: true,
      tension: 100,
      friction: 8,
@@ -46,83 +67,103 @@ const SlidingTabBar = ({ state, descriptors, navigation }: any) => {
      />
      
      <View style={styles.tabBar}>
-       {state.routes.map((route: any, index: number) => {
-         const { options } = descriptors[route.key];
-         const label = options.tabBarLabel !== undefined 
-           ? options.tabBarLabel 
-           : options.title !== undefined 
-           ? options.title 
-           : route.name;
+       {/* Home Tab */}
+       <TouchableOpacity
+         onPress={() => navigation.navigate('index')}
+         style={styles.tabButton}
+       >
+         <View style={styles.tabIconContainer}>
+           <IconSymbol 
+             size={28} 
+             name={state.index === 0 ? 'home' : 'home-outline'} 
+             color={state.index === 0 ? '#662D91' : '#C9B1D3'} 
+           />
+           <Text style={[
+             styles.tabLabel,
+             { color: state.index === 0 ? '#662D91' : '#C9B1D3' }
+           ]}>
+             Home
+           </Text>
+         </View>
+       </TouchableOpacity>
 
-         const isFocused = state.index === index;
-         const isCreateTab = route.name === 'create';
+       {/* Search Tab */}
+       <TouchableOpacity
+         onPress={() => navigation.navigate('search')}
+         style={styles.tabButton}
+       >
+         <View style={styles.tabIconContainer}>
+           <IconSymbol 
+             size={28} 
+             name={state.index === 1 ? 'search' : 'search-outline'} 
+             color={state.index === 1 ? '#662D91' : '#C9B1D3'} 
+           />
+           <Text style={[
+             styles.tabLabel,
+             { color: state.index === 1 ? '#662D91' : '#C9B1D3' }
+           ]}>
+             Search
+           </Text>
+         </View>
+       </TouchableOpacity>
 
-         const onPress = () => {
-           const event = navigation.emit({
-             type: 'tabPress',
-             target: route.key,
-             canPreventDefault: true,
-           });
+       {/* Create Button */}
+       <TouchableOpacity
+         onPress={() => setShowCreateModal(true)}
+         style={styles.createTabButton}
+       >
+         <View style={styles.createButtonContainer}>
+           <View style={styles.createButton}>
+             <IconSymbol size={32} name="add" color="white" />
+           </View>
+         </View>
+       </TouchableOpacity>
 
-           if (!isFocused && !event.defaultPrevented) {
-             navigation.navigate(route.name);
-           }
-         };
+       {/* Leaderboard Tab */}
+       <TouchableOpacity
+         onPress={() => navigation.navigate('leaderboard')}
+         style={styles.tabButton}
+       >
+         <View style={styles.tabIconContainer}>
+           <IconSymbol 
+             size={28} 
+             name={state.index === 2 ? 'podium' : 'podium-outline'} 
+             color={state.index === 2 ? '#662D91' : '#C9B1D3'} 
+           />
+           <Text style={[
+             styles.tabLabel,
+             { color: state.index === 2 ? '#662D91' : '#C9B1D3' }
+           ]}>
+             Leaderboard
+           </Text>
+         </View>
+       </TouchableOpacity>
 
-         if (isCreateTab) {
-           return (
-             <TouchableOpacity
-               key={route.key}
-               onPress={onPress}
-               style={styles.createTabButton}
-             >
-               <View style={styles.createButtonContainer}>
-                 <View style={styles.createButton}>
-                   <IconSymbol size={32} name="add" color="white" />
-                 </View>
-               </View>
-             </TouchableOpacity>
-           );
-         }
-
-         const getIconName = (routeName: string, focused: boolean) => {
-           switch (routeName) {
-             case 'index':
-               return focused ? 'home' : 'home-outline';
-             case 'search':
-               return focused ? 'search' : 'search-outline';
-             case 'leaderboard':
-               return focused ? 'podium' : 'podium-outline';
-             case 'profile':
-               return focused ? 'person' : 'person-outline';
-             default:
-               return 'help-circle';
-           }
-         };
-
-         return (
-           <TouchableOpacity
-             key={route.key}
-             onPress={onPress}
-             style={styles.tabButton}
-           >
-             <View style={styles.tabIconContainer}>
-               <IconSymbol 
-                 size={28} 
-                 name={getIconName(route.name, isFocused)} 
-                 color={isFocused ? '#662D91' : '#C9B1D3'} 
-               />
-               <Text style={[
-                 styles.tabLabel,
-                 { color: isFocused ? '#662D91' : '#C9B1D3' }
-               ]}>
-                 {label}
-               </Text>
-             </View>
-           </TouchableOpacity>
-         );
-       })}
+       {/* Profile Tab */}
+       <TouchableOpacity
+         onPress={() => navigation.navigate('profile')}
+         style={styles.tabButton}
+       >
+         <View style={styles.tabIconContainer}>
+           <IconSymbol 
+             size={28} 
+             name={state.index === 3 ? 'person' : 'person-outline'} 
+             color={state.index === 3 ? '#662D91' : '#C9B1D3'} 
+           />
+           <Text style={[
+             styles.tabLabel,
+             { color: state.index === 3 ? '#662D91' : '#C9B1D3' }
+           ]}>
+             Profile
+           </Text>
+         </View>
+       </TouchableOpacity>
      </View>
+     
+     <CreateModal 
+       visible={showCreateModal} 
+       onClose={() => setShowCreateModal(false)} 
+     />
    </View>
  );
 };
@@ -146,9 +187,6 @@ export default function TabLayout() {
        options={{
          title: 'Search',
        }}
-     />
-     <Tabs.Screen
-       name="create"
      />
      <Tabs.Screen
        name="leaderboard"
