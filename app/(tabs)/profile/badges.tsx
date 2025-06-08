@@ -1,9 +1,10 @@
 import { IconSymbol } from '@/src/components';
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { useImagesStore } from '@/src/store/imgStore';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Badge {
     id: string;
@@ -37,7 +38,11 @@ const BadgeCard: React.FC<{ badge: Badge }> = ({ badge }) => {
     return (
         <View style={[styles.badgeCard, getRarityGlow(badge.rarity)]}>
             <View style={{ borderColor: getRarityColor(badge.rarity) }}>
-                <Image source={{ uri: badge.image }} style={styles.badgeImage} />
+                <Image 
+                    source={badge.image || 'https://via.placeholder.com/120x120/757575/ffffff?text=Badge'} 
+                    style={styles.badgeImage}
+                    cachePolicy="memory-disk"
+                />
             </View>
             <Text style={styles.badgeName}>{badge.name}</Text>
             <Text style={styles.badgeDescription}>{badge.description}</Text>

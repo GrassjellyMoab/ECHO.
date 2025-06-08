@@ -16,6 +16,8 @@ export interface User {
   bio?: string;
   isVerified?: boolean;
   joinDate?: string;
+  followers?: number;
+  followees?: number;
   // stats: {
   //   threads: number;
   //   comments: number;
