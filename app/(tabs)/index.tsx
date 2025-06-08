@@ -5,6 +5,8 @@ import { useImagesStore } from '@/src/store/imgStore';
 import { Timestamp } from 'firebase/firestore';
 import React, { useMemo } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useNavigation} from '@react-navigation/native';
+import ThreadPage from './thread';
 
 interface ThreadData {
   id: string;
@@ -138,9 +140,14 @@ const TagComponent = ({ tag }: { tag: string }) => {
   );
 };
 
+function navigateToThreadPage(thread: ThreadData) : void{
+  const navigation = useNavigation();
+  navigation.navigate('thread',{thread});
+}
+
 const ThreadCard = ({ thread }: { thread: ThreadData }) => {
   return (
-    <TouchableOpacity style={styles.threadCard}>
+    <TouchableOpacity style={styles.threadCard} onPress={() => navigateToThreadPage(thread)}>
       <View style={styles.threadHeader}>
         <View style={styles.authorContainer}>
           {thread.avatar ? (

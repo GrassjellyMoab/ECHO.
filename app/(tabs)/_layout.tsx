@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import TabBarBackground from '@/src/components/ui/TabBarBackground';
-import CreateModal from './CreateModal';
+import CreateModal from './createModal';
 
 const { width: screenWidth } = Dimensions.get('window');
 
