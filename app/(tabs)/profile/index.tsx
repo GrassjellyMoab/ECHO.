@@ -244,7 +244,7 @@ export default function ProfileScreen() {
       <View style={styles.profileSection}>
         <View style={styles.profileImageContainer}>
           <Image
-            source={userImages.find(img => img.name === `${user.username.toLowerCase()}.png`)?.url || 'https://via.placeholder.com/120x120/4FC3F7/ffffff?text=User'}
+            source={userImages.find(img => img.name === `${user.username.toLowerCase()}.png`)?.url || require('@/src/assets/avatars/defaultAvatar.png')}
             style={styles.profileImage}
             cachePolicy="memory-disk"
           />
@@ -257,7 +257,7 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        <Text style={styles.displayName}>{user.first_name + ' ' + user.last_name || 'User'}</Text>
+        <Text style={styles.displayName}>{user.firstName + ' ' + user.lastName || 'User'}</Text>
 
         {/* Followers/Following */}
         <View style={styles.followContainer}>
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   },
   followContainer: {
     flexDirection: 'row',
-    gap: 40,
+    gap: 80,
     marginBottom: 20,
   },
   followItem: {
@@ -385,12 +385,12 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 25,
   },
   actionButton: {
     borderWidth: 1,
     borderColor: '#662D91',
-    borderRadius: 20,
+    borderRadius: 10,
     paddingHorizontal: 20,
     paddingVertical: 8,
   },
