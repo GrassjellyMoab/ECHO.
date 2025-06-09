@@ -3,10 +3,10 @@ import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { getTextColorForTag, tagColors } from '@/src/constants/posts';
 import { useCollectionData } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
+import { useRouter } from 'expo-router';
 import { Timestamp } from 'firebase/firestore';
 import React, { useMemo } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useRouter } from 'expo-router';
 
 interface ThreadData {
   id: string;
@@ -146,7 +146,7 @@ const ThreadCard = ({ thread }: { thread: ThreadData }) => {
   function navigateToThreadPage(thread: ThreadData){
     router.push({
     pathname: '/home/thread',
-    params: { thread: JSON.stringify(thread)},
+    params: { thread: JSON.stringify(thread) },
   });
   }
 
