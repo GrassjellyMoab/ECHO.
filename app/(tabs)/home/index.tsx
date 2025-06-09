@@ -3,7 +3,6 @@ import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { getTextColorForTag, tagColors } from '@/src/constants/posts';
 import { useCollectionData } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
-import { useRouter } from 'expo-router';
 import { Timestamp } from 'firebase/firestore';
 import React, { useMemo } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';

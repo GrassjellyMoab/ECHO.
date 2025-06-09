@@ -66,21 +66,6 @@ const TagComponent = ({ tag }: { tag: string }) => {
   );
 };
 
-const VotingSection = ({ voteData, onVote }: { 
-  voteData: VoteData, 
-  onVote: (vote: 'real' | 'fake') => void 
-}) => {
-  const totalVotes = voteData.real + voteData.fake;
-  const realPercentage = totalVotes > 0 ? (voteData.real / totalVotes) * 100 : 0;
-  const fakePercentage = totalVotes > 0 ? (voteData.fake / totalVotes) * 100 : 0;
-
-  return (
-    <View style={[styles.tag, { backgroundColor }]}>
-      <Text style={[styles.tagText, { color: textColor }]}>{tag}</Text>
-    </View>
-  );
-};
-
 function ThreadPage() {
   const route = useRoute();
   const navigation = useNavigation();
