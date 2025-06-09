@@ -1,17 +1,17 @@
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { getTextColorForTag, tagColors } from '@/src/constants/posts';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { Image } from 'expo-image';
 import { Timestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
 import {
-    Dimensions,
-    Image,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Dimensions,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -146,7 +146,11 @@ function ThreadPage() {
           <View style={styles.authorSection}>
             <View style={styles.authorContainer}>
               {threadData.avatar ? (
-                <Image source={{ uri: threadData.avatar }} style={styles.avatar} />
+                <Image 
+                  source={{ uri: threadData.avatar }} 
+                  style={styles.avatar}
+                  cachePolicy="memory-disk"
+                />
               ) : (
                 <View style={styles.avatar} />
               )}
@@ -171,7 +175,8 @@ function ThreadPage() {
               <Image
                 source={{ uri: threadData.threadImageUrl }}
                 style={styles.threadImage}
-                resizeMode="cover"
+                contentFit="cover"
+                cachePolicy="memory-disk"
               />
             )}
           </View>

@@ -2,7 +2,11 @@ import { getTextColorForTag, tagColors } from '@/src/constants/posts';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-const PopularTopics = () => {
+interface PopularTopicsProps {
+  onTopicPress?: (topic: string) => void;
+}
+
+const PopularTopics = ({ onTopicPress }: PopularTopicsProps) => {
   const topics = ['Health', 'Politics', 'Finance', 'Technology', 'Cybersecurity'];
   
   return (
@@ -16,6 +20,7 @@ const PopularTopics = () => {
             <TouchableOpacity 
               key={index} 
               style={[styles.topicTag, { backgroundColor }]}
+              onPress={() => onTopicPress?.(topic)}
             >
               <Text style={[styles.topicText, { color: textColor }]}>{topic}</Text>
             </TouchableOpacity>

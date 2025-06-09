@@ -69,7 +69,7 @@ const SlidingTabBar = ({ state, descriptors, navigation }: any) => {
      <View style={styles.tabBar}>
        {/* Home Tab */}
        <TouchableOpacity
-         onPress={() => navigation.navigate('home')}
+         onPress={() => navigation.navigate('home', { screen: 'index' })}
          style={styles.tabButton}
        >
          <View style={styles.tabIconContainer}>
