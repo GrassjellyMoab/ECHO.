@@ -22,6 +22,8 @@ const iconMap: Record<string, { name: IoniconsGlyph | AntDesignGlyph | MaterialI
   'home-outline': { name: 'home-outline', library: 'ionicons' },
   'search': { name: 'search', library: 'ionicons' }, 
   'search-outline': { name: 'search-outline', library: 'ionicons' },
+  'moderate': { name: 'shield-account', library: 'materialcommunityicons' }, 
+  'moderate-outline': { name: 'shield-account-outline', library: 'materialcommunityicons' },
   'add': { name: 'add', library: 'ionicons' },
   'podium': { name: 'podium', library: 'ionicons' },
   'podium-outline': { name: 'podium-outline', library: 'ionicons' },
