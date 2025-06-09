@@ -146,7 +146,7 @@ const ThreadCard = ({ thread }: { thread: ThreadData }) => {
   function navigateToThreadPage(thread: ThreadData){
     router.push({
     pathname: '/thread',
-    params: { thread: JSON.stringify(thread) }, // Or better: pass just an ID and fetch data on the thread page
+    params: { thread: JSON.stringify(thread) },
   });
   }
 

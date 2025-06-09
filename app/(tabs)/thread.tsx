@@ -21,12 +21,16 @@ interface ThreadData {
 }
 
 function ThreadPage() {
-    const route = useRoute();
-  const { ThreadData: thread } = route.params;
+  const route = useRoute();
+  const { thread } = route.params as { thread: string };
 
+  // Parse the thread data from JSON string
+  const threadData: ThreadData = JSON.parse(thread);
+  console.log(threadData);
+  console.log(threadData);
   return (
     <View>
-      <Text>{thread.title}</Text>
+      <Text>{threadData.id}</Text>
       {/* render other thread details */}
     </View>
   );
