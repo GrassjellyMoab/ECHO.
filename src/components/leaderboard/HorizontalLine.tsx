@@ -12,7 +12,7 @@ const styles = StyleSheet.create({
     height: 3,
     backgroundColor: '#662D91',
     marginTop: 0,
-    marginHorizontal: -20,
+    marginHorizontal: -30,
     marginBottom: 0,
     width: screenWidth,
   },

@@ -340,11 +340,11 @@ const styles = StyleSheet.create({
   tag: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 10,
+    borderRadius: 16,
   },
   tagText: {
     fontSize: 12,
-    fontFamily: 'AnonymousPro',
+    fontFamily: 'AnonymousPro-Bold',
     fontWeight: 'bold',
   },
   threadImage: {

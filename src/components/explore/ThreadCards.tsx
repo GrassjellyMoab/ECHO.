@@ -103,9 +103,9 @@ const SwipeableCards: React.FC = () => {
         article: {
           author: '@' + user?.username,
           title: thread.title,
-          views: `${formatNumber(thread.num_views)} Views`,
-          comments: `${formatNumber(thread.num_comments)} Comments`,
-          votes: `${formatNumber(thread.num_votes)} Votes`,
+          views: `${formatNumber(thread.num_views)}`,
+          comments: `${formatNumber(thread.num_comments)}`,
+          votes: `${formatNumber(thread.num_votes)}`,
           tags: getTopicNames(thread.topics || []),
           content: thread.description,
           timeAgo: formatTimeAgo(thread.posted_datetime),
@@ -313,15 +313,15 @@ const SwipeableCards: React.FC = () => {
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <IconSymbol name="eye" style={styles.icons} />
-              <Text style={styles.statText}>{card.article.views}</Text>
+              <Text style={styles.statText}>{card.article.views} Views</Text>
             </View>
             <View style={styles.statItem}>
               <IconSymbol name="message" style={styles.icons} />
-              <Text style={styles.statText}>{card.article.comments}</Text>
+              <Text style={styles.statText}>{card.article.comments} Comments</Text>
             </View>
             <View style={styles.statItem}>
               <IconSymbol name="arrow.up" style={styles.icons} />
-              <Text style={styles.statText}>{card.article.votes}</Text>
+              <Text style={styles.statText}>{card.article.votes} Votes</Text>
             </View>
           </View>
 

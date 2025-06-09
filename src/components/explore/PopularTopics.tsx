@@ -6,7 +6,7 @@ interface PopularTopicsProps {
   onTopicPress?: (topic: string) => void;
 }
 
-const PopularTopics = ({ onTopicPress }: PopularTopicsProps) => {
+export const PopularTopics = ({ onTopicPress }: PopularTopicsProps) => {
   const topics = ['Health', 'Politics', 'Finance', 'Technology', 'Cybersecurity'];
   
   return (
@@ -30,8 +30,6 @@ const PopularTopics = ({ onTopicPress }: PopularTopicsProps) => {
     </View>
   );
 };
-
-export default PopularTopics;
 
 const styles = StyleSheet.create({
   sectionContainer: {
