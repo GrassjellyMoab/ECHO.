@@ -1,25 +1,25 @@
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
-import React, { useState, useEffect } from 'react';
+import { NavigatorScreenParams, useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  Animated,
+  Dimensions,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  Modal,
-  Animated,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
   TouchableWithoutFeedback,
-  Keyboard
+  View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, NavigatorScreenParams } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import * as ImagePicker from 'expo-image-picker';
 
 import { Image } from 'react-native';
 
