@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { getTextColorForTag, tagColors } from '@/src/constants/posts';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Timestamp } from 'firebase/firestore';
 import VotingSection from '@/src/components/thread/VotingSection'; // Import your updated VotingSection component
 import { 
@@ -61,6 +62,21 @@ const TagComponent = ({ tag }: { tag: string }) => {
   return (
     <View style={[styles.tag, { backgroundColor: getTagColor(tag) }]}>
       <Text style={styles.tagText}>{tag}</Text>
+    </View>
+  );
+};
+
+const VotingSection = ({ voteData, onVote }: { 
+  voteData: VoteData, 
+  onVote: (vote: 'real' | 'fake') => void 
+}) => {
+  const totalVotes = voteData.real + voteData.fake;
+  const realPercentage = totalVotes > 0 ? (voteData.real / totalVotes) * 100 : 0;
+  const fakePercentage = totalVotes > 0 ? (voteData.fake / totalVotes) * 100 : 0;
+
+  return (
+    <View style={[styles.tag, { backgroundColor }]}>
+      <Text style={[styles.tagText, { color: textColor }]}>{tag}</Text>
     </View>
   );
 };
@@ -340,9 +356,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   tagText: {
-    color: '#000000',
     fontSize: 12,
     fontFamily: 'AnonymousPro',
+    fontWeight: 'bold',
   },
   threadContent: {
     fontSize: 16,
