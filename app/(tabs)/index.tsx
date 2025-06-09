@@ -23,6 +23,7 @@ interface ThreadData {
   isVerified?: boolean;
   avatar?: string;
   threadImageUrl?: string;
+  real_ratio : number;
 }
 
 export function useThreadData(): ThreadData[] {
@@ -88,7 +89,8 @@ export function useThreadData(): ThreadData[] {
           hasImage: Boolean(threadImageUrl),
           isVerified: user.role === 'admin' || user.role === 'moderator',
           avatar,
-          threadImageUrl
+          threadImageUrl,
+          real_ratio: thread.real_ratio
         } as ThreadData;
       })
       .filter((thread): thread is ThreadData => thread !== null)
