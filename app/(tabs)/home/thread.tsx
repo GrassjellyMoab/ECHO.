@@ -47,21 +47,15 @@ interface VoteData {
 
 const TagComponent = ({ tag }: { tag: string }) => {
   const getTagColor = (tagName: string) => {
-    switch (tagName.toLowerCase()) {
-      case 'health': return '#FC8476';
-      case 'cybersecurity': return '#FFD574';
-      case 'politics': return '#99AD43';
-      case 'whatsapp': return '#55C5D1';
-      case 'elections': return '#DBAFDA';
-      case 'finance': return '#99AD52';
-      case 'concerts': return '#DDA35F';
-      default: return '#757575';
-    }
+    return tagColors[tagName.toLowerCase()] || tagColors.default;
   };
 
+  const backgroundColor = getTagColor(tag);
+  const textColor = getTextColorForTag(backgroundColor);
+
   return (
-    <View style={[styles.tag, { backgroundColor: getTagColor(tag) }]}>
-      <Text style={styles.tagText}>{tag}</Text>
+    <View style={[styles.tag, { backgroundColor }]}>
+      <Text style={[styles.tagText, { color: textColor }]}>{tag}</Text>
     </View>
   );
 };
