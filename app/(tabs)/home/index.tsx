@@ -6,7 +6,6 @@ import { Timestamp } from 'firebase/firestore';
 import React, { useMemo } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import ThreadPage from './thread';
 
 interface ThreadData {
   id: string;
@@ -25,6 +24,7 @@ interface ThreadData {
   threadImageUrl?: string;
   real_ratio : number;
   ai_verdict?: string;
+  hasVoted: boolean;
 }
 
 export function useThreadData(): ThreadData[] {
@@ -92,7 +92,8 @@ export function useThreadData(): ThreadData[] {
           avatar,
           threadImageUrl,
           real_ratio: thread.real_ratio,
-          ai_verdict: thread.ai_verdict
+          ai_verdict: thread.ai_verdict,
+          hasVoted: false
         } as ThreadData;
       })
       .filter((thread): thread is ThreadData => thread !== null)
@@ -150,7 +151,7 @@ const ThreadCard = ({ thread }: { thread: ThreadData }) => {
   function navigateToThreadPage(thread: ThreadData){
     router.push({
     pathname: '/home/thread',
-    params: { thread: JSON.stringify(thread) },
+    params: { thread: JSON.stringify(thread)},
   });
   }
 
