@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Dimensions } from 'react-native';
 
 interface VoteData {
   real: number;
@@ -24,6 +25,24 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
   const handleVote = (vote: 'real' | 'fake') => {
     onVote(vote);
     setShowResults(true);
+  };
+
+  const screenHeight = Dimensions.get('window').height;
+
+  // Dynamic overlay style that ensures full coverage
+  const overlayStyle = {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    zIndex: 10,
+    padding: 20,
+    borderRadius: 12,
+    justifyContent: 'flex-start' as const,
+    alignItems: 'stretch' as const,
+    minHeight: '100%' as const,
   };
 
   if (!showResults) {
@@ -62,7 +81,7 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
         )}
 
         {/* Overlay - Covers both voting results and AI verdict */}
-        <View style={styles.overlay}>
+        <View style={overlayStyle}>
           <Text style={styles.votingPrompt}>Want to see the results?</Text>
           <Text style={styles.votingSubtext}>Vote for what you think.</Text>
           
@@ -132,22 +151,16 @@ const styles = StyleSheet.create({
   votingSectionContainer: {
     position: 'relative',
     marginBottom: 20,
+    minHeight: Dimensions.get('window').height * 0.3
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.96)',
-    zIndex: 10,
-    padding: 20,
-    borderRadius: 12,
-    justifyContent: 'flex-start',
-    alignItems: 'stretch',
-  },
+  // Removed overlay from StyleSheet since it's now dynamic
   votingPrompt: {
     fontSize: 20,
     color: '#333',
     marginBottom: 8,
     fontFamily: 'AnonymousPro-Bold',
     textAlign: 'center',
+    marginTop:-20
   },
   votingSubtext: {
     fontSize: 20,
