@@ -257,7 +257,7 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        <Text style={styles.displayName}>{user.firstName + ' ' + user.lastName || 'User'}</Text>
+        <Text style={styles.displayName}>{user.first_name + ' ' + user.last_name || 'User'}</Text>
 
         {/* Followers/Following */}
         <View style={styles.followContainer}>

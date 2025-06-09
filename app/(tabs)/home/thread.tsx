@@ -1,3 +1,4 @@
+import VotingSection from '@/src/components/thread/VotingSection'; // Import your updated VotingSection component
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { getTextColorForTag, tagColors } from '@/src/constants/posts';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -34,6 +35,7 @@ interface ThreadData {
   content?: string;
   real_ratio: number;
   ai_verdict?: string;
+  hasVoted: boolean;
 }
 
 interface VoteData {
@@ -57,58 +59,16 @@ const TagComponent = ({ tag }: { tag: string }) => {
   );
 };
 
-const VotingSection = ({ voteData, onVote }: { 
-  voteData: VoteData, 
-  onVote: (vote: 'real' | 'fake') => void 
-}) => {
-  const totalVotes = voteData.real + voteData.fake;
-  const realPercentage = totalVotes > 0 ? (voteData.real / totalVotes) * 100 : 0;
-  const fakePercentage = totalVotes > 0 ? (voteData.fake / totalVotes) * 100 : 0;
-
-  return (
-    <View style={styles.votingSection}>
-      <Text style={styles.votingPrompt}>
-        You voted <Text style={styles.fakeText}>Fake.</Text>
-      </Text>
-      <Text style={styles.overallVotes}>Overall Votes:</Text>
-      
-      <View style={styles.voteOptions}>
-        <TouchableOpacity 
-          style={[styles.voteButton, styles.realButton]}
-          onPress={() => onVote('real')}
-        >
-          <Text style={styles.voteButtonText}>Real.</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.voteButton, styles.fakeButton]}
-          onPress={() => onVote('fake')}
-        >
-          <Text style={styles.voteButtonText}>Fake.</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.voteBar}>
-        <View style={[styles.realBar, { width: `${realPercentage}%` }]} />
-        <View style={[styles.fakeBar, { width: `${fakePercentage}%` }]} />
-      </View>
-
-      <View style={styles.votePercentages}>
-        <Text style={styles.realPercentage}>{Math.round(realPercentage)}%</Text>
-        <Text style={styles.fakePercentage}>{Math.round(fakePercentage)}%</Text>
-      </View>
-    </View>
-  );
-};
-
 function ThreadPage() {
   const route = useRoute();
   const navigation = useNavigation();
   const { thread } = route.params as { thread: string };
-  
+
   // Parse the thread data from JSON string
   const threadData: ThreadData = JSON.parse(thread);
   console.log(threadData);
+  console.log(threadData.hasVoted);
+
   // Calculate vote counts based on real_ratio
   const totalVoteCount = parseInt(threadData.votes);
   const realVotes = Math.round(threadData.real_ratio * totalVoteCount);
@@ -121,14 +81,17 @@ function ThreadPage() {
     userVote: threadData.real_ratio < 0.5 ? 'fake' : null // Set user vote based on majority
   });
 
+  // Track if user has voted in this session
+  const [userHasVoted, setUserHasVoted] = useState(threadData.hasVoted);
+
   const handleVote = (vote: 'real' | 'fake') => {
     // In real app, this would update the backend
     setVoteData(prev => ({
       ...prev,
       userVote: vote
     }));
+    setUserHasVoted(true);
   };
-
 
   // Determine if content is fake based on real_ratio
   const isFake = threadData.real_ratio < 0.5;
@@ -217,17 +180,13 @@ function ThreadPage() {
             {threadData.content || "A user sent me this viral rumour that has been spreading about WhatsApp chat groups about Singhealth data leaks. What do you think?"}
           </Text>
 
-          {/* Voting Section */}
-          <VotingSection voteData={voteData} onVote={handleVote} />
-
-          {/* AI Verdict*/}
-          <View style={styles.aiSection}>
-            <View style={styles.aiHeader}>
-              <IconSymbol name="info.circle" style={styles.aiIcon} />
-              <Text style={styles.aiTitle}>AI Verdict</Text>
-            </View>
-            <Text style={styles.aiText}>{threadData.ai_verdict}</Text>
-          </View>
+          {/* Voting Section - Now includes AI verdict */}
+          <VotingSection 
+            voteData={voteData} 
+            onVote={handleVote} 
+            hasVoted={threadData.hasVoted}
+            aiVerdict={threadData.ai_verdict} // Pass AI verdict to VotingSection
+          />
           
         </View>
       </ScrollView>
@@ -388,120 +347,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     lineHeight: 24,
-    marginBottom: 24,
-    fontFamily: 'AnonymousPro',
-  },
-  votingSection: {
-    backgroundColor: '#F8F9FA',
-    padding: 20,
-    borderRadius: 12,
     marginBottom: 20,
-  },
-  votingPrompt: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 8,
     fontFamily: 'AnonymousPro',
-  },
-  fakeText: {
-    color: '#DC2626',
-    fontWeight: 'bold',
-  },
-  overallVotes: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 16,
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  voteOptions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  voteButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  realButton: {
-    backgroundColor: '#E5E7EB',
-  },
-  fakeButton: {
-    backgroundColor: '#662D91',
-  },
-  voteButtonText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  voteBar: {
-    flexDirection: 'row',
-    height: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  realBar: {
-    backgroundColor: '#E5E7EB',
-  },
-  fakeBar: {
-    backgroundColor: '#662D91',
-  },
-  votePercentages: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  realPercentage: {
-    fontSize: 12,
-    color: '#666',
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  fakePercentage: {
-    fontSize: 12,
-    color: '#662D91',
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  aiSection: {
-    backgroundColor: '#EEF2FF',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  aiHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  aiIcon: {
-    fontSize: 18,
-    color: '#662D91',
-    marginRight: 8,
-  },
-  aiTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  aiText: {
-    fontSize: 14,
-    color: '#333',
-    lineHeight: 20,
-    fontFamily: 'AnonymousPro',
-  },
-  aiConfidence: {
-    fontSize: 12,
-    color: '#662D91',
-    fontWeight: 'bold',
-    marginTop: 8,
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  boldText: {
-    fontWeight: 'bold',
-    fontFamily: 'AnonymousPro-Bold',
   },
 });
 
