@@ -52,7 +52,7 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
   const [slideAnim] = useState(new Animated.Value(screenHeight));
   const [imageUri, setImageUri] = useState('');
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
-  const topics = ['Health', 'Politics', 'Jobs', 'Environment', 'Bank','Entertainment', 'Religion', 'Technology'];
+  const topics = ['Health', 'Politics', 'Finance', 'Technology', 'Cybersecurity','Whatsapp','Concerts','Climate', 'Crypto', 'Science'];
 
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -110,7 +110,7 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
     ]);
   };
 
-  const isPostEnabled = title.trim().length > 0;
+  const isPostEnabled = title.trim().length > 0 && content.trim().length > 0 && selectedTopics.length >0;
 
   const handlePickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -160,15 +160,9 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
                 <IconSymbol name="close" size={28} color="#662D91" />
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.postButton, !isPostEnabled && styles.postButtonDisabled]}
-                onPress={handlePost}
-                disabled={!isPostEnabled}
-              >
-                <Text style={[styles.postButtonText, !isPostEnabled && styles.postButtonTextDisabled]}>
-                  Post
-                </Text>
-              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Create Thread</Text>
+
+              <View style={styles.placeholder} />
             </View>
 
             {/* Content */}
@@ -185,7 +179,7 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
                 
                 <TextInput
                   style={styles.contentInput}
-                  placeholder="body text (optional)"
+                  placeholder="body text"
                   value={content}
                   onChangeText={setContent}
                   multiline
@@ -235,6 +229,16 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
                     })}
                   </View>
                 </View>
+                {/*Post Button*/}
+                <TouchableOpacity
+                style={[styles.postButton, !isPostEnabled && styles.postButtonDisabled]}
+                onPress={handlePost}
+                disabled={!isPostEnabled}
+              >
+                <Text style={[styles.postButtonText, !isPostEnabled && styles.postButtonTextDisabled]}>
+                  Post
+                </Text>
+              </TouchableOpacity>
               </View>
             </ScrollView>
             
@@ -253,22 +257,35 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    justifyContent: 'space-between', // distributes space evenly
+    paddingHorizontal: 16,
+    height: 56,
+    backgroundColor: '#fff',
   },
   closeButton: {
-    padding: 5,
+    width: 40, // fixed width to help center title
+    alignItems: 'flex-start',
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 25,
+    fontWeight: 'bold',
+    color: '#000',
+    fontFamily: 'AnonymousPro-Bold'
+
+  },
+  placeholder: {
+    width: 40, // same as closeButton to balance the layout
   },
   postButton: {
     backgroundColor: '#662D91',
+    marginTop:15,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
     minWidth: 60,
-    alignItems: 'center',
+    alignItems: 'center'
   },
   postButtonDisabled: {
     backgroundColor: '#E5E7EB',
@@ -288,15 +305,19 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 7,
   },
   titleInput: {
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#000',
+    fontFamily: 'SpaceMono-Regular',
     marginBottom: 7,
-    fontFamily: 'AnonymousPro-Bold',
-    lineHeight: 25,
+    lineHeight: 17,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 10,
   },
   contentInput: {
     padding: 10,
@@ -316,7 +337,7 @@ const styles = StyleSheet.create({
     marginTop: 10
   },
   topicTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     marginBottom: 10,
     fontFamily: 'AnonymousPro-Bold',
@@ -336,7 +357,6 @@ const styles = StyleSheet.create({
   },
   topicChipSelected: {
     backgroundColor: '#662D91',
-    borderColor: '#662D91',
   },
   topicChipText: {
     color: '#777',
@@ -344,7 +364,6 @@ const styles = StyleSheet.create({
   },
   topicChipTextSelected: {
     color: '#fff',
-    fontWeight: 'bold',
   },
   imagePickerBox: {
     borderWidth: 1,
