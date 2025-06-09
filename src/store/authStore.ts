@@ -10,8 +10,8 @@ export interface User {
   id: string;
   username: string;
   email?: string;
-  first_name?: string;
-  last_name?: string;
+  firstName?: string;
+  lastName?: string;
   avatar?: string;
   bio?: string;
   isVerified?: boolean;
