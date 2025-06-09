@@ -24,6 +24,7 @@ interface ThreadData {
   avatar?: string;
   threadImageUrl?: string;
   real_ratio : number;
+  ai_verdict?: string;
 }
 
 export function useThreadData(): ThreadData[] {
@@ -90,7 +91,8 @@ export function useThreadData(): ThreadData[] {
           isVerified: user.role === 'admin' || user.role === 'moderator',
           avatar,
           threadImageUrl,
-          real_ratio: thread.real_ratio
+          real_ratio: thread.real_ratio,
+          ai_verdict: thread.ai_verdict
         } as ThreadData;
       })
       .filter((thread): thread is ThreadData => thread !== null)
@@ -147,7 +149,7 @@ const ThreadCard = ({ thread }: { thread: ThreadData }) => {
 
   function navigateToThreadPage(thread: ThreadData){
     router.push({
-    pathname: '/thread',
+    pathname: '/home/thread',
     params: { thread: JSON.stringify(thread) },
   });
   }

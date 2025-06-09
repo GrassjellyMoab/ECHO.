@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { AppHeader } from '@/src/components/ui/AppHeader';
+import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Timestamp } from 'firebase/firestore';
 import { 
@@ -12,7 +14,6 @@ import {
   SafeAreaView,
   Dimensions
 } from 'react-native';
-import { IconSymbol } from '@/src/components/ui/IconSymbol';
 
 const { width } = Dimensions.get('window');
 
@@ -32,6 +33,8 @@ interface ThreadData {
   avatar?: string;
   threadImageUrl?: string;
   content?: string;
+  real_ratio: number;
+  ai_verdict?: string;
 }
 
 interface VoteData {
@@ -105,23 +108,6 @@ const VotingSection = ({ voteData, onVote }: {
   );
 };
 
-const AIVerdict = () => {
-  return (
-    <View style={styles.aiSection}>
-      <View style={styles.aiHeader}>
-        <IconSymbol name="info.circle" style={styles.aiIcon} />
-        <Text style={styles.aiTitle}>AI Verdict</Text>
-      </View>
-      <Text style={styles.aiText}>
-        The news about the health data leak is <Text style={styles.boldText}>false</Text> because 
-        there is no evidence of a breach in the government's secure health systems. Independent 
-        security audits show no unauthorized access or anomalies. Additionally, the supposed 
-        leaked data contains fabricated entries that do <Text style={styles.boldText}>not match</Text> real patient records.
-      </Text>
-    </View>
-  );
-};
-
 function ThreadPage() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -129,12 +115,17 @@ function ThreadPage() {
   
   // Parse the thread data from JSON string
   const threadData: ThreadData = JSON.parse(thread);
+  console.log(threadData);
+  // Calculate vote counts based on real_ratio
+  const totalVoteCount = parseInt(threadData.votes);
+  const realVotes = Math.round(threadData.real_ratio * totalVoteCount);
+  const fakeVotes = totalVoteCount - realVotes;
   
-  // Mock voting data - in real app, this would come from your backend
+  // Initialize voting data using real_ratio from thread data
   const [voteData, setVoteData] = useState<VoteData>({
-    real: 27,
-    fake: 73,
-    userVote: 'fake'
+    real: realVotes,
+    fake: fakeVotes,
+    userVote: threadData.real_ratio < 0.5 ? 'fake' : null // Set user vote based on majority
   });
 
   const handleVote = (vote: 'real' | 'fake') => {
@@ -145,115 +136,102 @@ function ThreadPage() {
     }));
   };
 
-  const handleShare = () => {
-    // Implement share functionality
-    console.log('Share thread');
-  };
 
-  const handleBookmark = () => {
-    // Implement bookmark functionality
-    console.log('Bookmark thread');
-  };
-
-  const handleSubscribe = () => {
-    // Implement subscribe functionality
-    console.log('Subscribe to author');
-  };
+  // Determine if content is fake based on real_ratio
+  const isFake = threadData.real_ratio < 0.5;
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <IconSymbol name="arrow.left" style={styles.headerIcon} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>ECHO.</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={handleShare}>
-            <IconSymbol name="square.and.arrow.up" style={styles.headerIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleBookmark}>
-            <IconSymbol name="bookmark" style={styles.headerIcon} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false} stickyHeaderIndices={[0]}>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Author Info */}
-        <View style={styles.authorSection}>
-          <View style={styles.authorContainer}>
-            {threadData.avatar ? (
-              <Image source={{ uri: threadData.avatar }} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatar} />
-            )}
-            <View style={styles.authorInfo}>
-              <View style={styles.authorRow}>
-                <Text style={styles.authorName}>{threadData.author}</Text>
-                {threadData.isVerified && (
-                  <IconSymbol name="checkmark.circle.fill" style={styles.verifiedIcon} />
-                )}
+          {/* Back button */}
+          <TouchableOpacity onPress={() => navigation.goBack()}  style={styles.backBtn}>
+            <IconSymbol name="arrow-back" size={23} color="#662D91" />
+          </TouchableOpacity>
+          <View style={styles.content}>
+          {/* Author Info */}
+          <View style={styles.authorSection}>
+            <View style={styles.authorContainer}>
+              {threadData.avatar ? (
+                <Image source={{ uri: threadData.avatar }} style={styles.avatar} />
+              ) : (
+                <View style={styles.avatar} />
+              )}
+              <View style={styles.authorInfo}>
+                <View style={styles.authorRow}>
+                  <Text style={styles.authorName}>{threadData.author}</Text>
+                  {threadData.isVerified && (
+                    <IconSymbol name="checkmark.circle.fill" style={styles.verifiedIcon} />
+                  )}
+                </View>
+                <Text style={styles.threadMeta}>{threadData.timeAgo} • {threadData.readTime}</Text>
               </View>
-              <Text style={styles.threadMeta}>{threadData.timeAgo} • {threadData.readTime}</Text>
+            </View>
+            <TouchableOpacity style={styles.subscribeButton}>
+              <Text style={styles.subscribeText}>Subscribe</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Thread Image */}
+          <View style={styles.shadowWrapper}>
+            {threadData.hasImage && threadData.threadImageUrl && (
+              <Image
+                source={{ uri: threadData.threadImageUrl }}
+                style={styles.threadImage}
+                resizeMode="cover"
+              />
+            )}
+          </View>
+
+          {/* Dynamic Badge based on real_ratio */}
+          <View style={[styles.badge, isFake ? styles.fakeBadge : styles.realBadge]}>
+            <Text style={styles.badgeText}>{isFake ? 'Fake.' : 'Real.'}</Text>
+          </View>
+
+          {/* Thread Title */}
+          <Text style={styles.threadTitle}>{threadData.title}</Text>
+
+          {/* Thread Stats */}
+          <View style={styles.threadStats}>
+            <View style={styles.statItem}>
+              <IconSymbol name="eye" style={styles.statIcon} />
+              <Text style={styles.statText}>{threadData.views} Views</Text>
+            </View>
+            <View style={styles.statItem}>
+              <IconSymbol name="message" style={styles.statIcon} />
+              <Text style={styles.statText}>{threadData.comments} Comments</Text>
+            </View>
+            <View style={styles.statItem}>
+              <IconSymbol name="arrow.up" style={styles.statIcon} />
+              <Text style={styles.statText}>{threadData.votes} Votes</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.subscribeButton} onPress={handleSubscribe}>
-            <Text style={styles.subscribeText}>Subscribe</Text>
-          </TouchableOpacity>
-        </View>
 
-        {/* Thread Image */}
-        {threadData.hasImage && threadData.threadImageUrl && (
-          <Image
-            source={{ uri: threadData.threadImageUrl }}
-            style={styles.threadImage}
-            resizeMode="contain"
-          />
-        )}
-
-        {/* Fake Badge */}
-        <View style={styles.fakeBadge}>
-          <Text style={styles.fakeBadgeText}>Fake.</Text>
-        </View>
-
-        {/* Thread Title */}
-        <Text style={styles.threadTitle}>{threadData.title}</Text>
-
-        {/* Thread Stats */}
-        <View style={styles.threadStats}>
-          <View style={styles.statItem}>
-            <IconSymbol name="eye" style={styles.statIcon} />
-            <Text style={styles.statText}>{threadData.views} Views</Text>
+          {/* Tags */}
+          <View style={styles.tagsContainer}>
+            {threadData.tags.map((tag, index) => (
+              <TagComponent key={index} tag={tag} />
+            ))}
           </View>
-          <View style={styles.statItem}>
-            <IconSymbol name="message" style={styles.statIcon} />
-            <Text style={styles.statText}>{threadData.comments} Comments</Text>
+
+          {/* Thread Content */}
+          <Text style={styles.threadContent}>
+            {threadData.content || "A user sent me this viral rumour that has been spreading about WhatsApp chat groups about Singhealth data leaks. What do you think?"}
+          </Text>
+
+          {/* Voting Section */}
+          <VotingSection voteData={voteData} onVote={handleVote} />
+
+          {/* AI Verdict*/}
+          <View style={styles.aiSection}>
+            <View style={styles.aiHeader}>
+              <IconSymbol name="info.circle" style={styles.aiIcon} />
+              <Text style={styles.aiTitle}>AI Verdict</Text>
+            </View>
+            <Text style={styles.aiText}>{threadData.ai_verdict}</Text>
           </View>
-          <View style={styles.statItem}>
-            <IconSymbol name="arrow.up" style={styles.statIcon} />
-            <Text style={styles.statText}>{threadData.votes} Votes</Text>
-          </View>
+          
         </View>
-
-        {/* Tags */}
-        <View style={styles.tagsContainer}>
-          {threadData.tags.map((tag, index) => (
-            <TagComponent key={index} tag={tag} />
-          ))}
-        </View>
-
-        {/* Thread Content */}
-        <Text style={styles.threadContent}>
-          A user sent me this viral rumour that has been spreading about WhatsApp chat groups about Singhealth data leaks. What do you think?
-        </Text>
-
-        {/* Voting Section */}
-        <VotingSection voteData={voteData} onVote={handleVote} />
-
-        {/* AI Verdict */}
-        <AIVerdict />
       </ScrollView>
     </SafeAreaView>
   );
@@ -264,29 +242,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  backBtn:{
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
-    fontFamily: 'AnonymousPro-Bold',
-  },
-  headerIcon: {
-    fontSize: 20,
-    color: '#000',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 15,
+    paddingBottom: 5,
+    backgroundColor: 'white'
   },
   content: {
     flex: 1,
@@ -346,23 +305,39 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: 'AnonymousPro-Bold',
   },
+  shadowWrapper: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 2,
+    elevation: 5, // Android
+    borderRadius: 12,
+    backgroundColor: '#fff',
+  },
   threadImage: {
     width: width - 40,
     height: 200,
     borderRadius: 12,
-    marginBottom: 16,
+  },
+  badge: {
+    alignSelf: 'flex-end',
+    paddingHorizontal: 15,
+    paddingVertical: 6,
+    borderRadius: 10,
+    marginTop: -32,
+    marginBottom: 20,
+    marginRight: 5,
+    zIndex:1
   },
   fakeBadge: {
     backgroundColor: '#DC2626',
-    alignSelf: 'flex-end',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginBottom: 16,
   },
-  fakeBadgeText: {
+  realBadge: {
+    backgroundColor: '#059669',
+  },
+  badgeText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
     fontFamily: 'AnonymousPro-Bold',
   },
@@ -370,18 +345,16 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#000',
-    marginBottom: 16,
+    marginBottom: 6,
     lineHeight: 32,
     fontFamily: 'AnonymousPro-Bold',
   },
   threadStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
+    paddingVertical: 2,
     borderColor: '#E5E7EB',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   statItem: {
     flexDirection: 'row',
@@ -401,7 +374,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 20,
+    marginBottom: 17,
   },
   tag: {
     paddingHorizontal: 12,
@@ -520,6 +493,13 @@ const styles = StyleSheet.create({
     color: '#333',
     lineHeight: 20,
     fontFamily: 'AnonymousPro',
+  },
+  aiConfidence: {
+    fontSize: 12,
+    color: '#662D91',
+    fontWeight: 'bold',
+    marginTop: 8,
+    fontFamily: 'AnonymousPro-Bold',
   },
   boldText: {
     fontWeight: 'bold',

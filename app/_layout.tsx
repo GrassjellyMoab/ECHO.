@@ -173,7 +173,7 @@ export default function RootLayout() {
     } else if (isAuthenticated && !inTabsGroup) {
       // User is authenticated
       console.log('✅ User authenticated, navigating to tabs');
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/home');
     } else if (!isAuthenticated && !inAuthGroup) {
       // User not authenticated
       console.log('🔐 User not authenticated, navigating to auth');
