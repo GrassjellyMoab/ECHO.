@@ -23,6 +23,7 @@ interface ThreadData {
   isVerified?: boolean;
   avatar?: string;
   threadImageUrl?: string;
+  content: string;
   real_ratio : number;
   ai_verdict?: string;
   hasVoted: boolean;
@@ -92,6 +93,7 @@ export function useThreadData(): ThreadData[] {
           isVerified: user.role === 'admin' || user.role === 'moderator',
           avatar,
           threadImageUrl,
+          content: thread.description,
           real_ratio: thread.real_ratio,
           ai_verdict: thread.ai_verdict,
           hasVoted: false

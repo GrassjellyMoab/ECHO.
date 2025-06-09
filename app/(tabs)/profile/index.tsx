@@ -4,11 +4,12 @@ import { useCollectionData } from '@/src/store/dataStore';
 import { FirebaseImageData, useImagesStore } from '@/src/store/imgStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { Timestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '../../../src/store/authStore';
 
-interface ActivityItem {
+interface ActivityData {
   id: string;
   type: 'like' | 'comment' | 'thread';
   user: string;
@@ -18,16 +19,28 @@ interface ActivityItem {
   avatar: number;
 }
 
-interface ThreadItem {
+interface ThreadData {
   id: string;
+  author: string;
   title: string;
   timeAgo: string;
+  dateCreated: Timestamp;
   readTime: string;
-  content: string;
-  image?: string;
+  views: string;
+  comments: string;
+  votes: string;
+  tags: string[];
+  hasImage?: boolean;
+  isVerified?: boolean;
+  avatar?: string;
+  threadImageUrl?: string;
+  content?: string;
+  real_ratio: number;
+  ai_verdict?: string;
+  hasVoted: boolean;
 }
 
-const mockActivity: ActivityItem[] = [
+const mockActivity: ActivityData[] = [
   {
     id: '1',
     type: 'like',
@@ -74,27 +87,73 @@ const mockActivity: ActivityItem[] = [
   }
 ];
 
-function getThreadData(uid: string, threads: any[], threadImages: FirebaseImageData[]): ThreadItem[] {
+function getThreadData(uid: string, users: any[], threads: any[], topics: any[], userImages: FirebaseImageData[], threadImages: FirebaseImageData[]): ThreadData[] {
   if (uid === '' || !threads || threads.length === 0) {
     return [];
   }
 
+  const userMap = new Map(users.map(user => [user.id, user]));
+  const topicMap = new Map(topics.map(topic => [topic.id, topic]));
+
+  const userImageMap = new Map(
+    userImages.map(img => {
+      const username = img.name.replace('.png', '').toLowerCase();
+      return [username, img.url];
+    })
+  );
+
+  const threadImageMap = new Map(
+    threadImages.map(img => {
+      const threadId = img.name.replace('.png', '');
+      return [threadId, img.url];
+    })
+  );
+
   const mockThreads = threads
     .filter((thread: any) => thread.uid === uid)
     .map((thread: any) => {
+      const user = userMap.get(thread.uid);
+      if (!user) return null;
+
+      const threadTopics = thread.topics?.map((topicId: string) => {
+        const topic = topicMap.get(topicId);
+        return topic?.topic || { name: 'Unknown Topic', id: topicId };
+      }) || [];
+
+      const authorUsername = user.username || 'unknown';
+      const authorKey = authorUsername.toLowerCase().replace('@', '');
+
+      const avatar = userImageMap.get(authorKey) ||
+        `https://via.placeholder.com/80x80/4FC3F7/ffffff?text=${authorUsername.charAt(0).toUpperCase()}`;
+
+      const threadImageUrl = threadImageMap.get(thread.id);
+
       const timeAgo = thread.posted_datetime
         ? calculateTimeAgo(thread.posted_datetime.toDate())
         : 'Unknown time';
 
       return {
         id: thread.id,
-        title: thread.title,
-        timeAgo: timeAgo,
-        readTime: `${thread.read_duration} mins ago`,
+        author: authorUsername.startsWith('@') ? authorUsername : '@' + authorUsername,
+        title: thread.title || 'Untitled Thread',
         content: thread.description,
-        image: threadImages.find(img => img.name === `${thread.id}.png`)?.url,
-      };
-    });
+        timeAgo,
+        dateCreated: thread.posted_datetime,
+        readTime: `${thread.read_duration} mins read`,
+        views: String(thread.num_views ?? 0),
+        comments: String(thread.num_comments ?? 0),
+        votes: String(thread.num_votes ?? 0),
+        tags: threadTopics,
+        hasImage: Boolean(threadImageUrl),
+        isVerified: user.role === 'admin' || user.role === 'moderator',
+        avatar,
+        threadImageUrl,
+        real_ratio: thread.real_ratio,
+        ai_verdict: thread.ai_verdict,
+        hasVoted: false
+      } as ThreadData;
+    })
+    .filter((thread): thread is ThreadData => thread !== null);
 
   return mockThreads;
 }
@@ -123,14 +182,16 @@ function calculateTimeAgo(timestamp: number | string | Date): string {
 export default function ProfileScreen() {
   const { user, uid, logout } = useAuthStore();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'threads' | 'activity'>('activity');
+  const [activeTab, setActiveTab] = useState<'threads' | 'activity'>('threads');
   const [debugTaps, setDebugTaps] = useState(0);
   const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
 
+  const users = useCollectionData('users');
   const threads = useCollectionData('threads');
+  const topics = useCollectionData('topics');
   const userImages = getImagesByFolder('users');
   const threadImages = getImagesByFolder('threads');
-  const mockThreads = getThreadData(uid, threads, threadImages);
+  const mockThreads = getThreadData(uid, users, threads, topics, userImages, threadImages);
 
   const handleLogout = () => {
     Alert.alert(
@@ -198,13 +259,20 @@ export default function ProfileScreen() {
   };
 
   const ThreadsSection = () => {
+
+    function navigateToThreadPage(thread: ThreadData) {
+      router.push({
+        pathname: '/home/thread',
+        params: { thread: JSON.stringify(thread) },
+      });
+    }
     return (
       <View style={styles.threadsContainer}>
         {mockThreads.map((thread) => (
-          <TouchableOpacity key={thread.id} style={styles.threadCard}>
-            {thread.image && (
+          <TouchableOpacity key={thread.id} style={styles.threadCard} onPress={() => navigateToThreadPage(thread)}>
+            {thread.threadImageUrl && (
               <Image
-                source={thread.image}
+                source={thread.threadImageUrl}
                 style={styles.threadImage}
                 cachePolicy="memory-disk"
               />
@@ -473,13 +541,18 @@ const styles = StyleSheet.create({
   },
   threadsContainer: {
     padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   threadCard: {
     backgroundColor: '#F8F9FA',
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 16,
-    boxShadow: '-4px 4px 8px #BEBEBE, 4px -4px 8px #FFFFFF',
+
   },
   threadImage: {
     width: '100%',
@@ -505,7 +578,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000',
     lineHeight: 20,
-    fontFamily: 'AnonymousPro-Bold',
   },
   errorText: {
     fontSize: 16,
