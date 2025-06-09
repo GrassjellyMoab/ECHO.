@@ -35,6 +35,7 @@ interface Thread {
     ai_verdict: string;
     description: string;
     is_real: boolean;
+    real_ratio: number;
     num_comments: number;
     num_views: number;
     num_votes: number;
