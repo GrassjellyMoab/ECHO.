@@ -1,12 +1,12 @@
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
+import { getTextColorForTag, tagColors } from '@/src/constants/posts';
 import { useCollectionData } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
+import { useRouter } from 'expo-router';
 import { Timestamp } from 'firebase/firestore';
 import React, { useMemo } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useRouter } from 'expo-router';
-import ThreadPage from './thread';
 
 interface ThreadData {
   id: string;
@@ -125,21 +125,15 @@ function calculateTimeAgo(timestamp: number | string | Date): string {
 
 const TagComponent = ({ tag }: { tag: string }) => {
   const getTagColor = (tagName: string) => {
-    switch (tagName.toLowerCase()) {
-      case 'health': return '#FC8476';
-      case 'cybersecurity': return '#FFD574';
-      case 'politics': return '#99AD43';
-      case 'whatsapp': return '#55C5D1';
-      case 'elections': return '#DBAFDA';
-      case 'finance': return '#99AD52';
-      case 'concerts': return '#DDA35F';
-      default: return '#757575';
-    }
+    return tagColors[tagName.toLowerCase()] || tagColors.default;
   };
 
+  const backgroundColor = getTagColor(tag);
+  const textColor = getTextColorForTag(backgroundColor);
+
   return (
-    <View style={[styles.tag, { backgroundColor: getTagColor(tag) }]}>
-      <Text style={styles.tagText}>{tag}</Text>
+    <View style={[styles.tag, { backgroundColor }]}>
+      <Text style={[styles.tagText, { color: textColor }]}>{tag}</Text>
     </View>
   );
 };
@@ -345,9 +339,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   tagText: {
-    color: '#000000',
     fontSize: 12,
     fontFamily: 'AnonymousPro',
+    fontWeight: 'bold',
   },
   threadImage: {
     width: '100%',

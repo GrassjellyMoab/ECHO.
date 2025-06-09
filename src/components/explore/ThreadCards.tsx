@@ -1,5 +1,6 @@
 import { SwipeResultModal } from '@/src/components/explore/Justification';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
+import { getTextColorForTag, tagColors } from '@/src/constants/posts';
 import { useCollectionData } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
 import { Image } from 'expo-image';
@@ -296,26 +297,23 @@ const SwipeableCards: React.FC = () => {
           </View>
 
           <View style={styles.tagsContainer}>
-            {card.article.tags.slice(0, 3).map((tag, idx) => (
-              <View
-                key={idx}
-                style={[
-                  styles.tag,
-                  idx === 0 ? styles.tagRed :
-                    idx === 1 ? styles.tagYellow :
-                      styles.tagBlue
-                ]}
-              >
-                <Text style={[
-                  styles.tagText,
-                  idx === 0 ? styles.tagTextRed :
-                    idx === 1 ? styles.tagTextYellow :
-                      styles.tagTextBlue
-                ]}>
-                  {tag}
-                </Text>
-              </View>
-            ))}
+            {card.article.tags.slice(0, 3).map((tag, idx) => {
+              const backgroundColor = tagColors[tag.toLowerCase()] || tagColors.default;
+              const textColor = getTextColorForTag(backgroundColor);
+              return (
+                <View
+                  key={idx}
+                  style={[
+                    styles.tag,
+                    { backgroundColor }
+                  ]}
+                >
+                  <Text style={[styles.tagText, { color: textColor }]}>
+                    {tag}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
 
           <Text style={styles.articleContent} numberOfLines={3}>{card.article.content}</Text>
@@ -537,27 +535,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
-  tagRed: {
-    backgroundColor: '#fee2e2',
-  },
-  tagYellow: {
-    backgroundColor: '#fef3c7',
-  },
-  tagBlue: {
-    backgroundColor: '#dbeafe',
-  },
   tagText: {
     fontSize: 10,
-    fontWeight: '500',
-  },
-  tagTextRed: {
-    color: '#dc2626',
-  },
-  tagTextYellow: {
-    color: '#d97706',
-  },
-  tagTextBlue: {
-    color: '#2563eb',
+    fontWeight: 'bold',
   },
   articleContent: {
     fontSize: 15,

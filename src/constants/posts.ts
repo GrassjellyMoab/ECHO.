@@ -103,17 +103,39 @@ export const dummyPosts = [
 ];
 
 export const tagColors: { [key: string]: string } = {
-  'Health': '#FF9999',
-  'Cybersecurity': '#FFD700',
-  'WhatsApp': '#87CEEB',
-  'Technology': '#98FB98',
-  'AI': '#DDA0DD',
-  'Finance': '#F0E68C',
-  'Crypto': '#FFB6C1',
-  'Economy': '#B0E0E6',
-  'Environment': '#90EE90',
-  'Politics': '#F0E68C',
-  'Climate': '#87CEEB',
-  'Science': '#DDA0DD',
-  'Space': '#FFB6C1'
+  'health': '#BFDBFE',        // Very light blue - cool medical
+  'cybersecurity': '#FDE68A', // Light yellow - security alerts
+  'politics': '#DBEAFE',      // Very light blue - political
+  'whatsapp': '#D1FAE5',      // Very light mint green
+  'elections': '#E0F2FE',     // Very light sky blue - democratic
+  'finance': '#CCFBF1',       // Very light teal - money
+  'concerts': '#FCE7F3',      // Very light pink - entertainment
+  'technology': '#E2E8F0',    // Very light gray - tech
+  'ai': '#C7D2FE',           // Very light indigo - futuristic
+  'crypto': '#E0F7FA',       // Very light cyan - digital
+  'economy': '#D1FAE5',      // Very light green - economic
+  'environment': '#ECFDF5',   // Very light green - nature
+  'climate': '#F0FDFA',      // Very light teal - environmental
+  'science': '#E0F7FA',      // Very light cyan - academic
+  'space': '#E0F2FE',        // Very light sky blue - cosmic
+  'default': '#F1F5F9'       // Very light gray fallback
+};
+
+// Function to generate darker text color from background color
+export const getTextColorForTag = (backgroundColor: string): string => {
+  // Remove # and convert to RGB
+  const hex = backgroundColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  
+  // Darken significantly more for better contrast on light backgrounds
+  const darkenedR = Math.max(0, Math.floor(r * 0.3));
+  const darkenedG = Math.max(0, Math.floor(g * 0.3));
+  const darkenedB = Math.max(0, Math.floor(b * 0.3));
+  
+  // Convert back to hex
+  const toHex = (n: number) => n.toString(16).padStart(2, '0');
+  return `#${toHex(darkenedR)}${toHex(darkenedG)}${toHex(darkenedB)}`;
 }; 
+

@@ -1,32 +1,32 @@
+import { getTextColorForTag, tagColors } from '@/src/constants/posts';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-interface PopularTopicsProps {
-  topics?: string[];
-  onTopicPress?: (topic: string) => void;
-}
-
-export const PopularTopics = ({ 
-  topics = ['Cybersecurity', 'Technology', 'Health', 'Finance', 'Politics', 'Sports'],
-  onTopicPress 
-}: PopularTopicsProps) => {
+const PopularTopics = () => {
+  const topics = ['Health', 'Politics', 'Finance', 'Technology', 'Cybersecurity'];
+  
   return (
     <View style={styles.sectionContainer}>
       <Text style={styles.sectionTitle}>Popular Topics</Text>
       <View style={styles.topicsContainer}>
-        {topics.map((topic, index) => (
-          <TouchableOpacity 
-            key={index} 
-            style={styles.topicTag}
-            onPress={() => onTopicPress?.(topic)}
-          >
-            <Text style={styles.topicText}>{topic}</Text>
-          </TouchableOpacity>
-        ))}
+        {topics.map((topic, index) => {
+          const backgroundColor = tagColors[topic.toLowerCase()] || tagColors.default;
+          const textColor = getTextColorForTag(backgroundColor);
+          return (
+            <TouchableOpacity 
+              key={index} 
+              style={[styles.topicTag, { backgroundColor }]}
+            >
+              <Text style={[styles.topicText, { color: textColor }]}>{topic}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
 };
+
+export default PopularTopics;
 
 const styles = StyleSheet.create({
   sectionContainer: {
@@ -48,15 +48,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   topicTag: {
-    backgroundColor: '#9C27B0',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
   topicText: {
-    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: 'bold',
     fontFamily: 'AnonymousPro-Bold',
   },
 });
