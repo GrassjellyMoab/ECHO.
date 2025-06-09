@@ -1,19 +1,18 @@
-import React, { useState } from 'react';
+import VotingSection from '@/src/components/thread/VotingSection'; // Import your updated VotingSection component
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { getTextColorForTag, tagColors } from '@/src/constants/posts';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { Image } from 'expo-image';
 import { Timestamp } from 'firebase/firestore';
-import VotingSection from '@/src/components/thread/VotingSection'; // Import your updated VotingSection component
-import { 
-  Image, 
-  ScrollView, 
-  StyleSheet, 
-  Text, 
-  TouchableOpacity, 
-  View, 
-  StatusBar,
+import React, { useState } from 'react';
+import {
+  Dimensions,
   SafeAreaView,
-  Dimensions
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -110,7 +109,11 @@ function ThreadPage() {
           <View style={styles.authorSection}>
             <View style={styles.authorContainer}>
               {threadData.avatar ? (
-                <Image source={{ uri: threadData.avatar }} style={styles.avatar} />
+                <Image 
+                  source={{ uri: threadData.avatar }} 
+                  style={styles.avatar}
+                  cachePolicy="memory-disk"
+                />
               ) : (
                 <View style={styles.avatar} />
               )}
@@ -135,7 +138,8 @@ function ThreadPage() {
               <Image
                 source={{ uri: threadData.threadImageUrl }}
                 style={styles.threadImage}
-                resizeMode="cover"
+                contentFit="cover"
+                cachePolicy="memory-disk"
               />
             )}
           </View>
