@@ -1,8 +1,10 @@
 import { SwipeResultModal } from '@/src/components/explore/Justification';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
+import { getTextColorForTag, tagColors } from '@/src/constants/posts';
 import { useCollectionData } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { Animated, Dimensions, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -32,6 +34,7 @@ const SWIPE_THRESHOLD = screenWidth * 0.15;
 const SWIPE_OUT_DURATION = 250;
 
 const SwipeableCards: React.FC = () => {
+  const router = useRouter();
   const threads = useCollectionData('threads');
   const topics = useCollectionData('topics');
   const users = useCollectionData('users');
@@ -100,9 +103,9 @@ const SwipeableCards: React.FC = () => {
         article: {
           author: '@' + user?.username,
           title: thread.title,
-          views: `${formatNumber(thread.num_views)} Views`,
-          comments: `${formatNumber(thread.num_comments)} Comments`,
-          votes: `${formatNumber(thread.num_votes)} Votes`,
+          views: `${formatNumber(thread.num_views)}`,
+          comments: `${formatNumber(thread.num_comments)}`,
+          votes: `${formatNumber(thread.num_votes)}`,
           tags: getTopicNames(thread.topics || []),
           content: thread.description,
           timeAgo: formatTimeAgo(thread.posted_datetime),
@@ -184,6 +187,41 @@ const SwipeableCards: React.FC = () => {
     handleModalClose();
   };
 
+  // Function to convert card back to thread data for navigation
+  const convertCardToThreadData = (card: Card) => {
+    const originalThread = threads.find(t => t.id === card.id);
+    const user = users.find(u => u.id === originalThread?.uid);
+    
+    return {
+      id: card.id,
+      author: card.article.author,
+      title: card.article.title,
+      timeAgo: card.article.timeAgo,
+      dateCreated: originalThread?.posted_datetime,
+      readTime: card.article.readTime,
+      views: card.article.views,
+      comments: card.article.comments,
+      votes: card.article.votes,
+      tags: card.article.tags,
+      hasImage: Boolean(card.image),
+      isVerified: card.article.isVerified,
+      avatar: card.article.avatar,
+      threadImageUrl: card.image,
+      content: card.article.content,
+      real_ratio: originalThread?.real_ratio || 0,
+      ai_verdict: card.aiVerdict
+    };
+  };
+
+  // Function to handle card tap navigation
+  const handleCardTap = (card: Card) => {
+    const threadData = convertCardToThreadData(card);
+    router.push({
+      pathname: '/search/thread',
+      params: { thread: JSON.stringify(threadData) },
+    });
+  };
+
   const getCardStyle = (index: number) => {
     const isCurrentCard = index === currentIndex;
 
@@ -255,16 +293,8 @@ const SwipeableCards: React.FC = () => {
 
     const isCurrentCard = index === currentIndex;
 
-    return (
-      <Animated.View
-        key={card.id}
-        style={[
-          styles.card,
-          getCardStyle(index),
-          { zIndex: cards.length - index },
-        ]}
-        {...(isCurrentCard ? panResponder.panHandlers : {})}
-      >
+    const cardContent = (
+      <>
         <View style={styles.imageSection}>
           <Image
             source={card.image}
@@ -280,39 +310,36 @@ const SwipeableCards: React.FC = () => {
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <IconSymbol name="eye" style={styles.icons} />
-              <Text style={styles.statText}>{card.article.views}</Text>
+              <Text style={styles.statText}>{card.article.views} Views</Text>
             </View>
             <View style={styles.statItem}>
               <IconSymbol name="message" style={styles.icons} />
-              <Text style={styles.statText}>{card.article.comments}</Text>
+              <Text style={styles.statText}>{card.article.comments} Comments</Text>
             </View>
             <View style={styles.statItem}>
               <IconSymbol name="arrow.up" style={styles.icons} />
-              <Text style={styles.statText}>{card.article.votes}</Text>
+              <Text style={styles.statText}>{card.article.votes} Votes</Text>
             </View>
           </View>
 
           <View style={styles.tagsContainer}>
-            {card.article.tags.slice(0, 3).map((tag, idx) => (
-              <View
-                key={idx}
-                style={[
-                  styles.tag,
-                  idx === 0 ? styles.tagRed :
-                    idx === 1 ? styles.tagYellow :
-                      styles.tagBlue
-                ]}
-              >
-                <Text style={[
-                  styles.tagText,
-                  idx === 0 ? styles.tagTextRed :
-                    idx === 1 ? styles.tagTextYellow :
-                      styles.tagTextBlue
-                ]}>
-                  {tag}
-                </Text>
-              </View>
-            ))}
+            {card.article.tags.slice(0, 3).map((tag, idx) => {
+              const backgroundColor = tagColors[tag.toLowerCase()] || tagColors.default;
+              const textColor = getTextColorForTag(backgroundColor);
+              return (
+                <View
+                  key={idx}
+                  style={[
+                    styles.tag,
+                    { backgroundColor }
+                  ]}
+                >
+                  <Text style={[styles.tagText, { color: textColor }]}>
+                    {tag}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
 
           <Text style={styles.articleContent} numberOfLines={3}>{card.article.content}</Text>
@@ -341,8 +368,34 @@ const SwipeableCards: React.FC = () => {
             </View>
           </View>
         </View>
+      </>
+    );
 
-        {/* Swipe Indicators */}
+    return (
+      <Animated.View
+        key={card.id}
+        style={[
+          styles.card,
+          getCardStyle(index),
+          { zIndex: cards.length - index },
+        ]}
+        {...(isCurrentCard ? panResponder.panHandlers : {})}
+      >
+        {isCurrentCard ? (
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => handleCardTap(card)}
+            style={styles.cardTouchable}
+          >
+            {cardContent}
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.cardTouchable}>
+            {cardContent}
+          </View>
+        )}
+
+        {/* Swipe Indicators - only show for current card */}
         {isCurrentCard && (
           <>
             <Animated.View
@@ -382,8 +435,6 @@ const SwipeableCards: React.FC = () => {
     );
   };
 
-
-
   if (currentIndex >= cards.length) {
     return (
       <View style={styles.container}>
@@ -400,7 +451,6 @@ const SwipeableCards: React.FC = () => {
       <View style={styles.cardContainer}>
         {cards.map((card, index) => renderCard(card, index)).reverse()}
       </View>
-
 
       <View style={styles.instructionsContainer}>
         <TouchableOpacity
@@ -534,27 +584,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
-  tagRed: {
-    backgroundColor: '#fee2e2',
-  },
-  tagYellow: {
-    backgroundColor: '#fef3c7',
-  },
-  tagBlue: {
-    backgroundColor: '#dbeafe',
-  },
   tagText: {
     fontSize: 10,
-    fontWeight: '500',
-  },
-  tagTextRed: {
-    color: '#dc2626',
-  },
-  tagTextYellow: {
-    color: '#d97706',
-  },
-  tagTextBlue: {
-    color: '#2563eb',
+    fontWeight: 'bold',
   },
   articleContent: {
     fontSize: 15,
@@ -702,7 +734,9 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#666',
   },
-
+  cardTouchable: {
+    flex: 1,
+  },
 });
 
 export default SwipeableCards;

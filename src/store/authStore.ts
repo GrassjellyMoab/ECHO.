@@ -10,28 +10,15 @@ export interface User {
   id: string;
   username: string;
   email?: string;
-  firstName?: string;
-  lastName?: string;
+  first_name?: string;
+  last_name?: string;
   avatar?: string;
   bio?: string;
   isVerified?: boolean;
   joinDate?: string;
   followers?: number;
   followees?: number;
-  // stats: {
-  //   threads: number;
-  //   comments: number;
-  //   upvotes: number;
-  //   followers: number;
-  //   following: number;
-  //   points: number;
-  // };
-  // preferences: {
-  //   notifications: boolean;
-  //   darkMode: boolean;
-  //   fontSize: 'small' | 'medium' | 'large';r
-  //   language: string;
-  // };
+  role: 'user' | 'moderator' | 'admin';
 }
 
 interface AuthState {
@@ -41,16 +28,21 @@ interface AuthState {
   user: User | null;
   firebaseUser: FirebaseUser | null;
   uid: string;
-  
+
   // Authentication actions
   login: (credentials: { username: string; password: string }) => Promise<{ success: boolean; error?: string }>;
   register: (userData: { username: string; email: string; password: string; confirmPassword: string }) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
-  
+
   // Firebase Auth management
   initializeAuth: () => (() => void) | undefined;
   setFirebaseUser: (firebaseUser: FirebaseUser | null) => Promise<void>;
-  
+
+  // Role-based authorization helpers
+  isModerator: () => boolean;
+  isUser: () => boolean;
+  getUserRole: () => 'user' | 'moderator' | 'admin' | null;
+
   // Utility actions
   setLoading: (loading: boolean) => void;
   clearError: () => void;
@@ -63,7 +55,7 @@ const getUserDocument = async (uid: string): Promise<User | null> => {
   try {
     const userRef = doc(db, 'users', uid);
     const userSnap = await getDoc(userRef);
-    
+
     if (userSnap.exists()) {
       return userSnap.data() as User;
     }
@@ -83,14 +75,14 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       firebaseUser: null,
       uid: '',
-      
+
       // Initialize Firebase Auth listener
       initializeAuth: () => {
         set({ isLoading: true });
-        
+
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
           console.log('🔥 Auth state changed:', firebaseUser ? `User: ${firebaseUser.uid}` : 'No user');
-          
+
           if (firebaseUser) {
             console.log('🔥 Firebase user details:', {
               uid: firebaseUser.uid,
@@ -113,11 +105,27 @@ export const useAuthStore = create<AuthState>()(
             });
           }
         });
-        
+
         // Return unsubscribe function for cleanup
         return unsubscribe;
       },
-      
+
+      // Role-based authorization helpers
+      isModerator: () => {
+        const { user } = get();
+        return user?.role === 'moderator';
+      },
+
+      isUser: () => {
+        const { user } = get();
+        return user?.role === 'user';
+      },
+
+      getUserRole: () => {
+        const { user } = get();
+        return user?.role || null;
+      },
+
       // Set Firebase user and fetch user data
       setFirebaseUser: async (firebaseUser: FirebaseUser | null) => {
         if (firebaseUser) {
@@ -160,31 +168,31 @@ export const useAuthStore = create<AuthState>()(
           });
         }
       },
-      
+
       // Authentication actions
       login: async (credentials) => {
         set({ isLoading: true });
-        
+
         try {
           // Use the username as email directly if it contains @
           // Otherwise, you'll need to implement username->email lookup
-          const email = credentials.username.includes('@') 
-            ? credentials.username 
+          const email = credentials.username.includes('@')
+            ? credentials.username
             : credentials.username; // For now, assume username IS the email
-          
+
           console.log('Attempting login with email:', email);
           const userCredential = await signInWithEmailAndPassword(auth, email, credentials.password);
           console.log('Login successful, user:', userCredential.user.uid);
-          
+
           // Firebase Auth state change will handle the rest
           return { success: true };
         } catch (error: any) {
           console.log('🔐 Login failed:', error?.code || 'Unknown error');
           set({ isLoading: false });
-          
+
           // Handle specific Firebase Auth errors
           let errorMessage = 'Login failed. Please try again.';
-          
+
           if (error?.code) {
             switch (error.code) {
               case 'auth/invalid-email':
@@ -212,31 +220,31 @@ export const useAuthStore = create<AuthState>()(
                 errorMessage = 'Login failed. Please check your credentials.';
             }
           }
-          
+
           return { success: false, error: errorMessage };
         }
       },
-      
+
       register: async (userData) => {
         set({ isLoading: true });
-        
+
         try {
           const userCredential = await createUserWithEmailAndPassword(
-            auth, 
-            userData.email, 
+            auth,
+            userData.email,
             userData.password
           );
-          
+
           // Firebase Auth state change will handle the rest
           // User document should already exist in Firestore (managed externally)
           return { success: true };
         } catch (error: any) {
           console.log('📝 Registration failed:', error?.code || 'Unknown error');
           set({ isLoading: false });
-          
+
           // Handle specific Firebase Auth errors
           let errorMessage = 'Registration failed. Please try again.';
-          
+
           if (error?.code) {
             switch (error.code) {
               case 'auth/email-already-in-use':
@@ -255,11 +263,11 @@ export const useAuthStore = create<AuthState>()(
                 errorMessage = 'Registration failed. Please try again.';
             }
           }
-          
+
           return { success: false, error: errorMessage };
         }
       },
-      
+
       logout: async () => {
         try {
           console.log('🧹 Cleaning up data store on logout...');
@@ -270,7 +278,7 @@ export const useAuthStore = create<AuthState>()(
           console.error('Logout error:', error);
         }
       },
-      
+
       // Utility actions
       setLoading: (loading) => set({ isLoading: loading }),
       clearError: () => {

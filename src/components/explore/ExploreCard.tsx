@@ -1,13 +1,14 @@
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
+import { tagColors as defaultTagColors, getTextColorForTag } from '@/src/constants/posts';
 import React from 'react';
 import {
-  Animated,
-  Dimensions,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Dimensions,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -42,7 +43,7 @@ interface ExploreCardProps {
   translateX?: Animated.Value;
   translateY?: Animated.Value;
   scale?: Animated.Value;
-  tagColors: { [key: string]: string };
+  tagColors?: { [key: string]: string };
 }
 
 const ExploreCard = React.forwardRef<View, ExploreCardProps>(({
@@ -52,7 +53,7 @@ const ExploreCard = React.forwardRef<View, ExploreCardProps>(({
   translateX,
   translateY,
   scale,
-  tagColors,
+  tagColors = defaultTagColors,
 }, ref) => {
   // Safety check - return null if no post provided
   if (!post) return null;
@@ -92,10 +93,10 @@ ExploreCard.displayName = 'ExploreCard';
 
 interface CardContentProps {
   post: Post;
-  tagColors: { [key: string]: string };
+  tagColors?: { [key: string]: string };
 }
 
-function CardContent({ post, tagColors }: CardContentProps) {
+function CardContent({ post, tagColors = defaultTagColors }: CardContentProps) {
   return (
     <>
       {/* Static Example Image */}
@@ -123,11 +124,15 @@ function CardContent({ post, tagColors }: CardContentProps) {
 
         {/* Tags */}
         <View style={styles.tagsContainer}>
-          {post.tags.map((tag, index) => (
-            <View key={index} style={[styles.tag, { backgroundColor: tagColors[tag] || '#E5E7EB' }]}>
-              <Text style={styles.tagText}>{tag}</Text>
-            </View>
-          ))}
+          {post.tags.map((tag, index) => {
+            const backgroundColor = tagColors[tag.toLowerCase()] || tagColors.default || '#E5E7EB';
+            const textColor = getTextColorForTag(backgroundColor);
+            return (
+              <View key={index} style={[styles.tag, { backgroundColor }]}>
+                <Text style={[styles.tagText, { color: textColor }]}>{tag}</Text>
+              </View>
+            );
+          })}
         </View>
 
         {/* Post Excerpt */}
@@ -235,8 +240,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 9,
-    color: '#000',
-    fontWeight: '600',
+    fontWeight: 'bold',
     fontFamily: 'AnonymousPro-Bold',
   },
   postExcerpt: {

@@ -13,6 +13,7 @@ export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchState, setIsSearchState] = useState(false);
   const [showTopics, setShowTopics] = useState(false); // Add this state
+  const [topic, setTopic] = useState('');
   const lastFocusTime = useRef(Date.now());
   const searchInputRef = useRef<TextInput>(null);
 
@@ -53,6 +54,7 @@ export default function SearchScreen() {
   // Add this function to handle topic selection
   const handleTopicPress = (topic: string) => {
     setShowTopics(true);
+    setTopic(topic);
   };
 
   const router = useRouter();
@@ -90,7 +92,7 @@ export default function SearchScreen() {
   
       {showTopics ? (
         // Show Topics component
-        <Topics onBack={() => setShowTopics(false)} />
+        <Topics topic={topic} onBack={() => setShowTopics(false)} />
       ) : isSearchState ? (
         <ScrollView 
           style={styles.scrollContent}
@@ -140,8 +142,8 @@ const styles = StyleSheet.create({
   },
   searchSection: {
     backgroundColor: '#FFFFFF',
-    padding: 20,
-    marginVertical: 10,
+    paddingHorizontal: 20,
+    marginTop: 20,
     zIndex: 1,
   },
   searchContainer: {
@@ -163,6 +165,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flex: 1,
+    marginTop: 10,
   },
   content: {
     paddingHorizontal: 20,

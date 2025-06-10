@@ -64,6 +64,7 @@ interface Leaderboard {
 interface Comment {
     id: string;
     date: Date;
+    is_flagged: boolean;
     is_pinned: boolean;
     num_likes: number;
     num_replies: number;
