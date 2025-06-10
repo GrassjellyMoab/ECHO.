@@ -1,18 +1,18 @@
-import VotingSection from '@/src/components/thread/VotingSection'; // Import your updated VotingSection component
+import VotingSection from '@/src/components/thread/VotingSection';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { getTextColorForTag, tagColors } from '@/src/constants/posts';
-import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Timestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
 import {
-  Dimensions,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Dimensions,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -60,12 +60,20 @@ const TagComponent = ({ tag }: { tag: string }) => {
 };
 
 function ThreadPage() {
-  const route = useRoute();
-  const navigation = useNavigation();
-  const { thread } = route.params as { thread: string };
+  const router = useRouter();
+  const { thread } = useLocalSearchParams();
   
   // Parse the thread data from JSON string
-  const threadData: ThreadData = JSON.parse(thread);
+  const threadData: ThreadData = JSON.parse(thread as string);
+  
+  // Add debug logging
+  console.log('=== APP THREAD PAGE DEBUG ===');
+  console.log('threadData:', threadData);
+  console.log('hasImage:', threadData.hasImage);
+  console.log('threadImageUrl:', threadData.threadImageUrl);
+  console.log('avatar:', threadData.avatar);
+  console.log('hasVoted:', threadData.hasVoted);
+  console.log('============================');
 
   // Calculate vote counts based on real_ratio
   const totalVoteCount = parseInt(threadData.votes);
@@ -94,12 +102,17 @@ function ThreadPage() {
   // Determine if content is fake based on real_ratio
   const isFake = threadData.real_ratio < 0.5;
 
+  // Navigate back to search page specifically
+  const handleBackPress = () => {
+    router.push('/(tabs)/search');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} stickyHeaderIndices={[0]}>
 
           {/* Back button */}
-          <TouchableOpacity onPress={() => navigation.goBack()}  style={styles.backBtn}>
+          <TouchableOpacity onPress={handleBackPress} style={styles.backBtn}>
             <IconSymbol name="arrow-back" size={23} color="#662D91" />
           </TouchableOpacity>
           <View style={styles.content}>
@@ -350,4 +363,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ThreadPage;
+export default ThreadPage; 

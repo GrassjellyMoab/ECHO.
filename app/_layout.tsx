@@ -155,6 +155,7 @@ export default function RootLayout() {
     const inAuthGroup = segments[0] === '(auth)';
     const inTabsGroup = segments[0] === '(tabs)';
     const inSplashGroup = segments[0] === '(splash)';
+    const isThreadRoute = segments[0] === 'thread';
 
     console.log('🧭 Navigation check:', {
       isAuthenticated,
@@ -162,7 +163,8 @@ export default function RootLayout() {
       splashComplete,
       segments: segments[0],
       appReady,
-      isLoading
+      isLoading,
+      isThreadRoute
     });
 
     // Navigation logic
@@ -170,8 +172,8 @@ export default function RootLayout() {
       // Show splash animation
       console.log('🎬 Showing splash animation');
       router.replace('/(splash)');
-    } else if (isAuthenticated && !inTabsGroup) {
-      // User is authenticated
+    } else if (isAuthenticated && !inTabsGroup && !isThreadRoute) {
+      // User is authenticated (but allow thread route to pass through)
       console.log('✅ User authenticated, navigating to tabs');
       router.replace('/(tabs)/home');
     } else if (!isAuthenticated && !inAuthGroup) {

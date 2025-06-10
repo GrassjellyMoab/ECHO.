@@ -1,4 +1,5 @@
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
@@ -19,6 +20,26 @@ interface Post {
   sources: string[];
 }
 
+interface ThreadData {
+  id: string;
+  author: string;
+  title: string;
+  timeAgo: string;
+  dateCreated: any;
+  readTime: string;
+  views: string;
+  comments: string;
+  votes: string;
+  tags: string[];
+  hasImage: boolean;
+  isVerified: boolean;
+  avatar?: string;
+  threadImageUrl?: string;
+  content: string;
+  real_ratio: number;
+  ai_verdict: string;
+}
+
 interface FeedbackModalProps {
   visible: boolean;
   userChoice: 'FAKE' | 'REAL';
@@ -26,6 +47,7 @@ interface FeedbackModalProps {
   post: Post;
   onClose: () => void;
   onSeeThread?: () => void;
+  threadData?: ThreadData; // Optional thread data for navigation
 }
 
 export default function FeedbackModal({
@@ -35,7 +57,9 @@ export default function FeedbackModal({
   post,
   onClose,
   onSeeThread,
+  threadData,
 }: FeedbackModalProps) {
+  const router = useRouter();
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -120,7 +144,20 @@ export default function FeedbackModal({
         </View>
 
         {/* See Thread button */}
-        <TouchableOpacity style={styles.seeThreadButton} onPress={onSeeThread}>
+        <TouchableOpacity 
+          style={styles.seeThreadButton} 
+          onPress={() => {
+            if (onSeeThread) {
+              onSeeThread();
+            } else if (threadData) {
+              // Default navigation behavior if no custom onSeeThread provided
+              router.push({
+                pathname: '/search/thread',
+                params: { thread: JSON.stringify(threadData) },
+              });
+            }
+          }}
+        >
           <Text style={styles.seeThreadText}>SEE THREAD</Text>
         </TouchableOpacity>
       </Animated.View>

@@ -50,6 +50,8 @@ const SwipeableCards: React.FC = () => {
     explanation: string;
     sources: string[];
   } | null>(null);
+  
+
 
   // Helper function to format numbers
   const formatNumber = (num: number): string => {
@@ -169,7 +171,7 @@ const SwipeableCards: React.FC = () => {
     });
     setShowResultModal(true);
 
-    // Proceed to next card after a short delay
+    // Always proceed to next card after a short delay (restore original behavior)
     setTimeout(() => {
       setCurrentIndex(prev => prev + 1);
       position.setValue({ x: 0, y: 0 });
@@ -183,11 +185,32 @@ const SwipeableCards: React.FC = () => {
     setCurrentResult(null);
   };
 
+
+
   // Add this function to handle "See Thread" button
   const handleSeeThread = () => {
-    // Navigate to thread details or perform desired action
-    console.log('Navigate to thread details');
+    console.log('handleSeeThread called');
+    if (!currentResult) {
+      console.log('No currentResult, returning');
+      return;
+    }
+    
+    // Find the current card to get thread data
+    const currentCard = cards[currentIndex - 1]; // currentIndex is already incremented
+    if (!currentCard) {
+      console.log('No currentCard found, returning');
+      return;
+    }
+    
+    const threadData = convertCardToThreadData(currentCard);
+    console.log('Navigating to /search/thread with data:', threadData.title);
     handleModalClose();
+    
+    // Navigate to search tab-level thread page instead of app-level
+    router.push({
+      pathname: '/search/thread',
+      params: { thread: JSON.stringify(threadData) },
+    });
   };
 
   // Function to convert card back to thread data for navigation
@@ -206,13 +229,14 @@ const SwipeableCards: React.FC = () => {
       comments: card.article.comments,
       votes: card.article.votes,
       tags: card.article.tags,
-      hasImage: Boolean(card.image),
+      hasImage: Boolean(card.image && card.image !== null),
       isVerified: card.article.isVerified,
       avatar: card.article.avatar,
-      threadImageUrl: card.image,
+      threadImageUrl: card.image || null,
       content: card.article.content,
       real_ratio: originalThread?.real_ratio || 0,
-      ai_verdict: card.aiVerdict
+      ai_verdict: card.aiVerdict,
+      hasVoted: false // Add this missing property
     };
   };
 
@@ -438,7 +462,7 @@ const SwipeableCards: React.FC = () => {
     );
   };
 
-  if (currentIndex >= cards.length) {
+  if (currentIndex >= cards.length && !showResultModal) {
     return (
       <View style={styles.container}>
         <View style={styles.noMoreCards}>
