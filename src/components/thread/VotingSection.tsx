@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View, Animated } from 'react-native';
 import { IconSymbol } from '../ui/IconSymbol';
 
 interface VoteData {
@@ -17,17 +17,34 @@ interface VotingSectionProps {
 
 const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVoted, aiVerdict }) => {
   const [showResults, setShowResults] = useState(hasVoted);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const totalVotes = voteData.real + voteData.fake;
   const realPercentage = totalVotes > 0 ? (voteData.real / totalVotes) * 100 : 0;
   const fakePercentage = totalVotes > 0 ? (voteData.fake / totalVotes) * 100 : 0;
+  const isReal = realPercentage > 50;
+  const verdictText = isReal ? "REAL." : "FAKE.";
+  const verdictStyle = isReal ? styles.realText : styles.fakeText;
 
   const handleVote = (vote: 'real' | 'fake') => {
-    onVote(vote);
-    setShowResults(true);
+    // Start fade out animation
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 400,
+      useNativeDriver: true,
+    }).start(() => {
+      // After fade out completes, update vote and show results
+      onVote(vote);
+      setShowResults(true);
+      
+      // Fade back in
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
+    });
   };
-
-  const screenHeight = Dimensions.get('window').height;
 
   // Dynamic overlay style that ensures full coverage
   const overlayStyle = {
@@ -48,22 +65,26 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
   if (!showResults) {
     // Show the "Want to see results" prompt
     return (
-      <View style={styles.votingSectionContainer}>
+      <Animated.View style={[styles.votingSectionContainer, { opacity: fadeAnim }]}>
         {/* Hidden content underneath - rendered to maintain consistent sizing */}
         <View style={styles.resultsSection}>
-          <Text style={styles.votingDecision}>
-            You voted <Text style={styles.fakeText}>{voteData.userVote?.toUpperCase()}.</Text>
-          </Text>
-          <Text style={styles.overallVotes}>Overall Votes:</Text>
+            <Text style={styles.votingResults}>
+                Overall Votes: <Text style={verdictStyle}>{verdictText}</Text>
+            </Text>
+            <Text style={styles.votingDecision}>You voted {voteData.userVote?.toUpperCase()}.</Text>
 
           <View style={styles.voteBarContainer}>
             <View style={styles.voteBar}>
-              <View style={[styles.realBar, { width: `${realPercentage}%` }]} />
-              <View style={[styles.fakeBar, { width: `${fakePercentage}%` }]} />
-            </View>
-            <View style={styles.votePercentages}>
-              <Text>{Math.round(realPercentage)}%</Text>
-              <Text>{Math.round(fakePercentage)}%</Text>
+              <View style={[styles.realBar, { width: `${realPercentage}%` }]}>
+                {realPercentage > 15 && (
+                  <Text style={styles.realPercentageTextInside}>{Math.round(realPercentage)}%</Text>
+                )}
+              </View>
+              <View style={[styles.fakeBar, { width: `${fakePercentage}%` }]}>
+                {fakePercentage > 15 && (
+                  <Text style={styles.fakePercentageTextInside}>{Math.round(fakePercentage)}%</Text>
+                )}
+              </View>
             </View>
           </View>
 
@@ -108,28 +129,31 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
 
           </View>
         </View>
-      </View>
+      </Animated.View>
     );
   }
-
   // Show the results after voting or if already voted
   return (
-    <View style={styles.votingSectionContainer}>
+    <Animated.View style={[styles.votingSectionContainer, { opacity: fadeAnim }]}>
+
       {/* Voting Results Section */}
       <View style={styles.resultsSection}>
-        <Text style={styles.votingDecision}>
-          You voted <Text style={styles.fakeText}>{voteData.userVote?.toUpperCase()}.</Text>
+        <Text style={styles.votingResults}>
+            Overall Votes: <Text style={verdictStyle}>{verdictText}</Text>
         </Text>
-        <Text style={styles.overallVotes}>Overall Votes:</Text>
+        <Text style={styles.votingDecision}>You voted {voteData.userVote?.toUpperCase()}.</Text>
 
         <View style={styles.voteBar}>
-          <View style={[styles.realBar, { width: `${realPercentage}%` }]} />
-          <View style={[styles.fakeBar, { width: `${fakePercentage}%` }]} />
-        </View>
-
-        <View style={styles.votePercentages}>
-          <Text>{Math.round(realPercentage)}%</Text>
-          <Text>{Math.round(fakePercentage)}%</Text>
+          <View style={[styles.realBar, { width: `${realPercentage}%` }]}>
+            {realPercentage > 15 && (
+              <Text style={styles.realPercentageTextInside}>{Math.round(realPercentage)}%</Text>
+            )}
+          </View>
+          <View style={[styles.fakeBar, { width: `${fakePercentage}%` }]}>
+            {fakePercentage > 15 && (
+              <Text style={styles.fakePercentageTextInside}>{Math.round(fakePercentage)}%</Text>
+            )}
+          </View>
         </View>
       </View>
 
@@ -143,7 +167,7 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
           <Text style={styles.aiText}>{aiVerdict}</Text>
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 };
 
@@ -153,7 +177,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     minHeight: Dimensions.get('window').height * 0.3,
   },
-  // Removed overlay from StyleSheet since it's now dynamic
   votingPrompt: {
     fontSize: 20,
     color: '#333',
@@ -204,17 +227,21 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   votingDecision: {
-    fontSize: 20,
-    color: '#333',
+    fontSize: 18,
+    color: '#000',
     marginBottom: 10,
     fontFamily: 'AnonymousPro-Bold',
   },
   fakeText: {
-    color: '#DC2626',
+    color: '#C73535',
     fontWeight: 'bold',
   },
-  overallVotes: {
-    fontSize: 16,
+  realText: {
+    color: '#059669',
+    fontWeight: 'bold',
+  },
+  votingResults: {
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#000',
     marginBottom: 10,
@@ -231,12 +258,35 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#662D91',
+    position: 'relative',
   },
   realBar: {
     backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
   },
   fakeBar: {
     backgroundColor: '#662D91',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  realPercentageTextInside: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#662D91',
+    fontFamily: 'AnonymousPro-Bold',
+    position: 'absolute',
+    alignSelf: 'center',
+  },
+  fakePercentageTextInside: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
+    fontFamily: 'AnonymousPro-Bold',
+    position: 'absolute',
+    alignSelf: 'center',
   },
   votePercentages: {
     marginTop: 5,
@@ -251,7 +301,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(93, 52, 157, 0.16)',
     padding: 16,
     borderRadius: 12,
-    marginTop: 4,
+    marginTop: 12,
   },
   aiHeader: {
     flexDirection: 'row',
@@ -263,14 +313,14 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   aiTitle: {
-    fontSize: 16,
+    fontSize: 19,
     fontWeight: 'bold',
     color: '#000',
     fontFamily: 'AnonymousPro-Bold',
   },
   aiText: {
     fontSize: 14,
-    color: '#333',
+    color: '#000',
     lineHeight: 20,
     fontFamily: 'AnonymousPro',
   },

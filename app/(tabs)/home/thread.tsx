@@ -144,11 +144,6 @@ function ThreadPage() {
             )}
           </View>
 
-          {/* Dynamic Badge based on real_ratio */}
-          <View style={[styles.badge, isFake ? styles.fakeBadge : styles.realBadge]}>
-            <Text style={styles.badgeText}>{isFake ? 'Fake.' : 'Real.'}</Text>
-          </View>
-
           {/* Thread Title */}
           <Text style={styles.threadTitle}>{threadData.title}</Text>
 
@@ -276,29 +271,8 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 12,
   },
-  badge: {
-    alignSelf: 'flex-end',
-    paddingHorizontal: 15,
-    paddingVertical: 6,
-    borderRadius: 10,
-    marginTop: -32,
-    marginBottom: 20,
-    marginRight: 5,
-    zIndex:1
-  },
-  fakeBadge: {
-    backgroundColor: '#DC2626',
-  },
-  realBadge: {
-    backgroundColor: '#059669',
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-    fontFamily: 'AnonymousPro-Bold',
-  },
   threadTitle: {
+    marginTop: 10,
     fontSize: 24,
     fontWeight: 'bold',
     color: '#000',
@@ -345,7 +319,7 @@ const styles = StyleSheet.create({
   },
   threadContent: {
     fontSize: 16,
-    color: '#333',
+    color: '#000',
     lineHeight: 24,
     marginBottom: 20,
     fontFamily: 'AnonymousPro',
