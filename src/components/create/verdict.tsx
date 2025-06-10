@@ -13,9 +13,7 @@ interface SwipeResultModalProps {
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-// DEFAME API call function using local server (no auth required)
-// DEFAME API call function with proper image handling
-// DEFAME API call function with proper image handling
+// TODO: not enough information + truncate the justification else adjust text size if no choice
 const callDEFAMEAPI = async (claim: string, imageUri?: string) => {
   try {
     const baseURL = Platform.select({
@@ -24,9 +22,8 @@ const callDEFAMEAPI = async (claim: string, imageUri?: string) => {
       default: 'http://localhost:3004'
     });
 
-    // Build content array in DEFAME's format
     const content: Array<[string, string]> = [];
-    
+
     if (imageUri) {
       console.log('Processing image for fact-check:', imageUri);
       
@@ -40,7 +37,6 @@ const callDEFAMEAPI = async (claim: string, imageUri?: string) => {
         
         const blob = await response.blob();
         
-        // Check if blob is valid
         if (!blob || blob.size === 0) {
           throw new Error('Invalid image data received');
         }
@@ -63,22 +59,22 @@ const callDEFAMEAPI = async (claim: string, imageUri?: string) => {
 
         console.log('Image converted to base64, length:', imageBase64.length);
 
-        // Multimodal format: describe what we're fact-checking
+        // Add content as exact tuples that DEFAME expects
         if (claim && claim.trim()) {
-          // Both image and text claim
-          content.push(['text', `Please fact-check this claim: "${claim}"`]);
-          content.push(['text', 'The image is related to this claim:']);
-          content.push(['image', imageBase64]);
+          // Both text and image
+          content.push(["text", `Please fact-check this claim: "${claim}"`]);
+          content.push(["text", "The image is related to this claim:"]);
+          content.push(["image", imageBase64]);
         } else {
-          // Image-only fact-check
-          content.push(['text', 'Please fact-check the claims or information shown in this image:']);
-          content.push(['image', imageBase64]);
+          // Image only
+          content.push(["text", "Please fact-check the claims or information shown in this image:"]);
+          content.push(["image", imageBase64]);
         }
       } catch (imageError) {
         console.error('Error processing image:', imageError);
-        // Fallback to text-only if image processing fails
+        // Fallback to text-only
         if (claim && claim.trim()) {
-          content.push(['text', claim]);
+          content.push(["text", claim]);
           console.log('Falling back to text-only fact-check due to image error');
         } else {
           throw new Error('Cannot process image and no text claim provided');
@@ -89,51 +85,56 @@ const callDEFAMEAPI = async (claim: string, imageUri?: string) => {
       if (!claim || !claim.trim()) {
         throw new Error('No claim text or image provided for fact-checking');
       }
-      content.push(['text', claim]);
+      
+      // Simple text claim as tuple
+      content.push(["text", claim]);
     }
 
-    console.log('Submitting to DEFAME local server with', content.length, 'content elements');
-    console.log('Content types:', content.map(([type]) => type));
+    // Build the exact request body that DEFAME expects
+    const requestBody = {
+      content: content,
+      date: new Date().toISOString().split('T')[0]
+    };
 
-    // Submit to local DEFAME server
+    console.log('Submitting to DEFAME with exact tuple format:');
+    console.log('Content length:', content.length);
+    console.log('Content structure:', content.map(([type, data], index) => 
+      `${index}: [${type}, ${data.substring(0, 50)}${data.length > 50 ? '...' : ''}]`
+    ));
+    console.log('Date:', requestBody.date);
+
+    // Submit to DEFAME server
     const submitResponse = await fetch(`${baseURL}/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        content: content,
-        date: new Date().toISOString().split('T')[0]
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!submitResponse.ok) {
       const errorText = await submitResponse.text();
-      console.error('DEFAME API Error:', errorText);
+      console.error('DEFAME API Error Response:', errorText);
       throw new Error(`API Error: ${submitResponse.status} - ${errorText}`);
     }
 
     const result = await submitResponse.json();
     
-    // Enhanced logging to debug the response structure
-    console.log('DEFAME Response type:', typeof result);
-    console.log('DEFAME Response keys:', Object.keys(result || {}));
-    console.log('DEFAME Response (first 500 chars):', JSON.stringify(result).substring(0, 500));
+    console.log('DEFAME Response received successfully');
+    console.log('Response type:', typeof result);
+    console.log('Response keys:', Object.keys(result || {}));
+    console.log('Response preview:', JSON.stringify(result).substring(0, 500));
 
-    // Parse the response from local server
     if (result.error) {
       throw new Error(result.error);
     }
 
-    // Extract results from the response
     return parseLocalDEFAMEResults(result);
 
   } catch (error) {
     console.error('DEFAME API Error:', error);
     
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    
-    // Fallback response
     throw new Error(`Fact-checking failed: ${errorMessage}`);
   }
 };
@@ -182,6 +183,7 @@ const parseLocalDEFAMEResults = (result: any) => {
             } else if (actualVerdict.includes('supported')) {
               verdict = 'REAL';
             }
+            
             console.log('Extracted actual verdict from justification:', actualVerdict);
           } else {
             // Fallback: look for verdict keywords in the justification text
@@ -413,7 +415,8 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
           console.log('Starting fact-check with:', { 
             hasText: !!claim, 
             hasImage: !!imageUri,
-            textLength: claim?.length || 0
+            textLength: claim?.length || 0,
+            claimPreview: claim?.substring(0, 100)
           });
           
           const factCheckResult = await callDEFAMEAPI(claim || '', imageUri);
@@ -422,6 +425,12 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
           setExplanation(factCheckResult.explanation);
           setSources(factCheckResult.sources);
           setError(null);
+          
+          console.log('Fact-check completed successfully:', {
+            verdict: factCheckResult.verdict,
+            explanationLength: factCheckResult.explanation.length,
+            sourcesCount: factCheckResult.sources.length
+          });
         } catch (err) {
           console.error('Fact-check error:', err);
           const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -677,5 +686,3 @@ const styles = StyleSheet.create({
     fontFamily: 'AnonymousPro-Bold',
   },
 });
-
-// Remove the mock data since we're using real API data now
