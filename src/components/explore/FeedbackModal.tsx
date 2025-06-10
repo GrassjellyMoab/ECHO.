@@ -120,7 +120,14 @@ export default function FeedbackModal({
         </View>
 
         {/* See Thread button */}
-        <TouchableOpacity style={styles.seeThreadButton} onPress={onSeeThread}>
+        <TouchableOpacity 
+          style={styles.seeThreadButton} 
+          onPress={() => {
+            if (onSeeThread) {
+              onSeeThread();
+            }
+          }}
+        >
           <Text style={styles.seeThreadText}>SEE THREAD</Text>
         </TouchableOpacity>
       </Animated.View>

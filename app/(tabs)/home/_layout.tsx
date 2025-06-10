@@ -8,13 +8,6 @@ export default function HomeStack() {
         name="index" 
         options={{ headerShown: false }} // Your home screen
       />
-      <Stack.Screen 
-        name="thread" 
-        options={{ 
-          title: 'Thread',
-          headerShown: false
-        }} 
-      />
     </Stack>
   );
 }

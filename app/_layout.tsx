@@ -156,14 +156,14 @@ export default function RootLayout() {
     const inTabsGroup = segments[0] === '(tabs)';
     const inSplashGroup = segments[0] === '(splash)';
 
-    console.log('🧭 Navigation check:', {
-      isAuthenticated,
-      shouldShowSplash,
-      splashComplete,
-      segments: segments[0],
-      appReady,
-      isLoading
-    });
+    // console.log('🧭 Navigation check:', {
+    //   isAuthenticated,
+    //   shouldShowSplash,
+    //   splashComplete,
+    //   segments: segments[0],
+    //   appReady,
+    //   isLoading
+    // });
 
     // Navigation logic
     if (shouldShowSplash && !splashComplete && !inSplashGroup) {

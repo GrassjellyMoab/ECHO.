@@ -1,11 +1,11 @@
+import ThreadModal from '@/src/components/ThreadModal';
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { getTextColorForTag, tagColors } from '@/src/constants/posts';
 import { useCollectionData } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
-import { useRouter } from 'expo-router';
 import { Timestamp } from 'firebase/firestore';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface ThreadData {
@@ -142,18 +142,9 @@ const TagComponent = ({ tag }: { tag: string }) => {
   );
 };
 
-const ThreadCard = ({ thread }: { thread: ThreadData }) => {
-  const router = useRouter();
-
-  function navigateToThreadPage(thread: ThreadData){
-    router.push({
-    pathname: '/home/thread',
-    params: { thread: JSON.stringify(thread) },
-  });
-  }
-
+const ThreadCard = ({ thread, onThreadPress }: { thread: ThreadData; onThreadPress: (thread: ThreadData) => void }) => {
   return (
-    <TouchableOpacity style={styles.threadCard} onPress={() => navigateToThreadPage(thread)}>
+    <TouchableOpacity style={styles.threadCard} onPress={() => onThreadPress(thread)}>
       <View style={styles.threadHeader}>
         <View style={styles.authorContainer}>
           {thread.avatar ? (
@@ -211,22 +202,47 @@ const ThreadCard = ({ thread }: { thread: ThreadData }) => {
 
 export default function HomeScreen() {
   const mockThreads = useThreadData();
+  
+  // Add state for thread modal
+  const [showThreadModal, setShowThreadModal] = useState(false);
+  const [selectedThreadData, setSelectedThreadData] = useState<ThreadData | null>(null);
+
+  // Handle thread press
+  const handleThreadPress = (thread: ThreadData) => {
+    setSelectedThreadData(thread);
+    setShowThreadModal(true);
+  };
+
+  // Handle close modal
+  const handleCloseModal = () => {
+    setShowThreadModal(false);
+    setSelectedThreadData(null);
+  };
 
   return (
-    <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
-      <AppHeader />
+    <>
+      <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
+        <AppHeader />
 
-      <View style={styles.highlightsSection}>
-        <Text style={styles.sectionTitle}>TLDR.</Text>
-        <Text style={styles.sectionSubtitle}>this week's highlights</Text>
-      </View>
+        <View style={styles.highlightsSection}>
+          <Text style={styles.sectionTitle}>TLDR.</Text>
+          <Text style={styles.sectionSubtitle}>this week's highlights</Text>
+        </View>
 
-      <View style={styles.threadsContainer}>
-        {mockThreads.map((thread) => (
-          <ThreadCard key={thread.id} thread={thread} />
-        ))}
-      </View>
-    </ScrollView>
+        <View style={styles.threadsContainer}>
+          {mockThreads.map((thread) => (
+            <ThreadCard key={thread.id} thread={thread} onThreadPress={handleThreadPress} />
+          ))}
+        </View>
+      </ScrollView>
+      
+      {/* Thread Modal */}
+      <ThreadModal
+        visible={showThreadModal}
+        threadData={selectedThreadData}
+        onClose={handleCloseModal}
+      />
+    </>
   );
 }
 

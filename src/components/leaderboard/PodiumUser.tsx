@@ -6,7 +6,7 @@ export interface LeaderUser {
   rank: number;
   username: string;
   points: number;
-  avatar: string;
+  avatar: string | any; // Allow both URL strings and local assets
 }
 
 interface PodiumUserProps {
@@ -16,6 +16,14 @@ interface PodiumUserProps {
 }
 
 export const PodiumUser: React.FC<PodiumUserProps> = ({ user, position, height }) => {
+
+  // Handle both URL strings and local assets
+  const getAvatarSource = (avatar: string | any) => {
+    if (typeof avatar === 'string') {
+      return { uri: avatar };
+    }
+    return avatar; 
+  };
 
   const getCrownBackground = (rank: number) => {
     switch (rank) {
@@ -58,7 +66,7 @@ export const PodiumUser: React.FC<PodiumUserProps> = ({ user, position, height }
         />
         {/* User profile picture */}
         <Image 
-          source={{ uri:  user.avatar }} 
+          source={getAvatarSource(user.avatar)} 
           style={[
             styles.podiumAvatar, 
             position === 'center' && styles.centerAvatar,
