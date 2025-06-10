@@ -52,6 +52,8 @@ const iconMap: Record<string, { name: IoniconsGlyph | AntDesignGlyph | MaterialI
   'finance': { name: 'finance', library: 'materialcommunityicons' },
   'technology': { name: 'code', library: 'materialicons' },
   'cybersecurity': { name: 'security', library: 'materialicons' },
+  'sort': { name: 'sort', library: 'materialicons' },
+  'funnel': { name: 'funnel', library: 'ionicons' },
 };
 
 export function IconSymbol({ name, size = 24, color = '#000000', style }: IconSymbolProps) {
