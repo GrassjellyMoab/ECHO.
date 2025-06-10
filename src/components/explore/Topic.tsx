@@ -1,6 +1,8 @@
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
+import { useImagesStore } from '@/src/store/imgStore';
+import { Image } from 'expo-image';
 import React, { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Discussion {
   id: number;
@@ -12,74 +14,105 @@ interface Discussion {
 }
 
 interface TopicsProps {
+  topic: string;
   onBack?: () => void;
 }
 
-const Topics = ({ onBack }: TopicsProps) => {
+const health_titles = ["Has our Singhealth data been leaked?", "MOH has raised the dengue alert to...", "Bubble Tea Shops Face Tax Hike ...", "Sleep Position Tied to Parkinson's", "Avocados Contain Natural Stress ..."];
+const politics_titles = ["Did PAP win Sengkang GRC?", "Worker's Party running against PM ...", "Lawrence Wong the new Prime Minister?", "Did PAP win Sengkang GRC?", "Worker's Party running against PM ...", "Lawrence Wong the new Prime Minister?"];
+const finance_titles = ["Invest now! Guaranteed returns, ...", "Your account frozen. Verify ...", "Last chance: Double your money ...", "Urgent: Pay tax penalty or face ...", "Congratulations! You've won million ..."];
+const technology_titles = ["Congratulations! You won million ...", "Your account expires tomorrow. ...", "Whatsapp update: Add music to status.", "Is Whatsapp secretly tracking us?", "WhatsApp will charge fees unless ..."];
+const cybersecurity_titles = ["Hackers can remotely access your ...", "Government secretly installs ...", "Using incognito mode makes you ...", "Cybercriminals can steal passwords", "5G towers automatically download ..."];
+
+const Topics = ({ topic, onBack }: TopicsProps) => {
   const [selectedSort, setSelectedSort] = useState('MOST VOTERS');
+  const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
+  const userImages = getImagesByFolder('users');
+
+  let titles: string[] = [];
+  let num_vigilants = 0;
+
+  switch (topic) {
+    case "Health":
+      titles = health_titles;
+      num_vigilants = 401;
+      break;
+    case "Politics":
+      titles = politics_titles;
+      num_vigilants = 320;
+      break;
+    case "Finance":
+      titles = finance_titles;
+      num_vigilants = 506;
+      break;
+    case "Technology":
+      titles = technology_titles;
+      num_vigilants = 490;
+      break;
+    case "Cybersecurity":
+      titles = cybersecurity_titles;
+      num_vigilants = 506;
+      break;
+  }
 
   const discussions: Discussion[] = [
     {
       id: 1,
-      title: "Did PAP win Sengkang GRC?",
-      author: "User1",
+      title: titles[0],
+      author: "johndoe",
       timeAgo: "9 days ago",
       voters: 987,
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face"
+      avatar: require('@/src/assets/avatars/johndoe.png')
     },
     {
       id: 2,
-      title: "Worker's Party running against PM La...",
-      author: "User2",
+      title: titles[1],
+      author: "echoooo",
       timeAgo: "6 days ago",
       voters: 793,
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b2e70bb8?w=40&h=40&fit=crop&crop=face"
+      avatar: require('@/src/assets/avatars/echoooo.png')
     },
     {
       id: 3,
-      title: "Lawrence Wong the new Prime Minister of...",
-      author: "User3",
+      title: titles[2],
+      author: "notascammer",
       timeAgo: "2 days ago",
       voters: 734,
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
+      avatar: require('@/src/assets/avatars/notascammer.png')
     },
     {
       id: 4,
-      title: "Ministry of Health has retrenched ma...",
-      author: "User4",
+      title: titles[3],
+      author: "amychong23",
       timeAgo: "3 days ago",
       voters: 696,
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face"
+      avatar: require('@/src/assets/avatars/amychong23.png')
     },
     {
       id: 5,
-      title: "The government made a deal with Lady...",
-      author: "User5",
+      title: titles[4],
+      author: "chloe_tech",
       timeAgo: "9 days ago",
       voters: 650,
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face"
+      avatar: require('@/src/assets/avatars/chloe_tech.png')
     },
-    {
-      id: 6,
-      title: "Ministry of Health has retrenched ma...",
-      author: "User6",
-      timeAgo: "5 days ago",
-      voters: 542,
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40&h=40&fit=crop&crop=face"
-    }
-  ];
+];
+  const getActivityAvatarUrl = (username: string) => {
+    const cleanUsername = username.replace("@", "");
+    return userImages.find(img => img.name === `${cleanUsername}.png`)?.url || `https://via.placeholder.com/40x40/4A5568/ffffff?text=${cleanUsername.slice(0, 2).toUpperCase()}`;
+  };
 
   return (
     <View style={styles.container}>
       {/* Navigation Header */}
       <View style={styles.navigationHeader}>
         <View style={styles.headerContent}>
-          <IconSymbol name="person" size={20} color="#666" />
+          <IconSymbol name={topic.toLowerCase()} size={20} color="#666" style={styles.headerIcon} />
           <View style={styles.headerText}>
-            <Text style={styles.headerTitle}>Politics</Text>
+            <Text style={styles.headerTitle}>{topic}</Text>
             <View style={styles.headerSubtitleContainer}>
               <View style={styles.dot} />
-              <Text style={styles.headerSubtitle}>320 vigilants</Text>
+              <Text style={styles.headerSubtitle}>{num_vigilants} vigilants</Text>
             </View>
           </View>
         </View>
@@ -106,13 +139,14 @@ const Topics = ({ onBack }: TopicsProps) => {
             </Text>
             <View style={styles.discussionMeta}>
               <Image
-                source={{ uri: discussion.avatar }}
+                source={{ uri: getActivityAvatarUrl(discussion.author) }}
                 style={styles.avatar}
+                cachePolicy="memory-disk"
               />
               <View style={styles.metaText}>
                 <Text style={styles.metaItem}>{discussion.timeAgo}</Text>
                 <Text style={styles.metaItem}> | </Text>
-                <Text style={styles.metaItem}>Politics</Text>
+                <Text style={styles.metaItem}>{topic}</Text>
                 <Text style={styles.metaItem}> | </Text>
                 <Text style={styles.metaItem}>{discussion.voters} voters</Text>
               </View>
@@ -128,6 +162,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+    paddingHorizontal: 16,
+    marginTop: 10,
   },
   navigationHeader: {
     flexDirection: 'row',
@@ -140,6 +176,10 @@ const styles = StyleSheet.create({
   backButton: {
     marginRight: 16,
   },
+  headerIcon: {
+    fontSize: 40,
+    color: '#662D91',
+  },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -151,6 +191,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#000',
+    fontFamily: 'AnonymousPro-Bold',
   },
   headerSubtitleContainer: {
     flexDirection: 'row',
@@ -158,15 +199,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#9C27B0',
-    marginRight: 4,
+    width: 10,
+    height: 10,
+    borderRadius: '50%',
+    backgroundColor: '#662D91',
+    marginRight: 8,
   },
   headerSubtitle: {
     fontSize: 14,
     color: '#666',
+    fontFamily: 'AnonymousPro-Bold',
   },
   sortFilter: {
     flexDirection: 'row',
@@ -188,6 +230,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginRight: 8,
+    fontFamily: 'AnonymousPro-Bold',
   },
   discussionList: {
     flex: 1,
@@ -203,6 +246,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#1F2937',
     marginBottom: 12,
+    fontFamily: 'AnonymousPro-Bold',
   },
   discussionMeta: {
     flexDirection: 'row',

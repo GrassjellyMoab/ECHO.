@@ -22,6 +22,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image } from 'react-native';
+import { SwipeResultModal } from '@/src/components/create/verdict';
 
 
 type TabsParamList = {
@@ -52,6 +53,12 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
   const [slideAnim] = useState(new Animated.Value(screenHeight));
   const [imageUri, setImageUri] = useState('');
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [currentResult, setCurrentResult] = useState<{
+    title: string;
+    claim?: string;
+    imageUri?: string;
+  } | null>(null);
   const topics = ['Health', 'Politics', 'Finance', 'Technology', 'Cybersecurity','Whatsapp','Concerts','Climate', 'Crypto', 'Science'];
 
   const insets = useSafeAreaInsets();
@@ -87,20 +94,32 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
       Alert.alert('Error', 'Please add a title');
       return;
     }
-
+  
     Alert.alert('Success', 'Thread posted successfully!', [
       {
         text: 'OK',
         onPress: () => {
+          const postTitle = title;
+  
+          // Handle navigation and cleanup
           Animated.timing(slideAnim, {
             toValue: screenHeight,
             duration: 300,
             useNativeDriver: true,
           }).start(() => {
             onClose();
-            navigation.navigate('(tabs)', {
-                screen: 'profile',
-                });
+            navigation.navigate('(tabs)', { screen: 'profile' });
+            
+            setTimeout(() => {
+              // Pass title as the claim to fact-check
+              setCurrentResult({
+                title: postTitle,
+                claim: postTitle,        // ← Title IS the claim
+                imageUri: imageUri,      // ← Pass image if any
+              });
+              setShowResultModal(true);
+            }, 500);
+            
             setTitle('');
             setContent('');
             setImageUri('');
@@ -108,6 +127,17 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
         }
       }
     ]);
+  };
+
+  const handleModalClose = () => {
+    setShowResultModal(false);
+    setCurrentResult(null);
+  };
+
+  const handleSeeThread = () => {
+    // Disabled for now - will implement later
+    console.log('See thread functionality disabled');
+    // handleModalClose();
   };
 
   const isPostEnabled = title.trim().length > 0 && content.trim().length > 0 && selectedTopics.length >0;
@@ -132,120 +162,128 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <Animated.View
-          style={[
-            styles.container,
-            {
-              transform: [{ translateY: slideAnim }],
-              paddingTop: insets.top - 10,
-              paddingBottom: insets.bottom,
-            }
-          ]}
-        >
-          <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={0}
+    <>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="none"
+        statusBarTranslucent
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <Animated.View
+            style={[
+              styles.container,
+              {
+                transform: [{ translateY: slideAnim }],
+                paddingTop: insets.top - 10,
+                paddingBottom: insets.bottom,
+              }
+            ]}
           >
-            {/* Header */}
-            <View style={styles.header}>
-              <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-                <IconSymbol name="close" size={28} color="#662D91" />
-              </TouchableOpacity>
-
-              <Text style={styles.headerTitle}>Create Thread</Text>
-
-              <View style={styles.placeholder} />
-            </View>
-
-            {/* Content */}
-            <ScrollView style={styles.scrollContainer} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-              <View style={styles.content}>
-                <TextInput
-                  style={styles.titleInput}
-                  placeholder="Title"
-                  value={title}
-                  onChangeText={setTitle}
-                  multiline
-                  placeholderTextColor="#777"
-                />
-                
-                <TextInput
-                  style={styles.contentInput}
-                  placeholder="body text"
-                  value={content}
-                  onChangeText={setContent}
-                  multiline
-                  placeholderTextColor="#777"
-                />
-                <TouchableOpacity
-                  style={[styles.imagePickerBox, imageUri && styles.imagePickerBoxWithImage]}
-                  onPress={handlePickImage}
-                  activeOpacity={0.7}
-                >
-                  {imageUri ? (
-                    <View style={styles.imageContainer}>
-                      <Image source={{ uri: imageUri }} style={styles.selectedImage} />
-                      <TouchableOpacity
-                        style={styles.removeImageButton}
-                        onPress={() => setImageUri('')}
-                      >
-                        <Text style={styles.removeImageText}>✕</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <Text style={styles.imagePickerText}>+ Tap to add an image</Text>
-                  )}
+            <KeyboardAvoidingView
+              style={{ flex: 1 }}
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              keyboardVerticalOffset={0}
+            >
+              {/* Header */}
+              <View style={styles.header}>
+                <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+                  <IconSymbol name="close" size={28} color="#662D91" />
                 </TouchableOpacity>
-                <View style={styles.topicSection}>
-                  <Text style={styles.topicTitle}>Select Topics</Text>
-                  <View style={styles.topicList}>
-                    {topics.map((item) => {
-                      const isSelected = selectedTopics.includes(item);
-                      return (
+
+                <TouchableOpacity
+                  style={[styles.postButton, !isPostEnabled && styles.postButtonDisabled]}
+                  onPress={handlePost}
+                  disabled={!isPostEnabled}
+                >
+                  <Text style={[styles.postButtonText, !isPostEnabled && styles.postButtonTextDisabled]}>
+                    Post
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Content */}
+              <ScrollView style={styles.scrollContainer} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                <View style={styles.content}>
+                  <TextInput
+                    style={styles.titleInput}
+                    placeholder="Title"
+                    value={title}
+                    onChangeText={setTitle}
+                    multiline
+                    placeholderTextColor="#777"
+                  />
+                  
+                  <TextInput
+                    style={styles.contentInput}
+                    placeholder="body text (optional)"
+                    value={content}
+                    onChangeText={setContent}
+                    multiline
+                    placeholderTextColor="#777"
+                  />
+                  <TouchableOpacity
+                    style={[styles.imagePickerBox, imageUri && styles.imagePickerBoxWithImage]}
+                    onPress={handlePickImage}
+                    activeOpacity={0.7}
+                  >
+                    {imageUri ? (
+                      <View style={styles.imageContainer}>
+                        <Image source={{ uri: imageUri }} style={styles.selectedImage} />
                         <TouchableOpacity
-                          key={item}
-                          style={[styles.topicChip, isSelected && styles.topicChipSelected]}
-                          onPress={() => {
-                            if (isSelected) {
-                              setSelectedTopics(prev => prev.filter(t => t !== item));
-                            } else {
-                              setSelectedTopics(prev => [...prev, item]);
-                            }
-                          }}
+                          style={styles.removeImageButton}
+                          onPress={() => setImageUri('')}
                         >
-                          <Text style={[styles.topicChipText, isSelected && styles.topicChipTextSelected]}>
-                            {item}
-                          </Text>
+                          <Text style={styles.removeImageText}>✕</Text>
                         </TouchableOpacity>
-                      );
-                    })}
+                      </View>
+                    ) : (
+                      <Text style={styles.imagePickerText}>+ Tap to add an image</Text>
+                    )}
+                  </TouchableOpacity>
+                  <View style={styles.topicSection}>
+                    <Text style={styles.topicTitle}>Select Topics</Text>
+                    <View style={styles.topicList}>
+                      {topics.map((item) => {
+                        const isSelected = selectedTopics.includes(item);
+                        return (
+                          <TouchableOpacity
+                            key={item}
+                            style={[styles.topicChip, isSelected && styles.topicChipSelected]}
+                            onPress={() => {
+                              if (isSelected) {
+                                setSelectedTopics(prev => prev.filter(t => t !== item));
+                              } else {
+                                setSelectedTopics(prev => [...prev, item]);
+                              }
+                            }}
+                          >
+                            <Text style={[styles.topicChipText, isSelected && styles.topicChipTextSelected]}>
+                              {item}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
                   </View>
                 </View>
-                {/*Post Button*/}
-                <TouchableOpacity
-                style={[styles.postButton, !isPostEnabled && styles.postButtonDisabled]}
-                onPress={handlePost}
-                disabled={!isPostEnabled}
-              >
-                <Text style={[styles.postButtonText, !isPostEnabled && styles.postButtonTextDisabled]}>
-                  Post
-                </Text>
-              </TouchableOpacity>
-              </View>
-            </ScrollView>
-            
-          </KeyboardAvoidingView>
-        </Animated.View>
-      </TouchableWithoutFeedback>
-    </Modal>
+              </ScrollView>
+              
+            </KeyboardAvoidingView>
+          </Animated.View>
+        </TouchableWithoutFeedback>
+      </Modal>
+      {currentResult && (
+        <SwipeResultModal
+          visible={showResultModal}
+          onClose={handleModalClose}
+          title={currentResult.title}
+          claim={currentResult.claim}      // ← Pass the claim text
+          imageUri={currentResult.imageUri} // ← Pass the image
+          onSeeThread={handleSeeThread}
+        />
+      )}
+    </>
   );
 }
 
@@ -325,7 +363,6 @@ const styles = StyleSheet.create({
     color: '#000',
     fontFamily: 'SpaceMono-Regular',
     marginTop:7,
-    marginBottom: 8,
     lineHeight: 17,
     minHeight: 200,
     textAlignVertical: 'top',
