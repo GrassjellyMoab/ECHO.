@@ -157,9 +157,6 @@ const SwipeableCards: React.FC = () => {
     const item = cards[currentIndex];
     console.log(`Swiped ${direction} on:`, item.article.title);
 
-    // Determine the result based on swipe direction
-    const swipeResult = direction === 'left' ? 'FAKE' : 'REAL';
-
     // Use actual Firebase data for the result
     setCurrentResult({
       result: item.isReal ? 'REAL' : 'FAKE',
