@@ -33,6 +33,7 @@ yarn-error.*
 # local env files
 .env*.local
 .env
+env
 
 # typescript
 *.tsbuildinfo
@@ -40,4 +41,7 @@ yarn-error.*
 app-example
 
 # firebase
-utils/echo-d1e60-firebase-adminsdk-fbsvc-967e760980.json
+*-firebase-adminsdk-*.json
+
+# cache
+__pycache__/
