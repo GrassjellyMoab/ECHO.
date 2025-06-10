@@ -55,10 +55,9 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [showResultModal, setShowResultModal] = useState(false);
   const [currentResult, setCurrentResult] = useState<{
-    result: 'REAL' | 'FAKE';
     title: string;
-    explanation: string;
-    sources: string[];
+    claim?: string;
+    imageUri?: string;
   } | null>(null);
   const topics = ['Health', 'Politics', 'Jobs', 'Environment', 'Bank','Entertainment', 'Religion', 'Technology'];
 
@@ -102,25 +101,25 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
         onPress: () => {
           const postTitle = title;
   
-          // Then handle navigation and cleanup
+          // Handle navigation and cleanup
           Animated.timing(slideAnim, {
             toValue: screenHeight,
             duration: 300,
             useNativeDriver: true,
           }).start(() => {
             onClose();
-            navigation.navigate('(tabs)', {
-              screen: 'profile',
-            });
+            navigation.navigate('(tabs)', { screen: 'profile' });
+            
             setTimeout(() => {
+              // Pass title as the claim to fact-check
               setCurrentResult({
-                result: 'REAL',
                 title: postTitle,
-                explanation: "This news appears to be legitimate based on our analysis. The information has been verified through multiple reliable sources and matches established facts.",
-                sources: ["Reuters", "BBC News", "Associated Press"],
+                claim: postTitle,        // ← Title IS the claim
+                imageUri: imageUri,      // ← Pass image if any
               });
               setShowResultModal(true);
             }, 500);
+            
             setTitle('');
             setContent('');
             setImageUri('');
@@ -274,17 +273,16 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
           </Animated.View>
         </TouchableWithoutFeedback>
       </Modal>
-    {currentResult && (
-      <SwipeResultModal
-        visible={showResultModal}
-        onClose={handleModalClose}
-        result={currentResult.result}
-        title={currentResult.title}
-        explanation={currentResult.explanation}
-        sources={currentResult.sources}
-        onSeeThread={handleSeeThread}
-      />
-    )}
+      {currentResult && (
+        <SwipeResultModal
+          visible={showResultModal}
+          onClose={handleModalClose}
+          title={currentResult.title}
+          claim={currentResult.claim}      // ← Pass the claim text
+          imageUri={currentResult.imageUri} // ← Pass the image
+          onSeeThread={handleSeeThread}
+        />
+      )}
     </>
   );
 }
