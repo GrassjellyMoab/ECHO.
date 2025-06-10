@@ -2,10 +2,11 @@ import SortFilterComponent, { additionalStyles } from '@/src/components/moderate
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { getTextColorForTag, tagColors } from '@/src/constants/posts';
+import { db } from '@/src/firebase/config';
 import { useCollectionData } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
 import { useRouter } from 'expo-router';
-import { Timestamp } from 'firebase/firestore';
+import { deleteDoc, doc, Timestamp, updateDoc } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -44,69 +45,6 @@ interface FlaggedCommentData {
     uid: string;
     thread?: ThreadData; // Add thread data
 }
-
-// // Enhanced test data with more complete information
-// const flaggedComments: FlaggedCommentData[] = [
-//     {
-//         id: '1',
-//         date: new Date(),
-//         is_flagged: true,
-//         is_pinned: false,
-//         num_likes: 5,
-//         num_replies: 2,
-//         reply_cid: '',
-//         text: 'Nah Donald Trump won',
-//         tid: 'thread1',
-//         topic_id: 'topic1',
-//         uid: 'johndoe',
-//         thread: {
-//             id: 'thread1',
-//             author: 'johndoe',
-//             title: 'Did PAP win Sengkang GRC?',
-//             timeAgo: '2h ago',
-//             dateCreated: Timestamp.now(),
-//             readTime: '3 min',
-//             views: '124',
-//             comments: '15',
-//             votes: '23',
-//             tags: ['Health', 'Cybersecurity'],
-//             threadImageUrl: 'https://example.com/image.jpg',
-//             content: 'A user sent me this viral rumour that has been spreading about WhatsApp chat groups about SingHealth data leaks. What do you think?',
-//             real_ratio: 0.3,
-//             ai_verdict: 'The news about the health data leak is false because there is no evidence of a breach in the government\'s secure health systems. Independent security audits show no unauthorized access or anomalies. Additionally, the supposed leaked data contains fabricated entries that do not match real patient records.',
-//             hasVoted: false
-//         },
-//     },
-//     {
-//         id: '2',
-//         date: new Date(),
-//         is_flagged: true,
-//         is_pinned: false,
-//         num_likes: 3,
-//         num_replies: 1,
-//         reply_cid: '',
-//         text: 'Ministry of Health has been compromised',
-//         tid: 'thread2',
-//         topic_id: 'topic2',
-//         uid: 'johndoe',
-//         thread: {
-//             id: 'thread2',
-//             author: 'johndoe',
-//             title: 'Ministry of Health has been compromised',
-//             timeAgo: '4h ago',
-//             dateCreated: Timestamp.now(),
-//             readTime: '2 min',
-//             views: '89',
-//             comments: '8',
-//             votes: '12',
-//             tags: ['Health'],
-//             content: 'Rumors about government data breach',
-//             real_ratio: 0.2,
-//             ai_verdict: 'This claim lacks credible evidence and appears to be misinformation.',
-//             hasVoted: false
-//         },
-//     }
-// ];
 
 const getFlaggedComments = () => {
     const commentsData = useCollectionData('comments');
@@ -269,32 +207,33 @@ export default function VerifyScreen() {
             return newSet;
         });
     };
-
+    
     const handleAllow = async (commentId: string) => {
-        // Update the comment's is_flagged to false in Firebase
         try {
-            // Add your Firebase update logic here
-            // await updateDoc(doc(db, 'comments', commentId), { is_flagged: false });
-
+            const commentRef = doc(db, 'comments', commentId);
+            await updateDoc(commentRef, {
+                is_flagged: false
+            });
             // Update local state
             setComments(prev => prev.filter(comment => comment.id !== commentId));
-            console.log(`Allowed comment ${commentId}`);
+            setDisplayedComments(prev => prev.filter(comment => comment.id !== commentId));
+            // handleCollectionUpdate will be triggered automatically via the listener
         } catch (error) {
-            console.error('Error allowing comment:', error);
+            console.error('Error updating comment flag:', error);
+            throw error;
         }
     };
 
     const handleDeny = async (commentId: string) => {
-        // Delete the comment from Firebase
         try {
-            // Add your Firebase delete logic here
-            // await deleteDoc(doc(db, 'comments', commentId));
-
+            const commentRef = doc(db, 'comments', commentId);
+            await deleteDoc(commentRef);
             // Update local state
             setComments(prev => prev.filter(comment => comment.id !== commentId));
-            console.log(`Denied and deleted comment ${commentId}`);
+            setDisplayedComments(prev => prev.filter(comment => comment.id !== commentId));
         } catch (error) {
-            console.error('Error denying comment:', error);
+            console.error('Error deleting comment:', error);
+            throw error;
         }
     };
 
@@ -392,7 +331,7 @@ export default function VerifyScreen() {
                                 style={styles.allowButton}
                                 onPress={() => handleAllow(comment.id)}
                             >
-                                <Text style={styles.allowButtonIcon}>✕</Text>
+                                <Text style={styles.allowButtonIcon}>✓</Text>
                                 <Text style={styles.allowButtonText}>Allow</Text>
                             </TouchableOpacity>
 
@@ -400,7 +339,7 @@ export default function VerifyScreen() {
                                 style={styles.denyButton}
                                 onPress={() => handleDeny(comment.id)}
                             >
-                                <Text style={styles.denyButtonIcon}>✓</Text>
+                                <Text style={styles.denyButtonIcon}>✕</Text>
                                 <Text style={styles.denyButtonText}>Deny</Text>
                             </TouchableOpacity>
                         </View>
