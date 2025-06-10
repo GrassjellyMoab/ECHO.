@@ -52,7 +52,7 @@ class Judge:
     def _generate_verdict(self, prompt: Prompt) -> Label:
         response = self.llm.generate(prompt)
 
-        if response is None or not response["verdict"]:
+        if response is None or (isinstance(response, dict) and not response.get("verdict")):
             logger.warning(f"Error while generating verdict. Defaulting to REFUSED.")
             self.latest_reasoning = ""
             return Label.REFUSED_TO_ANSWER
