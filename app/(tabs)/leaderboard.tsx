@@ -27,7 +27,7 @@ function getData(users: any[], leaderboard: any[], userImages: FirebaseImageData
     rank: index + 1,
     username: '@' + user.username,
     points: user.points,
-    avatar: userImages.find(img => img.name === `${user.username.toLowerCase().replace("@", "")}.png`)?.url || 'https://via.placeholder.com/80x80/4FC3F7/ffffff?text=EL',
+    avatar: userImages.find(img => img.name === `${user.username.toLowerCase().replace("@", "")}.png`)?.url || require('@/src/assets/avatars/defaultAvatar.png'),
   }));
 
   return ranks;

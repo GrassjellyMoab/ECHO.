@@ -7,12 +7,19 @@ interface ListUserProps {
 }
 
 export const ListUser: React.FC<ListUserProps> = ({ user }) => {
+  // Handle both URL strings and local assets
+  const getAvatarSource = (avatar: string | any) => {
+    if (typeof avatar === 'string') {
+      return { uri: avatar };
+    }
+    return avatar; // Local asset from require()
+  };
+
   return (
     <View style={styles.listUser}>
       <Text style={styles.listRank}>{user.rank.toString().padStart(2, '0')}</Text>
-      {/* TODO: EDIT SOURCE WHEN IMAGES ARE LOADED */}
       <Image 
-        source={require('@/src/assets/images/dummy_avatar.jpg')} 
+        source={getAvatarSource(user.avatar)}
         style={styles.listAvatar} 
       />
       <Text style={styles.listUsername}>{user.username}</Text>

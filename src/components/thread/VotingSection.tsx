@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View, Animated } from 'react-native';
+import { useSessionDataStore } from '@/src/store/sessionDataStore';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { IconSymbol } from '../ui/IconSymbol';
 
 interface VoteData {
@@ -13,18 +14,50 @@ interface VotingSectionProps {
   onVote: (vote: 'real' | 'fake') => void;
   hasVoted: boolean;
   aiVerdict?: string;
+  threadId: string;
 }
 
-const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVoted, aiVerdict }) => {
-  const [showResults, setShowResults] = useState(hasVoted);
+const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVoted, aiVerdict, threadId }) => {
+  // Session data store for checking vote status
+  const { hasUserVoted } = useSessionDataStore();
+  
+  // Check if user has voted in session or originally
+  const userHasVotedInSession = hasUserVoted(threadId);
+  const shouldShowResults = userHasVotedInSession || hasVoted;
+  
+  const [showResults, setShowResults] = useState(shouldShowResults);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
+  // Update showResults when session vote status changes
+  useEffect(() => {
+    setShowResults(shouldShowResults);
+  }, [shouldShowResults]);
+
+  // Helper function to handle AI verdict display
+  const getAiVerdictText = (verdict?: string): string => {
+    if (!verdict || verdict.trim() === '' || verdict === 'NaN' || verdict === 'undefined' || verdict === 'null') {
+      return 'No AI verdict generated yet. Please check back later.';
+    }
+    return verdict;
+  };
+
+  // Helper function to check if AI verdict should be shown
+  const shouldShowAiVerdict = (verdict?: string): boolean => {
+    // Always show the AI section if there's any verdict (including fallback message)
+    return true;
+  };
+
+  console.log(voteData);
   const totalVotes = voteData.real + voteData.fake;
   const realPercentage = totalVotes > 0 ? (voteData.real / totalVotes) * 100 : 0;
   const fakePercentage = totalVotes > 0 ? (voteData.fake / totalVotes) * 100 : 0;
   const isReal = realPercentage > 50;
   const verdictText = isReal ? "REAL." : "FAKE.";
   const verdictStyle = isReal ? styles.realText : styles.fakeText;
+
+  // Add safety checks for NaN values
+  const safeRealPercentage = isNaN(realPercentage) ? 0 : realPercentage;
+  const safeFakePercentage = isNaN(fakePercentage) ? 0 : fakePercentage;
 
   const handleVote = (vote: 'real' | 'fake') => {
     // Start fade out animation
@@ -71,18 +104,20 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
             <Text style={styles.votingResults}>
                 Overall Votes: <Text style={verdictStyle}>{verdictText}</Text>
             </Text>
-            <Text style={styles.votingDecision}>You voted {voteData.userVote?.toUpperCase()}.</Text>
+            <Text style={styles.votingDecision}>
+              You voted {voteData.userVote ? voteData.userVote.toUpperCase() : 'UNKNOWN'}.
+            </Text>
 
           <View style={styles.voteBarContainer}>
             <View style={styles.voteBar}>
-              <View style={[styles.realBar, { width: `${realPercentage}%` }]}>
-                {realPercentage > 15 && (
-                  <Text style={styles.realPercentageTextInside}>{Math.round(realPercentage)}%</Text>
+              <View style={[styles.realBar, { width: `${safeRealPercentage}%` }]}>
+                {safeRealPercentage > 15 && (
+                  <Text style={styles.realPercentageTextInside}>{Math.round(safeRealPercentage)}%</Text>
                 )}
               </View>
-              <View style={[styles.fakeBar, { width: `${fakePercentage}%` }]}>
-                {fakePercentage > 15 && (
-                  <Text style={styles.fakePercentageTextInside}>{Math.round(fakePercentage)}%</Text>
+              <View style={[styles.fakeBar, { width: `${safeFakePercentage}%` }]}>
+                {safeFakePercentage > 15 && (
+                  <Text style={styles.fakePercentageTextInside}>{Math.round(safeFakePercentage)}%</Text>
                 )}
               </View>
             </View>
@@ -91,13 +126,13 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
         </View>
 
         {/* AI Verdict placeholder - Always rendered to maintain consistent sizing */}
-        {aiVerdict && (
+        {shouldShowAiVerdict(aiVerdict) && (
           <View style={styles.aiSection}>
             <View style={styles.aiHeader}>
               <IconSymbol name="info" style={styles.aiIcon} />
               <Text style={styles.aiTitle}>AI Verdict</Text>
             </View>
-            <Text style={styles.aiText}>{aiVerdict}</Text>
+            <Text style={styles.aiText}>{getAiVerdictText(aiVerdict)}</Text>
           </View>
         )}
 
@@ -141,30 +176,32 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
         <Text style={styles.votingResults}>
             Overall Votes: <Text style={verdictStyle}>{verdictText}</Text>
         </Text>
-        <Text style={styles.votingDecision}>You voted {voteData.userVote?.toUpperCase()}.</Text>
+        <Text style={styles.votingDecision}>
+          You voted {voteData.userVote ? voteData.userVote.toUpperCase() : 'UNKNOWN'}.
+        </Text>
 
         <View style={styles.voteBar}>
-          <View style={[styles.realBar, { width: `${realPercentage}%` }]}>
-            {realPercentage > 15 && (
-              <Text style={styles.realPercentageTextInside}>{Math.round(realPercentage)}%</Text>
+          <View style={[styles.realBar, { width: `${safeRealPercentage}%` }]}>
+            {safeRealPercentage > 15 && (
+              <Text style={styles.realPercentageTextInside}>{Math.round(safeRealPercentage)}%</Text>
             )}
           </View>
-          <View style={[styles.fakeBar, { width: `${fakePercentage}%` }]}>
-            {fakePercentage > 15 && (
-              <Text style={styles.fakePercentageTextInside}>{Math.round(fakePercentage)}%</Text>
+          <View style={[styles.fakeBar, { width: `${safeFakePercentage}%` }]}>
+            {safeFakePercentage > 15 && (
+              <Text style={styles.fakePercentageTextInside}>{Math.round(safeFakePercentage)}%</Text>
             )}
           </View>
         </View>
       </View>
 
       {/* AI Verdict Section - Only show if user has voted and aiVerdict is provided */}
-      {aiVerdict && (
+      {shouldShowAiVerdict(aiVerdict) && (
         <View style={styles.aiSection}>
           <View style={styles.aiHeader}>
             <IconSymbol name="info" style={styles.aiIcon} />
             <Text style={styles.aiTitle}>AI Verdict</Text>
           </View>
-          <Text style={styles.aiText}>{aiVerdict}</Text>
+          <Text style={styles.aiText}>{getAiVerdictText(aiVerdict)}</Text>
         </View>
       )}
     </Animated.View>

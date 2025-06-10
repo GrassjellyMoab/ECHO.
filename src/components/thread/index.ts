@@ -1,2 +1,3 @@
 // Thread Page Components
-export { VotingSection } from './VotingSection' 
+export { default as VotingSection } from './VotingSection';
+

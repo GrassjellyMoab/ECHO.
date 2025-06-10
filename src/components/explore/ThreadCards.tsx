@@ -3,10 +3,19 @@ import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { getTextColorForTag, tagColors } from '@/src/constants/posts';
 import { useCollectionData } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
+import { useSessionDataStore } from '@/src/store/sessionDataStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
-import { Animated, Dimensions, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Animated,
+  Dimensions,
+  PanResponder,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 
 interface Card {
   id: string; // Changed to string to match Firebase ID
@@ -29,29 +38,61 @@ interface Card {
   };
 }
 
+interface ThreadData {
+  id: string;
+  author: string;
+  title: string;
+  timeAgo: string;
+  dateCreated: any;
+  readTime: string;
+  views: string;
+  comments: string;
+  votes: string;
+  tags: string[];
+  hasImage?: boolean;
+  isVerified?: boolean;
+  avatar?: string;
+  threadImageUrl?: string;
+  content: string;
+  real_ratio: number;
+  ai_verdict?: string;
+  hasVoted: boolean;
+}
+
+interface SwipeableCardsProps {
+  // Remove onShowThreadModal since we're handling internally now
+}
+
 const { width: screenWidth } = Dimensions.get('window');
 const SWIPE_THRESHOLD = screenWidth * 0.15;
 const SWIPE_OUT_DURATION = 250;
 
-const SwipeableCards: React.FC = () => {
+const SwipeableCards: React.FC<SwipeableCardsProps> = () => {
   const router = useRouter();
   const threads = useCollectionData('threads');
   const topics = useCollectionData('topics');
   const users = useCollectionData('users');
 
+  // Session data store for saving votes
+  const { addVote, hasUserVoted } = useSessionDataStore();
+  
+  // Get userVotes to watch for changes
+  const userVotes = useSessionDataStore(state => state.userVotes);
+
   const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
   const userImages = getImagesByFolder('users');
   const threadImages = getImagesByFolder('threads');
 
+  // Modal states
   const [showResultModal, setShowResultModal] = useState(false);
-  const [currentResult, setCurrentResult] = useState<{
-    result: 'REAL' | 'FAKE';
-    title: string;
-    explanation: string;
-    sources: string[];
-  } | null>(null);
+  const [currentResult, setCurrentResult] = useState<{ verdict: 'REAL' | 'FAKE'; title: string; explanation: string; sources: string[] } | null>(null);
   
-
+  // Store the card that was just swiped for thread navigation
+  const [currentSwipedCard, setCurrentSwipedCard] = useState<Card | null>(null);
+  
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedThreadData, setSelectedThreadData] = useState<ThreadData | null>(null);
+  const [showThreadInModal, setShowThreadInModal] = useState(false);
 
   // Helper function to format numbers
   const formatNumber = (num: number): string => {
@@ -91,10 +132,9 @@ const SwipeableCards: React.FC = () => {
       .slice(0, 3); // Limit to 3 tags
   };
 
-  // Transform Firebase threads to Card format
+  // Transform Firebase threads to Card format (don't filter here)
   const transformThreadsToCards = (): Card[] => {
     return threads.map(thread => {
-      console.log('Thread AI predict:', thread.ai_verdict, 'Type:', typeof thread.ai_verdict);
       const user = users.find(u => u.id === thread.uid);
       return {
         id: thread.id,
@@ -121,10 +161,25 @@ const SwipeableCards: React.FC = () => {
 
   const cards = transformThreadsToCards();
 
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
   const position = useRef(new Animated.ValueXY()).current;
   const rotate = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
+
+  // Function to skip past already voted cards
+  const skipVotedCards = () => {
+    let newIndex = currentIndex;
+    while (newIndex < cards.length && hasUserVoted(cards[newIndex].id)) {
+      newIndex++;
+    }
+    if (newIndex !== currentIndex) {
+      setCurrentIndex(newIndex);
+    }
+  };
+
+  // Skip voted cards when component loads or when vote state changes
+  React.useEffect(() => {
+    skipVotedCards();
+  }, [cards.length, userVotes.length]); // Also depend on userVotes to react to vote changes
 
   const resetPosition = (): void => {
     Animated.spring(position, {
@@ -157,20 +212,51 @@ const SwipeableCards: React.FC = () => {
 
   const onSwipeComplete = (direction: 'left' | 'right'): void => {
     const item = cards[currentIndex];
-    console.log(`Swiped ${direction} on:`, item.article.title);
 
-    // Use actual Firebase data for the result
-    setCurrentResult({
-      result: item.isReal ? 'REAL' : 'FAKE',
-      title: item.article.title,
-      explanation: item.aiVerdict,
-      sources: item.sources.length > 0 ? item.sources : ['No sources available'],
-    });
-    setShowResultModal(true);
+    // Store the swiped card for potential thread navigation
+    setCurrentSwipedCard(item);
 
-    // Always proceed to next card after a short delay (restore original behavior)
+    // Check if user has already voted on this thread
+    if (hasUserVoted(item.id)) {
+      console.log(`User already voted on thread ${item.id}, skipping vote save`);
+      
+      // Still show the result modal but don't save duplicate vote
+      setCurrentResult({
+        verdict: item.isReal ? 'REAL' : 'FAKE',
+        title: item.article.title,
+        explanation: item.aiVerdict,
+        sources: item.sources,
+      });
+      setShowResultModal(true);
+    } else {
+      // Determine vote based on swipe direction
+      // Right swipe = REAL vote, Left swipe = FAKE vote
+      const userVote = direction === 'right' ? 'real' : 'fake';
+      
+      // Save vote to session store
+      addVote(item.id, userVote);
+      console.log(`Saved vote ${userVote} for thread ${item.id}`);
+
+      // Use actual Firebase data for the result
+      setCurrentResult({
+        verdict: item.isReal ? 'REAL' : 'FAKE',
+        title: item.article.title,
+        explanation: item.aiVerdict,
+        sources: item.sources,
+      });
+      setShowResultModal(true);
+    }
+
+    // Always proceed to next card after a short delay
     setTimeout(() => {
-      setCurrentIndex(prev => prev + 1);
+      let newIndex = currentIndex + 1;
+      
+      // Skip any already voted cards
+      while (newIndex < cards.length && hasUserVoted(cards[newIndex].id)) {
+        newIndex++;
+      }
+      
+      setCurrentIndex(newIndex);
       position.setValue({ x: 0, y: 0 });
       rotate.setValue(0);
       opacity.setValue(1);
@@ -180,40 +266,34 @@ const SwipeableCards: React.FC = () => {
   const handleModalClose = () => {
     setShowResultModal(false);
     setCurrentResult(null);
+    setCurrentSwipedCard(null); // Clear the swiped card when modal closes
   };
 
-
-
-  // Add this function to handle "See Thread" button
+  // Update the handleSeeThread function to use the stored swiped card
   const handleSeeThread = () => {
-    console.log('handleSeeThread called');
-    if (!currentResult) {
-      console.log('No currentResult, returning');
+    if (!currentResult || !currentSwipedCard) {
       return;
     }
     
-    // Find the current card to get thread data
-    const currentCard = cards[currentIndex - 1]; // currentIndex is already incremented
-    if (!currentCard) {
-      console.log('No currentCard found, returning');
-      return;
-    }
+    const threadData = convertCardToThreadData(currentSwipedCard);
     
-    const threadData = convertCardToThreadData(currentCard);
-    console.log('Navigating to /search/thread with data:', threadData.title);
-    handleModalClose();
-    
-    // Navigate to search tab-level thread page instead of app-level
-    router.push({
-      pathname: '/search/thread',
-      params: { thread: JSON.stringify(threadData) },
-    });
+    // Show thread content within the same modal
+    setSelectedThreadData(threadData);
+    setShowThreadInModal(true);
+  };
+
+  const handleBackToJustification = () => {
+    setShowThreadInModal(false);
+    setSelectedThreadData(null);
   };
 
   // Function to convert card back to thread data for navigation
   const convertCardToThreadData = (card: Card) => {
     const originalThread = threads.find(t => t.id === card.id);
     const user = users.find(u => u.id === originalThread?.uid);
+    
+    // Get session vote status using session store hooks
+    const { hasUserVoted } = useSessionDataStore.getState();
     
     return {
       id: card.id,
@@ -230,20 +310,11 @@ const SwipeableCards: React.FC = () => {
       isVerified: card.article.isVerified,
       avatar: card.article.avatar,
       threadImageUrl: card.image || null,
-      content: card.article.content,
+      content: card.article.content || "", // Ensure content is always a string
       real_ratio: originalThread?.real_ratio || 0,
       ai_verdict: card.aiVerdict,
-      hasVoted: false // Add this missing property
+      hasVoted: hasUserVoted(card.id) // Check session store for vote status
     };
-  };
-
-  // Function to handle card tap navigation
-  const handleCardTap = (card: Card) => {
-    const threadData = convertCardToThreadData(card);
-    router.push({
-      pathname: '/search/thread',
-      params: { thread: JSON.stringify(threadData) },
-    });
   };
 
   const getCardStyle = (index: number) => {
@@ -285,24 +356,18 @@ const SwipeableCards: React.FC = () => {
       return Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
     },
     onPanResponderGrant: () => {
-      console.log('Pan responder granted');
     },
     onPanResponderMove: (evt, gestureState) => {
       position.setValue({ x: gestureState.dx, y: gestureState.dy });
       rotate.setValue(gestureState.dx);
-      console.log('Moving with dx:', gestureState.dx);
     },
     onPanResponderTerminationRequest: () => false,
     onPanResponderRelease: (evt, gestureState) => {
-      console.log('Released with dx:', gestureState.dx, 'threshold:', SWIPE_THRESHOLD);
       if (gestureState.dx > SWIPE_THRESHOLD) {
-        console.log('Triggering right swipe');
         forceSwipe('right');
       } else if (gestureState.dx < -SWIPE_THRESHOLD) {
-        console.log('Triggering left swipe');
         forceSwipe('left');
       } else {
-        console.log('Resetting position - not enough swipe distance');
         resetPosition();
       }
     },
@@ -405,19 +470,9 @@ const SwipeableCards: React.FC = () => {
         ]}
         {...(isCurrentCard ? panResponder.panHandlers : {})}
       >
-        {isCurrentCard ? (
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => handleCardTap(card)}
-            style={styles.cardTouchable}
-          >
-            {cardContent}
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.cardTouchable}>
-            {cardContent}
-          </View>
-        )}
+        <View style={styles.cardTouchable}>
+          {cardContent}
+        </View>
 
         {/* Swipe Indicators - only show for current card */}
         {isCurrentCard && (
@@ -502,11 +557,14 @@ const SwipeableCards: React.FC = () => {
         <SwipeResultModal
           visible={showResultModal}
           onClose={handleModalClose}
-          result={currentResult.result}
+          result={currentResult.verdict}
           title={currentResult.title}
           explanation={currentResult.explanation}
           sources={currentResult.sources}
           onSeeThread={handleSeeThread}
+          showThreadContent={showThreadInModal}
+          threadData={selectedThreadData}
+          onBackToJustification={handleBackToJustification}
         />
       )}
     </View>

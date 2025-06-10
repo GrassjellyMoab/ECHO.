@@ -1,3 +1,4 @@
+import ThreadModal from '@/src/components/ThreadModal';
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { useCollectionData } from '@/src/store/dataStore';
@@ -8,6 +9,7 @@ import { Timestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '../../../src/store/authStore';
+import { useThreadData } from '../home';
 
 interface ActivityData {
   id: string;
@@ -34,7 +36,7 @@ interface ThreadData {
   isVerified?: boolean;
   avatar?: string;
   threadImageUrl?: string;
-  content?: string;
+  content: string;
   real_ratio: number;
   ai_verdict?: string;
   hasVoted: boolean;
@@ -136,7 +138,7 @@ function getThreadData(uid: string, users: any[], threads: any[], topics: any[],
         id: thread.id,
         author: authorUsername.startsWith('@') ? authorUsername : '@' + authorUsername,
         title: thread.title || 'Untitled Thread',
-        content: thread.description,
+        content: thread.description || '',
         timeAgo,
         dateCreated: thread.posted_datetime,
         readTime: `${thread.read_duration} mins read`,
@@ -184,6 +186,11 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'threads' | 'activity'>('threads');
   const [debugTaps, setDebugTaps] = useState(0);
+  
+  // Thread modal state
+  const [showThreadModal, setShowThreadModal] = useState(false);
+  const [selectedThread, setSelectedThread] = useState<ThreadData | null>(null);
+  
   const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
 
   const users = useCollectionData('users');
@@ -191,7 +198,7 @@ export default function ProfileScreen() {
   const topics = useCollectionData('topics');
   const userImages = getImagesByFolder('users');
   const threadImages = getImagesByFolder('threads');
-  const mockThreads = getThreadData(uid, users, threads, topics, userImages, threadImages);
+  const mockThreads = useThreadData();
 
   const handleLogout = () => {
     Alert.alert(
@@ -259,17 +266,20 @@ export default function ProfileScreen() {
   };
 
   const ThreadsSection = () => {
-
-    function navigateToThreadPage(thread: ThreadData) {
-      router.push({
-        pathname: '/home/thread',
-        params: { thread: JSON.stringify(thread) },
-      });
+    function openThreadModal(thread: ThreadData) {
+      setSelectedThread(thread);
+      setShowThreadModal(true);
     }
+
+    const handleCloseThreadModal = () => {
+      setShowThreadModal(false);
+      setSelectedThread(null);
+    };
+
     return (
       <View style={styles.threadsContainer}>
         {mockThreads.map((thread) => (
-          <TouchableOpacity key={thread.id} style={styles.threadCard} onPress={() => navigateToThreadPage(thread)}>
+          <TouchableOpacity key={thread.id} style={styles.threadCard} onPress={() => openThreadModal(thread)}>
             {thread.threadImageUrl && (
               <Image
                 source={thread.threadImageUrl}
@@ -284,6 +294,13 @@ export default function ProfileScreen() {
             </View>
           </TouchableOpacity>
         ))}
+        
+        {/* Thread Modal */}
+        <ThreadModal
+          visible={showThreadModal}
+          threadData={selectedThread}
+          onClose={handleCloseThreadModal}
+        />
       </View>
     );
   };
