@@ -2,6 +2,7 @@ import { db } from '@/src/firebase/config';
 import { useAuthStore } from '@/src/store/authStore';
 import { useCollectionData, useDataStore } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
+import axios from 'axios';
 import { addDoc, collection } from "firebase/firestore";
 import React, { useRef, useState } from 'react';
 import {
@@ -96,24 +97,24 @@ const CommentsSection: React.FC<CommentsProps> = ({
     }
 
     let filtered = comments;
-    
+
     // Filter out flagged comments
     filtered = filtered.filter(comment => comment.is_flagged === false);
-    
+
     if (threadId) {
       filtered = filtered.filter(comment => comment.tid === threadId);
     }
-    
+
     // Sort comments: pinned first, then by date (newest first)
     return filtered.sort((a, b) => {
       // Pinned comments always come first
       if (a.is_pinned && !b.is_pinned) return -1;
       if (!a.is_pinned && b.is_pinned) return 1;
-      
+
       // For dates, handle both Date objects and ISO strings
       let dateA: Date;
       let dateB: Date;
-      
+
       if (a.date instanceof Date) {
         dateA = a.date;
       } else if (typeof a.date === 'string') {
@@ -121,7 +122,7 @@ const CommentsSection: React.FC<CommentsProps> = ({
       } else {
         dateA = new Date(); // fallback
       }
-      
+
       if (b.date instanceof Date) {
         dateB = b.date;
       } else if (typeof b.date === 'string') {
@@ -129,7 +130,7 @@ const CommentsSection: React.FC<CommentsProps> = ({
       } else {
         dateB = new Date(); // fallback
       }
-      
+
       // Sort by date: newest first (dateB - dateA gives descending order)
       return dateB.getTime() - dateA.getTime();
     });
@@ -138,7 +139,7 @@ const CommentsSection: React.FC<CommentsProps> = ({
   const onAddComment = async (content: string) => {
     console.log('🚀 onAddComment called with content:', content);
     console.log('🔐 Auth status:', { isAuthenticated, uid });
-    
+
     if (!isAuthenticated || !uid) {
       console.error('User must be authenticated to add a comment');
       return;
@@ -149,10 +150,21 @@ const CommentsSection: React.FC<CommentsProps> = ({
     try {
       const commentsRef = collection(db, 'comments');
       console.log('📝 Comments collection reference created');
-      
+
+      // Call review API before creating comment object
+      console.log('🔍 Calling review API...');
+      const reviewResponse = await axios.post('http://localhost:8000/review', {
+        comment: content,
+        thread_id: threadId
+      });
+
+      console.log('✅ Review API response:', reviewResponse.data);
+      const isFlagged = reviewResponse.data.result.is_flagged || false;
+      console.log('🏁 Comment flagged status:', isFlagged);
+
       const newCommentObj = {
         date: new Date().toISOString(),
-        is_flagged: false,
+        is_flagged: isFlagged,
         is_pinned: false,
         is_reviewed: false,
         num_likes: 0,
@@ -163,18 +175,18 @@ const CommentsSection: React.FC<CommentsProps> = ({
         topic_id: 'topic_healthcare',
         uid: uid
       };
-      
+
       console.log('📦 Comment object created:', newCommentObj);
       console.log("🔄 Attempting to add comment to Firestore...");
-      
+
       const docRef = await addDoc(commentsRef, newCommentObj);
       console.log('✅ Comment added successfully! Doc ID:', docRef.id);
-      
+
       // Refresh the comments collection to ensure UI updates
       console.log('🔄 Refreshing comments collection...');
       await refreshCollection('comments');
       console.log('✅ Comments collection refreshed');
-      
+
     } catch (error: any) {
       console.error('❌ Error adding comment:', error);
       console.error('❌ Error details:', {
@@ -200,75 +212,75 @@ const CommentsSection: React.FC<CommentsProps> = ({
   const handleAddComment = () => {
     if (newComment.trim()) {
       onAddComment(newComment.trim());
-     
+
       setNewComment('');
     }
   };
 
   const calculateTimeAgo = (timestamp: number | string | Date) => {
-      const now = new Date();
-      const time = typeof timestamp === 'number' ? new Date(timestamp) : new Date(timestamp);
-      const diffInMs = now.getTime() - time.getTime();
+    const now = new Date();
+    const time = typeof timestamp === 'number' ? new Date(timestamp) : new Date(timestamp);
+    const diffInMs = now.getTime() - time.getTime();
 
-      const minutes = Math.floor(diffInMs / (1000 * 60));
-      const hours = Math.floor(diffInMs / (1000 * 60 * 60));
-      const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-      const weeks = Math.floor(days / 7);
-      const months = Math.floor(days / 30.44); // Average days per month
-      const years = Math.floor(days / 365.25); // Account for leap years
+    const minutes = Math.floor(diffInMs / (1000 * 60));
+    const hours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+    const weeks = Math.floor(days / 7);
+    const months = Math.floor(days / 30.44); // Average days per month
+    const years = Math.floor(days / 365.25); // Account for leap years
 
-      if (years > 0) return `${years} year${years === 1 ? '' : 's'} ago`;
-      if (months > 0) return `${months} month${months === 1 ? '' : 's'} ago`;
-      if (weeks > 0) return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
-      if (days > 0) return `${days} day${days === 1 ? '' : 's'} ago`;
-      if (hours > 0) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-      if (minutes > 0) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
-      return 'Just now';
+    if (years > 0) return `${years} year${years === 1 ? '' : 's'} ago`;
+    if (months > 0) return `${months} month${months === 1 ? '' : 's'} ago`;
+    if (weeks > 0) return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+    if (days > 0) return `${days} day${days === 1 ? '' : 's'} ago`;
+    if (hours > 0) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+    if (minutes > 0) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+    return 'Just now';
   };
 
   // Improved user data retrieval with better avatar handling
-const getUserFromStore = (uid: string) => {
-  if (!users || users.length === 0) {
-    return { 
-      username: `user_${uid}`, 
-      avatar: null,
-      isVerified: false 
-    };
-  }
+  const getUserFromStore = (uid: string) => {
+    if (!users || users.length === 0) {
+      return {
+        username: `user_${uid}`,
+        avatar: null,
+        isVerified: false
+      };
+    }
 
-  const user = users.find(u => u.id === uid);
-  if (user) {
-    // Clean username for image matching - remove @ symbol and convert to lowercase
-    const cleanUsername = user.username.replace('@', '').toLowerCase();
-    
-    // Try to find matching avatar image from assets/avatars folder
-    const avatarImage = userImages.find(img => {
-      // Extract filename without extension
-      const imageName = img.name.toLowerCase().replace('.png', '');      
-      // Match exact username with .png extension
-      return imageName === cleanUsername;
-    });
+    const user = users.find(u => u.id === uid);
+    if (user) {
+      // Clean username for image matching - remove @ symbol and convert to lowercase
+      const cleanUsername = user.username.replace('@', '').toLowerCase();
 
-    // Alternative: If images are stored with full path, use this instead:
-    // const avatarImage = userImages.find(img => {
-    //   const fileName = img.name.toLowerCase();
-    //   const expectedFileName = `${cleanUsername}.png`;
-    //   return fileName === expectedFileName || fileName.endsWith(`/${expectedFileName}`);
-    // });
+      // Try to find matching avatar image from assets/avatars folder
+      const avatarImage = userImages.find(img => {
+        // Extract filename without extension
+        const imageName = img.name.toLowerCase().replace('.png', '');
+        // Match exact username with .png extension
+        return imageName === cleanUsername;
+      });
+
+      // Alternative: If images are stored with full path, use this instead:
+      // const avatarImage = userImages.find(img => {
+      //   const fileName = img.name.toLowerCase();
+      //   const expectedFileName = `${cleanUsername}.png`;
+      //   return fileName === expectedFileName || fileName.endsWith(`/${expectedFileName}`);
+      // });
+
+      return {
+        username: user.username,
+        avatar: avatarImage?.url || null,
+        isVerified: user.role === 'admin' || user.role === 'moderator'
+      };
+    }
 
     return {
-      username: user.username,
-      avatar: avatarImage?.url || null,
-      isVerified: user.role === 'admin' || user.role === 'moderator'
+      username: `user_${uid}`,
+      avatar: null,
+      isVerified: false
     };
-  }
-  
-  return { 
-    username: `user_${uid}`, 
-    avatar: null, 
-    isVerified: false 
   };
-};
 
   // Handle avatar error
   const handleAvatarError = (userId: string) => {
@@ -296,13 +308,13 @@ const getUserFromStore = (uid: string) => {
             <Text style={styles.pinnedText}>Pinned</Text>
           </View>
         )}
-        
+
         <View style={styles.commentHeader}>
           <View style={styles.userInfo}>
             <View style={styles.avatar}>
               {user.avatar && !hasAvatarError ? (
-                <Image 
-                  source={{ uri: user.avatar }} 
+                <Image
+                  source={{ uri: user.avatar }}
                   style={styles.avatarImage}
                   onError={() => handleAvatarError(item.uid)}
                 />
@@ -315,7 +327,7 @@ const getUserFromStore = (uid: string) => {
                 </View>
               )}
             </View>
-            
+
             <View style={styles.userDetails}>
               <View style={styles.usernameRow}>
                 <Text style={styles.username}>@{user.username}</Text>
@@ -331,12 +343,12 @@ const getUserFromStore = (uid: string) => {
         <Text style={styles.commentContent}>{item.text}</Text>
 
         <View style={styles.actionBar}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.actionButton}
             onPress={() => handleLikeComment(item.id)}
           >
-            <IconSymbol 
-              name={isLiked ? "heart.fill" : "heart"} 
+            <IconSymbol
+              name={isLiked ? "heart.fill" : "heart"}
               style={[styles.actionIcon, isLiked && styles.likedIcon]}
             />
           </TouchableOpacity>
@@ -401,7 +413,7 @@ const getUserFromStore = (uid: string) => {
               textAlignVertical="center"
             />
             {newComment.trim().length > 0 && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.postButton}
                 onPress={handleAddComment}
               >
@@ -412,8 +424,8 @@ const getUserFromStore = (uid: string) => {
         </View>
 
         <Text style={styles.emptyState}>
-          {threadId 
-            ? "No comments found for this thread." 
+          {threadId
+            ? "No comments found for this thread."
             : "No comments yet. Be the first to comment!"
           }
         </Text>
@@ -439,7 +451,7 @@ const getUserFromStore = (uid: string) => {
             textAlignVertical="center"
           />
           {newComment.trim().length > 0 && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.postButton}
               onPress={handleAddComment}
             >

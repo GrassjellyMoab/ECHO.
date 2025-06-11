@@ -1,10 +1,20 @@
 # Steps to run the backend
 
-1. Start the server:
+1. Activate virtual environment. The first command is for Windows CMD, the second is for Powershell and the last is for Bash.
+
+       . env/bin/activate
+       env\Scripts\activate
+       source ./env/bin/activate
+
+2. Install requirements.txt
+
+       pip install -r requirements.txt 
+
+3. Start the server:
 
        uvicorn main:app --reload
 
-2. Make a POST request to /review:
+4. Make a POST request to /review:
 
         curl -X POST "<http://localhost:8000/review>" \
         -H "Content-Type: application/json" \
@@ -13,7 +23,7 @@
             "thread_id": "your-thread-id-here"
         }'
 
-3. Response will be:
+5. Response will be:
 
         {
             "success": true,
