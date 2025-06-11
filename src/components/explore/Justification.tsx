@@ -5,23 +5,24 @@ import { Dimensions, Modal, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import ThreadModal from '../ThreadModal';
 
 interface ThreadData {
-    id: string;
-    author: string;
-    title: string;
-    timeAgo: string;
-    readTime: string;
-    views: string;
-    comments: string;
-    votes: string;
-    tags: string[];
-    hasImage?: boolean;
-    isVerified?: boolean;
-    avatar?: string;
-    threadImageUrl?: string;
-    content: string;
-    real_ratio: number;
-    ai_verdict?: string;
-    hasVoted: boolean;
+  id: string;
+  author: string;
+  title: string;
+  timeAgo: string;
+  readTime: string;
+  views: string;
+  comments: string;
+  votes: string;
+  tags: string[];
+  hasImage?: boolean;
+  isVerified?: boolean;
+  avatar?: string;
+  threadImageUrl?: string;
+  content: string;
+  real_ratio: number;
+  ai_verdict?: string;
+  hasVoted: boolean;
+  sources: string[];  
 }
 
 interface SwipeResultModalProps {

@@ -9,7 +9,6 @@ import { Timestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '../../../src/store/authStore';
-import { useThreadData } from '../home';
 
 interface ActivityData {
   id: string;
@@ -40,6 +39,7 @@ interface ThreadData {
   real_ratio: number;
   ai_verdict?: string;
   hasVoted: boolean;
+  sources: string[];  
 }
 
 const mockActivity: ActivityData[] = [
@@ -198,7 +198,7 @@ export default function ProfileScreen() {
   const topics = useCollectionData('topics');
   const userImages = getImagesByFolder('users');
   const threadImages = getImagesByFolder('threads');
-  const mockThreads = useThreadData();
+  const mockThreads = getThreadData(uid, users, threads, topics, userImages, threadImages);
 
   const handleLogout = () => {
     Alert.alert(

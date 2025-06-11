@@ -302,7 +302,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#9C27B0',
     marginRight: 12,
   },
   authorInfo: {

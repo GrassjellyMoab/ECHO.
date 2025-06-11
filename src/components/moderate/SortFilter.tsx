@@ -5,7 +5,6 @@ import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 interface ThreadData {
     id: string;
-    author: string;
     title: string;
     timeAgo: string;
     dateCreated: Timestamp;
@@ -36,6 +35,9 @@ interface FlaggedCommentData {
     tid: string;
     topic_id: string;
     uid: string;
+    author: string;
+    hasImage?: boolean;
+    userImageUrl?: string;
     thread?: ThreadData; // Add thread data
 }
 
