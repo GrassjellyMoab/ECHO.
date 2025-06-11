@@ -22,6 +22,7 @@ interface ThreadData {
   real_ratio: number;
   ai_verdict?: string;
   hasVoted: boolean;
+  sources: string[];  
 }
 
 interface SwipeResultModalProps {
