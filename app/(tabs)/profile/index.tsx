@@ -9,6 +9,7 @@ import { Timestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '../../../src/store/authStore';
+import { useNewThreadStore } from '@/src/store/newThreadStore';
 
 interface ActivityData {
   id: string;
@@ -25,7 +26,7 @@ interface ThreadData {
   author: string;
   title: string;
   timeAgo: string;
-  dateCreated: Timestamp;
+  dateCreated?: Timestamp;
   readTime: string;
   views: string;
   comments: string;
@@ -266,19 +267,24 @@ export default function ProfileScreen() {
   };
 
   const ThreadsSection = () => {
+    const { newThreads } = useNewThreadStore();
+    
     function openThreadModal(thread: ThreadData) {
       setSelectedThread(thread);
       setShowThreadModal(true);
     }
-
+  
     const handleCloseThreadModal = () => {
       setShowThreadModal(false);
       setSelectedThread(null);
     };
-
+  
+    // Combine new threads with existing threads
+    const allThreads = [...newThreads, ...mockThreads];
+  
     return (
       <View style={styles.threadsContainer}>
-        {mockThreads.map((thread) => (
+        {allThreads.map((thread) => (
           <TouchableOpacity key={thread.id} style={styles.threadCard} onPress={() => openThreadModal(thread)}>
             {thread.threadImageUrl && (
               <Image
@@ -316,7 +322,6 @@ export default function ProfileScreen() {
       </View>
     );
   }
-
   return (
     <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
       {/* Header with settings */}
