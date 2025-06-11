@@ -15,15 +15,16 @@ interface VotingSectionProps {
   hasVoted: boolean;
   aiVerdict?: string;
   threadId: string;
+  skipVoting?: boolean; 
 }
 
-const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVoted, aiVerdict, threadId }) => {
+const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVoted, aiVerdict, threadId, skipVoting = false}) => {
   // Session data store for checking vote status
   const { hasUserVoted } = useSessionDataStore();
   
   // Check if user has voted in session or originally
   const userHasVotedInSession = hasUserVoted(threadId);
-  const shouldShowResults = userHasVotedInSession || hasVoted;
+  const shouldShowResults = userHasVotedInSession || hasVoted || skipVoting; 
   
   const [showResults, setShowResults] = useState(shouldShowResults);
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -52,8 +53,10 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
   const realPercentage = totalVotes > 0 ? (voteData.real / totalVotes) * 100 : 0;
   const fakePercentage = totalVotes > 0 ? (voteData.fake / totalVotes) * 100 : 0;
   const isReal = realPercentage > 50;
-  const verdictText = isReal ? "REAL." : "FAKE.";
-  const verdictStyle = isReal ? styles.realText : styles.fakeText;
+
+  // Handle skipVoting case with no votes
+  const verdictText = skipVoting && totalVotes === 0 ? "No Votes!" : (isReal ? "REAL." : "FAKE.");
+  const verdictStyle = skipVoting && totalVotes === 0 ? styles.noVotesText : (isReal ? styles.realText : styles.fakeText);
 
   // Add safety checks for NaN values
   const safeRealPercentage = isNaN(realPercentage) ? 0 : realPercentage;
@@ -105,21 +108,27 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
                 Overall Votes: <Text style={verdictStyle}>{verdictText}</Text>
             </Text>
             <Text style={styles.votingDecision}>
-              You voted {voteData.userVote ? voteData.userVote.toUpperCase() : 'UNKNOWN'}.
+              {skipVoting ? 'AI Fact-Check Result' : `You voted ${voteData.userVote ? voteData.userVote.toUpperCase() : 'UNKNOWN'}.`}
             </Text>
 
-          <View style={styles.voteBarContainer}>
+            <View style={styles.voteBarContainer}>
             <View style={styles.voteBar}>
-              <View style={[styles.realBar, { width: `${safeRealPercentage}%` }]}>
-                {safeRealPercentage > 15 && (
-                  <Text style={styles.realPercentageTextInside}>{Math.round(safeRealPercentage)}%</Text>
-                )}
-              </View>
-              <View style={[styles.fakeBar, { width: `${safeFakePercentage}%` }]}>
-                {safeFakePercentage > 15 && (
-                  <Text style={styles.fakePercentageTextInside}>{Math.round(safeFakePercentage)}%</Text>
-                )}
-              </View>
+              {totalVotes > 0 ? (
+                <>
+                  <View style={[styles.realBar, { width: `${safeRealPercentage}%` }]}>
+                    {safeRealPercentage > 15 && (
+                      <Text style={styles.realPercentageTextInside}>{Math.round(safeRealPercentage)}%</Text>
+                    )}
+                  </View>
+                  <View style={[styles.fakeBar, { width: `${safeFakePercentage}%` }]}>
+                    {safeFakePercentage > 15 && (
+                      <Text style={styles.fakePercentageTextInside}>{Math.round(safeFakePercentage)}%</Text>
+                    )}
+                  </View>
+                </>
+              ) : (
+                <View style={styles.emptyBar} />
+              )}
             </View>
           </View>
 
@@ -177,20 +186,26 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
             Overall Votes: <Text style={verdictStyle}>{verdictText}</Text>
         </Text>
         <Text style={styles.votingDecision}>
-          You voted {voteData.userVote ? voteData.userVote.toUpperCase() : 'UNKNOWN'}.
+          {skipVoting ? 'AI Fact-Check Result' : `You voted ${voteData.userVote ? voteData.userVote.toUpperCase() : 'UNKNOWN'}.`}
         </Text>
 
         <View style={styles.voteBar}>
-          <View style={[styles.realBar, { width: `${safeRealPercentage}%` }]}>
-            {safeRealPercentage > 15 && (
-              <Text style={styles.realPercentageTextInside}>{Math.round(safeRealPercentage)}%</Text>
-            )}
-          </View>
-          <View style={[styles.fakeBar, { width: `${safeFakePercentage}%` }]}>
-            {safeFakePercentage > 15 && (
-              <Text style={styles.fakePercentageTextInside}>{Math.round(safeFakePercentage)}%</Text>
-            )}
-          </View>
+          {totalVotes > 0 ? (
+            <>
+              <View style={[styles.realBar, { width: `${safeRealPercentage}%` }]}>
+                {safeRealPercentage > 15 && (
+                  <Text style={styles.realPercentageTextInside}>{Math.round(safeRealPercentage)}%</Text>
+                )}
+              </View>
+              <View style={[styles.fakeBar, { width: `${safeFakePercentage}%` }]}>
+                {safeFakePercentage > 15 && (
+                  <Text style={styles.fakePercentageTextInside}>{Math.round(safeFakePercentage)}%</Text>
+                )}
+              </View>
+            </>
+          ) : (
+            <View style={styles.emptyBar} />
+          )}
         </View>
       </View>
 
@@ -209,6 +224,10 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
 };
 
 const styles = StyleSheet.create({
+  noVotesText: {
+    color: '#666',
+    fontWeight: 'bold',
+  },
   votingSectionContainer: {
     position: 'relative',
     marginBottom: 20,
@@ -296,6 +315,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#662D91',
     position: 'relative',
+  },
+  emptyBar: {
+    width: '100%',
   },
   realBar: {
     backgroundColor: '#fff',
