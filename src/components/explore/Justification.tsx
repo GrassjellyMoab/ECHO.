@@ -34,7 +34,6 @@ interface SwipeResultModalProps {
     sources: string[];
     onSeeThread?: () => void;
     showThreadContent?: boolean;
-    threadData: ThreadData | null;
     onBackToJustification?: () => void;
 }
 
