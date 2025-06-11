@@ -19,6 +19,7 @@ interface Comment {
   id: string;
   date: Date | string;
   is_flagged: boolean;
+  is_reviewed: boolean;
   is_pinned: boolean;
   num_likes: number;
   num_replies: number;
@@ -96,6 +97,9 @@ const CommentsSection: React.FC<CommentsProps> = ({
     }
 
     let filtered = comments;
+    
+    // Filter out flagged comments
+    filtered = filtered.filter(comment => comment.is_flagged === false);
     
     if (threadId) {
       filtered = filtered.filter(comment => comment.tid === threadId);
