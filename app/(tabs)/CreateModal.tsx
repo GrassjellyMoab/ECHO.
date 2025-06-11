@@ -23,6 +23,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image } from 'react-native';
+import { SwipeResultModal } from '@/src/components/create/verdict';
+import ThreadModal from '@/src/components/ThreadModal';
 
 
 type TabsParamList = {
@@ -47,6 +49,26 @@ interface CreateModalProps {
   onClose: () => void;
 }
 
+interface ThreadData {
+  id: string;
+  author: string;
+  title: string;
+  timeAgo: string;
+  readTime: string;
+  views: string;
+  comments: string;
+  votes: string;
+  tags: string[];
+  hasImage?: boolean;
+  isVerified?: boolean;
+  avatar?: string;
+  threadImageUrl?: string;
+  content: string;
+  real_ratio: number;
+  ai_verdict?: string;
+  hasVoted: boolean;
+}
+
 export default function CreateModal({ visible, onClose }: CreateModalProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -54,10 +76,13 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
   const [imageUri, setImageUri] = useState('');
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [showResultModal, setShowResultModal] = useState(false);
+  const [showThreadModal, setShowThreadModal] = useState(false);
+  const [selectedThreadData, setSelectedThreadData] = useState<ThreadData | null>(null);  
   const [currentResult, setCurrentResult] = useState<{
     title: string;
     claim?: string;
     imageUri?: string;
+    content?: string;
   } | null>(null);
   const topics = ['Health', 'Politics', 'Finance', 'Technology', 'Cybersecurity','Whatsapp','Concerts','Climate', 'Crypto', 'Science'];
 
@@ -116,6 +141,7 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
                 title: postTitle,
                 claim: postTitle,        // ← Title IS the claim
                 imageUri: imageUri,      // ← Pass image if any
+                content: content,        // ← Pass the description/content
               });
               setShowResultModal(true);
             }, 500);
@@ -134,10 +160,19 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
     setCurrentResult(null);
   };
 
-  const handleSeeThread = () => {
-    // Disabled for now - will implement later
-    console.log('See thread functionality disabled');
-    // handleModalClose();
+  const handleSeeThread = (threadData: ThreadData) => {
+    handleModalClose();
+    
+    // Mark this as a fact-checked thread that should skip voting
+    const threadDataWithSkipVoting = {
+      ...threadData,
+      votes: '0', // Ensure votes is 0
+      hasVoted: false, // Ensure no vote recorded
+      // Keep the ai_verdict to show the result
+    };
+    
+    setSelectedThreadData(threadDataWithSkipVoting);
+    setShowThreadModal(true);
   };
 
   const isPostEnabled = title.trim().length > 0 && content.trim().length > 0 && selectedTopics.length >0;
@@ -282,12 +317,23 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
           visible={showResultModal}
           onClose={handleModalClose}
           title={currentResult.title}
-          claim={currentResult.claim}      // ← Pass the claim text
-          imageUri={currentResult.imageUri} // ← Pass the image
+          claim={currentResult.claim}    // ← Pass the claim text
+          imageUri={currentResult.imageUri}  
+          content={currentResult.content}
           onSeeThread={handleSeeThread}
         />
       )}
-       </>
+      {selectedThreadData && (
+        <ThreadModal
+          visible={showThreadModal}
+          threadData={selectedThreadData}
+          onClose={() => {
+            setShowThreadModal(false);
+            setSelectedThreadData(null);
+          }}
+        />
+      )}
+    </>
   );
 }
 

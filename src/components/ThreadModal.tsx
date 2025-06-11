@@ -197,6 +197,7 @@ export default function ThreadModal({ visible, threadData, onClose }: ThreadModa
               hasVoted={threadData.hasVoted}
               aiVerdict={threadData.ai_verdict}
               threadId={threadData.id}
+              skipVoting={threadData.votes === '0' && !threadData.hasVoted && !!threadData.ai_verdict}
             />
           </View>
         </ScrollView>

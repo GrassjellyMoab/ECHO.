@@ -6,9 +6,30 @@ interface SwipeResultModalProps {
   visible: boolean;
   onClose: () => void;
   title: string;
-  claim?: string; // The actual claim text to fact-check
-  imageUri?: string; // Optional image to include
-  onSeeThread?: () => void;
+  claim?: string;
+  imageUri?: string;
+  content?: string;
+  onSeeThread?: (threadData: ThreadData) => void;
+}
+
+interface ThreadData {
+  id: string;
+  author: string;
+  title: string;
+  timeAgo: string;
+  readTime: string;
+  views: string;
+  comments: string;
+  votes: string;
+  tags: string[];
+  hasImage?: boolean;
+  isVerified?: boolean;
+  avatar?: string;
+  threadImageUrl?: string;
+  content: string;
+  real_ratio: number;
+  ai_verdict?: string;
+  hasVoted: boolean;
 }
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -144,7 +165,7 @@ const parseLocalDEFAMEResults = (result: any) => {
   try {
     console.log('Parsing DEFAME result:', JSON.stringify(result, null, 2));
     
-    let verdict: 'REAL' | 'FAKE' = 'REAL';
+    let verdict: 'REAL' | 'FAKE' | 'AMBIGUOUS' = 'REAL';
     let explanation = 'Fact-check completed.';
     
     // Handle different possible response structures
@@ -175,13 +196,15 @@ const parseLocalDEFAMEResults = (result: any) => {
             .join(' ');
           
           // Look for the actual verdict in the justification text
-          const verdictMatch = justificationTexts.match(/### Verdict:\s*(SUPPORTED|REFUTED|NOT SUPPORTED)/i);
+          const verdictMatch = justificationTexts.match(/### Verdict:\s*(SUPPORTED|REFUTED|NOT ENOUGH INFORMATION)/i);
           if (verdictMatch) {
             const actualVerdict = verdictMatch[1].toLowerCase();
             if (actualVerdict.includes('refuted') || actualVerdict.includes('not supported')) {
               verdict = 'FAKE';
             } else if (actualVerdict.includes('supported')) {
               verdict = 'REAL';
+            } else if (actualVerdict.includes('not enough information')) {
+              verdict = 'AMBIGUOUS';
             }
             
             console.log('Extracted actual verdict from justification:', actualVerdict);
@@ -200,6 +223,10 @@ const parseLocalDEFAMEResults = (result: any) => {
                       lowerJustification.includes('verified') ||
                       lowerJustification.includes('accurate')) {
               verdict = 'REAL';
+            }else if (lowerJustification.includes('unsure') || 
+                      lowerJustification.includes('not enough') ||
+                      lowerJustification.includes('not enough information')) {
+              verdict = 'AMBIGUOUS';
             }
           }
           
@@ -249,6 +276,8 @@ const parseLocalDEFAMEResults = (result: any) => {
         verdict = 'FAKE';
       } else if (v.includes('supported') || v.includes('true')) {
         verdict = 'REAL';
+      } else if (v.includes('not enough information')) {
+        verdict = 'AMBIGUOUS';
       }
       
       if (result.explanation || result.justification) {
@@ -262,6 +291,8 @@ const parseLocalDEFAMEResults = (result: any) => {
           verdict = 'FAKE';
         } else if (v.includes('supported') || v.includes('true')) {
           verdict = 'REAL';
+        } else if (v.includes('not enough information')) {
+          verdict = 'AMBIGUOUS';
         }
       }
       
@@ -277,6 +308,8 @@ const parseLocalDEFAMEResults = (result: any) => {
             verdict = 'FAKE';
           } else if (v.includes('supported') || v.includes('true')) {
             verdict = 'REAL';
+          } else if (v.includes('not enough information')) {
+            verdict = 'AMBIGUOUS';
           }
         }
         
@@ -307,6 +340,11 @@ const parseLocalDEFAMEResults = (result: any) => {
         ? 'This claim appears to be supported by available evidence.'
         : 'This claim has been refuted or is not supported by available evidence.';
     }
+
+    const words = explanation.split(' ');
+    const truncatedExplanation = words.length > 30 
+      ? words.slice(0, 30).join(' ') + '...'
+      : explanation;
     
     console.log('Final parsed verdict:', verdict);
     console.log('Final explanation length:', explanation.length);
@@ -396,13 +434,15 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
     title,
     claim,
     imageUri,
+    content,
     onSeeThread
 }) => {
   const [loading, setLoading] = useState(true);
-  const [result, setResult] = useState<'REAL' | 'FAKE'>('REAL');
+  const [result, setResult] = useState<'REAL' | 'FAKE' | 'AMBIGUOUS'>('REAL');
   const [explanation, setExplanation] = useState('');
   const [sources, setSources] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [truncatedExplanation, setTruncatedExplanation] = useState(''); 
 
   // Call DEFAME API when modal becomes visible
   useEffect(() => {
@@ -425,7 +465,7 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
           setExplanation(factCheckResult.explanation);
           setSources(factCheckResult.sources);
           setError(null);
-          
+
           console.log('Fact-check completed successfully:', {
             verdict: factCheckResult.verdict,
             explanationLength: factCheckResult.explanation.length,
@@ -503,14 +543,17 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
               {/* Result */}
               <View style={styles.resultContainer}>
                 <View style={styles.resultIconBackground}>
-                  <Image
-                    source={result === 'FAKE' || error
+                <Image
+                  source={
+                    result === 'REAL' 
+                      ? require('../../assets/tick.png')
+                      : result === 'FAKE' || error
                       ? require('../../assets/cross.png')
-                      : require('../../assets/tick.png')
-                    }
-                    style={styles.backgroundIcon}
-                    resizeMode="contain"
-                  />
+                      : require('../../assets/question.png') 
+                  }
+                  style={styles.backgroundIcon}
+                  resizeMode="contain"
+                />
                   <Text style={[styles.resultText, { color: '#000' }]}>
                     {error ? 'ERROR' : result}.
                   </Text>
@@ -521,8 +564,49 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
               <Text style={styles.whyTitle}>
                 {error ? 'ERROR DETAILS:' : 'WHY?'}
               </Text>
-              <Text style={styles.explanation}>{explanation}</Text>
-
+              <Text style={styles.explanation}>
+                {(() => {
+                  const words = explanation.split(' ');
+                  const truncatedExplanation = words.length > 30 
+                    ? words.slice(0, 30).join(' ') + '...'
+                    : explanation;
+                  
+                    return (
+                      <>
+                        {words.length > 30 ? truncatedExplanation : explanation}
+                        {words.length > 30 && onSeeThread && (
+                          <Text 
+                            style={styles.seeMoreText} 
+                            onPress={() => {
+                              const threadData: ThreadData = {
+                                id: Date.now().toString(), // Generate unique ID
+                                author: '@user', // You can get this from auth store
+                                title: title,
+                                timeAgo: 'Just now',
+                                readTime: '2 min read',
+                                views: '0',
+                                comments: '0',
+                                votes: '0',
+                                tags: ['Fact-check'], // Default tag
+                                hasImage: !!imageUri,
+                                isVerified: false,
+                                avatar: undefined,
+                                threadImageUrl: imageUri,
+                                content: content || 'No description provided', // Full explanation as content
+                                real_ratio: 0, // No votes yet
+                                ai_verdict: explanation, // Pass the verdict result
+                                hasVoted: false
+                              };
+                              onSeeThread(threadData);
+                            }}
+                          >
+                            {' '}SEE MORE
+                          </Text>
+                        )}
+                      </>
+                    );
+                })()}
+              </Text>
               {/* Sources */}
               <Text style={styles.sourcesTitle}>SOURCES:</Text>
               <View style={styles.sourcesContainer}>
@@ -535,13 +619,6 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
                   </View>
                 ))}
               </View>
-
-              {/* See Thread Button - only show if no error */}
-              {onSeeThread && !error && (
-                <TouchableOpacity style={styles.seeThreadButton} onPress={onSeeThread}>
-                  <Text style={styles.seeThreadText}>SEE THREAD</Text>
-                </TouchableOpacity>
-              )}
             </>
           )}
         </View>
@@ -683,6 +760,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+    fontFamily: 'AnonymousPro-Bold',
+  },
+  seeMoreText: {
+    color: '#662D91',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
     fontFamily: 'AnonymousPro-Bold',
   },
 });
