@@ -1,5 +1,7 @@
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
-import React, { useEffect, useState } from 'react';
+import { useAuthStore } from '@/src/store/authStore';
+import { useImagesStore } from '@/src/store/imgStore';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Dimensions, Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface SwipeResultModalProps {
@@ -48,23 +50,23 @@ const callDEFAMEAPI = async (claim: string, imageUri?: string) => {
 
     if (imageUri) {
       console.log('Processing image for fact-check:', imageUri);
-      
+
       try {
         // Convert image to base64
         const response = await fetch(imageUri);
-        
+
         if (!response.ok) {
           throw new Error(`Failed to fetch image: ${response.status}`);
         }
-        
+
         const blob = await response.blob();
-        
+
         if (!blob || blob.size === 0) {
           throw new Error('Invalid image data received');
         }
-        
+
         console.log('Image blob size:', blob.size, 'type:', blob.type);
-        
+
         const imageBase64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
@@ -107,7 +109,7 @@ const callDEFAMEAPI = async (claim: string, imageUri?: string) => {
       if (!claim || !claim.trim()) {
         throw new Error('No claim text or image provided for fact-checking');
       }
-      
+
       // Simple text claim as tuple
       content.push(["text", claim]);
     }
@@ -120,7 +122,7 @@ const callDEFAMEAPI = async (claim: string, imageUri?: string) => {
 
     console.log('Submitting to DEFAME with exact tuple format:');
     console.log('Content length:', content.length);
-    console.log('Content structure:', content.map(([type, data], index) => 
+    console.log('Content structure:', content.map(([type, data], index) =>
       `${index}: [${type}, ${data.substring(0, 50)}${data.length > 50 ? '...' : ''}]`
     ));
     console.log('Date:', requestBody.date);
@@ -141,7 +143,7 @@ const callDEFAMEAPI = async (claim: string, imageUri?: string) => {
     }
 
     const result = await submitResponse.json();
-    
+
     console.log('DEFAME Response received successfully');
     console.log('Response type:', typeof result);
     console.log('Response keys:', Object.keys(result || {}));
@@ -155,7 +157,7 @@ const callDEFAMEAPI = async (claim: string, imageUri?: string) => {
 
   } catch (error) {
     console.error('DEFAME API Error:', error);
-    
+
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     throw new Error(`Fact-checking failed: ${errorMessage}`);
   }
@@ -165,10 +167,10 @@ const callDEFAMEAPI = async (claim: string, imageUri?: string) => {
 const parseLocalDEFAMEResults = (result: any) => {
   try {
     console.log('Parsing DEFAME result:', JSON.stringify(result, null, 2));
-    
+
     let verdict: 'REAL' | 'FAKE' | 'AMBIGUOUS' = 'REAL';
     let explanation = 'Fact-check completed.';
-    
+
     // Handle different possible response structures
     if (typeof result === 'string') {
       try {
@@ -182,12 +184,12 @@ const parseLocalDEFAMEResults = (result: any) => {
         };
       }
     }
-    
+
     // Check different possible response structures
     if (result.claims) {
       // Original structure with claims object
       const claimEntries = Object.values(result.claims);
-      
+
       for (const claim of claimEntries as any[]) {
         // FIXED: Extract verdict from the detailed justification text, not the top-level verdict
         if (claim.justification && Array.isArray(claim.justification)) {
@@ -195,7 +197,7 @@ const parseLocalDEFAMEResults = (result: any) => {
             .filter(([type, _]: [string, string]) => type === 'text')
             .map(([_, text]: [string, string]) => text)
             .join(' ');
-          
+
           // Look for the actual verdict in the justification text
           const verdictMatch = justificationTexts.match(/### Verdict:\s*(SUPPORTED|REFUTED|NOT ENOUGH INFORMATION)/i);
           if (verdictMatch) {
@@ -207,37 +209,37 @@ const parseLocalDEFAMEResults = (result: any) => {
             } else if (actualVerdict.includes('not enough information')) {
               verdict = 'AMBIGUOUS';
             }
-            
+
             console.log('Extracted actual verdict from justification:', actualVerdict);
           } else {
             // Fallback: look for verdict keywords in the justification text
             const lowerJustification = justificationTexts.toLowerCase();
-            if (lowerJustification.includes('refuted') || 
-                lowerJustification.includes('not supported') || 
-                lowerJustification.includes('false') ||
-                lowerJustification.includes('insufficient evidence') ||
-                lowerJustification.includes('misleading') ||
-                lowerJustification.includes('inaccurate')) {
+            if (lowerJustification.includes('refuted') ||
+              lowerJustification.includes('not supported') ||
+              lowerJustification.includes('false') ||
+              lowerJustification.includes('insufficient evidence') ||
+              lowerJustification.includes('misleading') ||
+              lowerJustification.includes('inaccurate')) {
               verdict = 'FAKE';
-            } else if (lowerJustification.includes('supported') || 
-                      lowerJustification.includes('confirmed') ||
-                      lowerJustification.includes('verified') ||
-                      lowerJustification.includes('accurate')) {
+            } else if (lowerJustification.includes('supported') ||
+              lowerJustification.includes('confirmed') ||
+              lowerJustification.includes('verified') ||
+              lowerJustification.includes('accurate')) {
               verdict = 'REAL';
-            }else if (lowerJustification.includes('unsure') || 
-                      lowerJustification.includes('not enough') ||
-                      lowerJustification.includes('not enough information')) {
+            } else if (lowerJustification.includes('unsure') ||
+              lowerJustification.includes('not enough') ||
+              lowerJustification.includes('not enough information')) {
               verdict = 'AMBIGUOUS';
             }
           }
-          
+
           // Extract clean explanation (remove markdown and redundant text)
           if (justificationTexts.trim()) {
             // Extract the "Final Judgement" or "Elaboration" section if available
             const finalJudgementMatch = justificationTexts.match(/## Final Judgement\s*([\s\S]*?)(?=###|$)/i);
             const elaborationMatch = justificationTexts.match(/## Elaboration\s*([\s\S]*?)(?=##|$)/i);
             const evidenceMatch = justificationTexts.match(/## Evidence\s*([\s\S]*?)(?=##|$)/i);
-            
+
             if (finalJudgementMatch) {
               explanation = finalJudgementMatch[1].trim();
             } else if (elaborationMatch) {
@@ -248,7 +250,7 @@ const parseLocalDEFAMEResults = (result: any) => {
               // Fallback to full justification text
               explanation = justificationTexts;
             }
-            
+
             // Clean up the explanation
             explanation = explanation
               .replace(/##\s*/g, '')
@@ -265,7 +267,7 @@ const parseLocalDEFAMEResults = (result: any) => {
               .trim();
           }
         }
-        
+
         // WARNING: Don't use the top-level verdict as it may be incorrect
         console.warn('Top-level verdict ignored due to potential inconsistency:', claim.verdict);
       }
@@ -280,7 +282,7 @@ const parseLocalDEFAMEResults = (result: any) => {
       } else if (v.includes('not enough information')) {
         verdict = 'AMBIGUOUS';
       }
-      
+
       if (result.explanation || result.justification) {
         explanation = result.explanation || result.justification;
       }
@@ -296,7 +298,7 @@ const parseLocalDEFAMEResults = (result: any) => {
           verdict = 'AMBIGUOUS';
         }
       }
-      
+
       if (result.analysis.explanation) {
         explanation = result.analysis.explanation;
       }
@@ -313,7 +315,7 @@ const parseLocalDEFAMEResults = (result: any) => {
             verdict = 'AMBIGUOUS';
           }
         }
-        
+
         if (item.explanation || item.justification) {
           explanation = item.explanation || item.justification;
           break;
@@ -326,7 +328,7 @@ const parseLocalDEFAMEResults = (result: any) => {
         explanation = 'Fact-check analysis completed, but response format was unexpected.';
       }
     }
-    
+
     // Final cleanup and validation
     if (typeof explanation === 'string') {
       explanation = explanation
@@ -335,34 +337,34 @@ const parseLocalDEFAMEResults = (result: any) => {
         .replace(/\n{3,}/g, '\n\n') // Replace multiple newlines
         .trim();
     }
-    
+
     if (!explanation || explanation.length < 10) {
-      explanation = verdict === 'REAL' 
+      explanation = verdict === 'REAL'
         ? 'This claim appears to be supported by available evidence.'
         : 'This claim has been refuted or is not supported by available evidence.';
     }
 
     const words = explanation.split(' ');
-    const truncatedExplanation = words.length > 30 
+    const truncatedExplanation = words.length > 30
       ? words.slice(0, 30).join(' ') + '...'
       : explanation;
-    
+
     console.log('Final parsed verdict:', verdict);
     console.log('Final explanation length:', explanation.length);
-    
+
     // Extract actual sources from justification text
     let extractedSources: string[] = [];
-    
+
     if (result.claims) {
       const claimEntries = Object.values(result.claims);
-      
+
       for (const claim of claimEntries as any[]) {
         if (claim.justification && Array.isArray(claim.justification)) {
           const justificationTexts = claim.justification
             .filter(([type, _]: [string, string]) => type === 'text')
             .map(([_, text]: [string, string]) => text)
             .join(' ');
-          
+
           // Extract sources from markdown links like [NASA](https://...)
           const sourceMatches = justificationTexts.match(/\[([^\]]+)\]\([^)]+\)/g);
           if (sourceMatches) {
@@ -372,7 +374,7 @@ const parseLocalDEFAMEResults = (result: any) => {
             });
             extractedSources.push(...sources);
           }
-          
+
           // Extract sources from brackets like [Straits Times] or [Mothership]
           const bracketMatches = justificationTexts.match(/\[([^\]]+)\]/g);
           if (bracketMatches) {
@@ -381,19 +383,19 @@ const parseLocalDEFAMEResults = (result: any) => {
               .filter((source: string) => {
                 // Filter out common non-source brackets like [text], [image], etc.
                 const lowerSource = source.toLowerCase();
-                return !lowerSource.includes('text') && 
-                       !lowerSource.includes('image') && 
-                       !lowerSource.includes('url') &&
-                       source.length > 2 && 
-                       source.length < 50;
+                return !lowerSource.includes('text') &&
+                  !lowerSource.includes('image') &&
+                  !lowerSource.includes('url') &&
+                  source.length > 2 &&
+                  source.length < 50;
               });
             extractedSources.push(...bracketSources);
           }
-          
+
           // Also look for mentions like "according to NASA" or "sources like NASA"
           const mentionMatches = justificationTexts.match(/(?:according to|sources? like|from|via)\s+([A-Z][A-Za-z\s&]+?)(?:\s|,|\.|$)/g);
           if (mentionMatches) {
-            const mentions = mentionMatches.map((match: string) => 
+            const mentions = mentionMatches.map((match: string) =>
               match.replace(/(?:according to|sources? like|from|via)\s+/, '').trim().replace(/[,.]$/, '')
             ).filter((mention: string | any[]) => mention.length > 1 && mention.length < 50);
             extractedSources.push(...mentions);
@@ -401,26 +403,26 @@ const parseLocalDEFAMEResults = (result: any) => {
         }
       }
     }
-    
+
     // Remove duplicates and clean up source names
     const uniqueSources = [...new Set(extractedSources)]
       .map(source => source.trim())
       .filter(source => source.length > 1)
       .slice(0, 5); // Limit to max 5 sources for UI
-    
+
     // Fallback to generic if no sources found
-    const finalSources = uniqueSources.length > 0 
-      ? uniqueSources 
+    const finalSources = uniqueSources.length > 0
+      ? uniqueSources
       : ['DEFAME AI Analysis'];
-    
+
     console.log('Extracted sources:', finalSources);
-    
+
     return {
       verdict,
       explanation,
       sources: finalSources
     };
-    
+
   } catch (error) {
     console.error('Error parsing DEFAME results:', error);
     console.error('Original result object:', result);
@@ -430,38 +432,56 @@ const parseLocalDEFAMEResults = (result: any) => {
 
 // Updated SwipeResultModal component with better error handling
 export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
-    visible,
-    onClose,
-    title,
-    claim,
-    imageUri,
-    content,
-    onSeeThread
+  visible,
+  onClose,
+  title,
+  claim,
+  imageUri,
+  content,
+  onSeeThread
 }) => {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<'REAL' | 'FAKE' | 'AMBIGUOUS'>('REAL');
   const [explanation, setExplanation] = useState('');
   const [sources, setSources] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [truncatedExplanation, setTruncatedExplanation] = useState(''); 
+  const [truncatedExplanation, setTruncatedExplanation] = useState('');
+  const { user } = useAuthStore();
+
+  const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
+  const userImages = getImagesByFolder('users');
+  const userImageMap = new Map(
+    userImages.map(img => {
+      const username = img.name.replace('.png', '').toLowerCase();
+      return [username, img.url];
+    })
+  );
+
+  const avatar = useMemo(() => {
+    const authorUsername = user?.username || 'unknown';
+    const authorKey = authorUsername.toLowerCase().replace('@', '');
+
+    return userImageMap.get(authorKey) ||
+      `https://via.placeholder.com/80x80/4FC3F7/ffffff?text=${authorUsername.charAt(0).toUpperCase()}`;
+  }, [user?.username, userImageMap]);
 
   // Call DEFAME API when modal becomes visible
   useEffect(() => {
     if (visible && (claim || imageUri)) {
       setLoading(true);
       setError(null);
-      
+
       const factCheck = async () => {
         try {
-          console.log('Starting fact-check with:', { 
-            hasText: !!claim, 
+          console.log('Starting fact-check with:', {
+            hasText: !!claim,
             hasImage: !!imageUri,
             textLength: claim?.length || 0,
             claimPreview: claim?.substring(0, 100)
           });
-          
+
           const factCheckResult = await callDEFAMEAPI(claim || '', imageUri);
-          
+
           setResult(factCheckResult.verdict);
           setExplanation(factCheckResult.explanation);
           setSources(factCheckResult.sources);
@@ -476,7 +496,7 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
           console.error('Fact-check error:', err);
           const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
           setError(errorMessage);
-          
+
           // Set fallback values
           setResult('REAL');
           setExplanation(`Unable to complete fact-check: ${errorMessage}`);
@@ -519,7 +539,7 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
           <View style={styles.iconContainer}>
             <Image
               source={require('../../assets/Judge.png')}
-              style={{width: 70, height: 70, tintColor: 'black'}}
+              style={{ width: 70, height: 70, tintColor: 'black' }}
             />
           </View>
 
@@ -531,9 +551,9 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#662D91" />
               <Text style={styles.loadingText}>
-                {imageUri && claim 
-                  ? 'Fact-checking claim and image...' 
-                  : imageUri 
+                {imageUri && claim
+                  ? 'Fact-checking claim and image...'
+                  : imageUri
                     ? 'Analyzing image...'
                     : 'Fact-checking claim...'
                 }
@@ -544,17 +564,17 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
               {/* Result */}
               <View style={styles.resultContainer}>
                 <View style={styles.resultIconBackground}>
-                <Image
-                  source={
-                    result === 'REAL' 
-                      ? require('../../assets/tick.png')
-                      : result === 'FAKE' || error
-                      ? require('../../assets/cross.png')
-                      : require('../../assets/question.png') 
-                  }
-                  style={styles.backgroundIcon}
-                  resizeMode="contain"
-                />
+                  <Image
+                    source={
+                      result === 'REAL'
+                        ? require('../../assets/tick.png')
+                        : result === 'FAKE' || error
+                          ? require('../../assets/cross.png')
+                          : require('../../assets/question.png')
+                    }
+                    style={styles.backgroundIcon}
+                    resizeMode="contain"
+                  />
                   <Text style={[styles.resultText, { color: '#000' }]}>
                     {error ? 'ERROR' : result}.
                   </Text>
@@ -568,45 +588,45 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
               <Text style={styles.explanation}>
                 {(() => {
                   const words = explanation.split(' ');
-                  const truncatedExplanation = words.length > 30 
+                  const truncatedExplanation = words.length > 30
                     ? words.slice(0, 30).join(' ') + '...'
                     : explanation;
-                  
-                    return (
-                      <>
-                        {words.length > 30 ? truncatedExplanation : explanation}
-                        {words.length > 30 && onSeeThread && (
-                          <Text 
-                            style={styles.seeMoreText} 
-                            onPress={() => {
-                              const threadData: ThreadData = {
-                                id: Date.now().toString(), // Generate unique ID
-                                author: '@user', // You can get this from auth store
-                                title: title,
-                                timeAgo: 'Just now',
-                                readTime: '2 min read',
-                                views: '0',
-                                comments: '0',
-                                votes: '0',
-                                tags: ['Fact-check'], // Default tag
-                                hasImage: !!imageUri,
-                                isVerified: false,
-                                avatar: undefined,
-                                threadImageUrl: imageUri,
-                                content: content || 'No description provided', // Full explanation as content
-                                real_ratio: 0, // No votes yet
-                                ai_verdict: explanation, // Pass the verdict result
-                                hasVoted: false,
-                                sources: sources
-                              };
-                              onSeeThread(threadData);
-                            }}
-                          >
-                            {' '}SEE MORE
-                          </Text>
-                        )}
-                      </>
-                    );
+
+                  return (
+                    <>
+                      {words.length > 30 ? truncatedExplanation : explanation}
+                      {words.length > 30 && onSeeThread && (
+                        <Text
+                          style={styles.seeMoreText}
+                          onPress={() => {
+                            const threadData: ThreadData = {
+                              id: Date.now().toString(), // Generate unique ID
+                              author: '@' + `${user?.username}` || '@user', // You can get this from auth store
+                              title: title,
+                              timeAgo: 'Just now',
+                              readTime: '2 min read',
+                              views: '0',
+                              comments: '0',
+                              votes: '0',
+                              tags: ['Fact-check'], // Default tag
+                              hasImage: !!imageUri,
+                              isVerified: false,
+                              avatar: avatar,
+                              threadImageUrl: imageUri,
+                              content: content || 'No description provided', // Full explanation as content
+                              real_ratio: 0, // No votes yet
+                              ai_verdict: explanation, // Pass the verdict result
+                              hasVoted: false,
+                              sources: sources
+                            };
+                            onSeeThread(threadData);
+                          }}
+                        >
+                          {' '}SEE MORE
+                        </Text>
+                      )}
+                    </>
+                  );
                 })()}
               </Text>
               {/* Sources */}
@@ -614,7 +634,7 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
               <View style={styles.sourcesContainer}>
                 {sources.map((source, index) => (
                   <View key={index} style={[
-                    styles.sourceTag, 
+                    styles.sourceTag,
                     error && styles.sourceTagError
                   ]}>
                     <Text style={styles.sourceText}>{source}</Text>
