@@ -212,9 +212,12 @@ const SwipeableCards: React.FC<SwipeableCardsProps> = () => {
 
   const onSwipeComplete = (direction: 'left' | 'right'): void => {
     const item = cards[currentIndex];
-
     // Store the swiped card for potential thread navigation
     setCurrentSwipedCard(item);
+
+    // Convert card to thread data immediately for the modal
+    const threadData = convertCardToThreadData(item);
+    setSelectedThreadData(threadData);
 
     // Check if user has already voted on this thread
     if (hasUserVoted(item.id)) {
@@ -227,6 +230,7 @@ const SwipeableCards: React.FC<SwipeableCardsProps> = () => {
         explanation: item.aiVerdict,
         sources: item.sources,
       });
+
       setShowResultModal(true);
     } else {
       // Determine vote based on swipe direction
@@ -235,7 +239,6 @@ const SwipeableCards: React.FC<SwipeableCardsProps> = () => {
       
       // Save vote to session store
       addVote(item.id, userVote);
-      console.log(`Saved vote ${userVote} for thread ${item.id}`);
 
       // Use actual Firebase data for the result
       setCurrentResult({
@@ -313,7 +316,8 @@ const SwipeableCards: React.FC<SwipeableCardsProps> = () => {
       content: card.article.content || "", // Ensure content is always a string
       real_ratio: originalThread?.real_ratio || 0,
       ai_verdict: card.aiVerdict,
-      hasVoted: hasUserVoted(card.id) // Check session store for vote status
+      hasVoted: hasUserVoted(card.id), // Check session store for vote status
+      sources: card.sources,
     };
   };
 

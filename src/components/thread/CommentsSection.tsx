@@ -205,17 +205,27 @@ const CommentsSection: React.FC<CommentsProps> = ({
     }
   };
 
-  const formatTimestamp = (date: Date | string) => {
+  const calculateTimeAgo = (timestamp: number | string | Date) => {
     const now = new Date();
-    const commentDate = date instanceof Date ? date : new Date(date);
-    const diffInMs = now.getTime() - commentDate.getTime();
-    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'now';
-    if (diffInHours < 24) return `${diffInHours} hours ago`;
-    if (diffInHours < 48) return '1 day ago';
-    return `${Math.floor(diffInHours / 24)} days ago`;
+    const time = typeof timestamp === 'number' ? new Date(timestamp) : new Date(timestamp);
+    const diffInMs = now.getTime() - time.getTime();
+
+    const minutes = Math.floor(diffInMs / (1000 * 60));
+    const hours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+    const weeks = Math.floor(days / 7);
+    const months = Math.floor(days / 30.44); // Average days per month
+    const years = Math.floor(days / 365.25); // Account for leap years
+
+    if (years > 0) return `${years} year${years === 1 ? '' : 's'} ago`;
+    if (months > 0) return `${months} month${months === 1 ? '' : 's'} ago`;
+    if (weeks > 0) return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+    if (days > 0) return `${days} day${days === 1 ? '' : 's'} ago`;
+    if (hours > 0) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+    if (minutes > 0) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+    return 'Just now';
   };
+
 
   // Improved user data retrieval with better avatar handling
 const getUserFromStore = (uid: string) => {
@@ -314,7 +324,7 @@ const getUserFromStore = (uid: string) => {
                   <IconSymbol name="checkmark.circle.fill" style={styles.verifiedIcon} />
                 )}
               </View>
-              <Text style={styles.timestamp}>{formatTimestamp(item.date)}</Text>
+              <Text style={styles.timestamp}>{calculateTimeAgo(item.date)}</Text>
             </View>
           </View>
         </View>

@@ -26,16 +26,16 @@ interface ThreadData {
 }
 
 interface SwipeResultModalProps {
-  visible: boolean;
-  onClose: () => void;
-  result: 'REAL' | 'FAKE';
-  title: string;
-  explanation: string;
-  sources: string[];
-  onSeeThread?: () => void;
-  showThreadContent?: boolean;
-  threadData?: ThreadData | null;
-  onBackToJustification?: () => void;
+    visible: boolean;
+    onClose: () => void;
+    result: 'REAL' | 'FAKE';
+    title: string;
+    explanation: string;
+    sources: string[];
+    onSeeThread?: () => void;
+    showThreadContent?: boolean;
+    threadData: ThreadData | null;
+    onBackToJustification?: () => void;
 }
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -52,94 +52,93 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
     threadData,
     onBackToJustification
 }) => {
-  const isCorrect = result === 'FAKE'; 
+    const isCorrect = result === 'FAKE';
+    return (
+        <Modal
+            visible={visible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={onClose}
+        >
+            <View style={styles.overlay}>
+                <View style={styles.modalContainer}>
 
-  return (
-    <Modal
-    visible={visible}
-    transparent={true}
-    animationType="fade"
-    onRequestClose={onClose}
-    >
-        <View style={styles.overlay}>
-            <View style={styles.modalContainer}>
-            
-            {/* Conditionally render thread content or justification content */}
-            {showThreadContent && threadData ? (
-                <ThreadModal
-                    visible={true}
-                    threadData={threadData}
-                    onClose={onBackToJustification || (() => {})}
-                />
-            ) : (
-                <>
-                    {/* Close Button */}
-                    <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                        <IconSymbol name="close" size={32} color="#666" />
-                    </TouchableOpacity>
-
-                    {/* Icon */}
-                    <View style={styles.iconContainer}>
-                        <Image
-                            source={require('../../assets/Judge.png')}
-                            style={{width: 70, height: 70, tintColor: 'black'}}
+                    {/* Conditionally render thread content or justification content */}
+                    {showThreadContent && threadData ? (
+                        <ThreadModal
+                            visible={true}
+                            threadData={threadData}
+                            onClose={onBackToJustification || (() => { })}
                         />
-                    </View>
+                    ) : (
+                        <>
+                            {/* Close Button */}
+                            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                                <IconSymbol name="close" size={32} color="#666" />
+                            </TouchableOpacity>
 
-                    {/* Title */}
-                    <Text style={styles.title}>{title}</Text>
+                            {/* Icon */}
+                            <View style={styles.iconContainer}>
+                                <Image
+                                    source={require('../../assets/Judge.png')}
+                                    style={{ width: 70, height: 70, tintColor: 'black' }}
+                                />
+                            </View>
 
-                    {/* Result */}
-                    <View style={styles.resultContainer}>
-                        <View style={styles.resultIconBackground}>
-                            <Image
-                            source={result === 'FAKE' 
-                                ? require('../../assets/cross.png')
-                                : require('../../assets/tick.png')
-                            }
-                            style={styles.backgroundIcon}
-                            resizeMode="contain"
-                            />
-                            <Text style={[
-                            styles.resultText,
-                            { color: result === 'FAKE' ? '#000' : '#000' }
-                            ]}>
-                            {result}.
-                            </Text>
-                        </View>
-                    </View>
+                            {/* Title */}
+                            <Text style={styles.title}>{title}</Text>
 
-                    {/* Why Section */}
-                    <Text style={styles.whyTitle}>WHY?</Text>
-                    <Text style={styles.explanation}>{explanation}</Text>
+                            {/* Result */}
+                            <View style={styles.resultContainer}>
+                                <View style={styles.resultIconBackground}>
+                                    <Image
+                                        source={result === 'FAKE'
+                                            ? require('../../assets/cross.png')
+                                            : require('../../assets/tick.png')
+                                        }
+                                        style={styles.backgroundIcon}
+                                        resizeMode="contain"
+                                    />
+                                    <Text style={[
+                                        styles.resultText,
+                                        { color: result === 'FAKE' ? '#000' : '#000' }
+                                    ]}>
+                                        {result}.
+                                    </Text>
+                                </View>
+                            </View>
 
-                    {/* Sources */}
-                    <Text style={styles.sourcesTitle}>SOURCES:</Text>
-                    <View style={styles.sourcesContainer}>
-                        {sources.map((source, index) => (
-                        <View key={index} style={styles.sourceTag}>
-                            <Text style={styles.sourceText}>{source}</Text>
-                        </View>
-                        ))}
-                    </View>
+                            {/* Why Section */}
+                            <Text style={styles.whyTitle}>WHY?</Text>
+                            <Text style={styles.explanation}>{explanation}</Text>
 
-                    {/* See Thread Button */}
-                    {onSeeThread && (
-                        <TouchableOpacity 
-                            style={styles.seeThreadButton} 
-                            onPress={() => {
-                                onSeeThread();
-                            }}
-                        >
-                            <Text style={styles.seeThreadText}>SEE THREAD</Text>
-                        </TouchableOpacity>
+                            {/* Sources */}
+                            <Text style={styles.sourcesTitle}>SOURCES:</Text>
+                            <View style={styles.sourcesContainer}>
+                                {sources.map((source, index) => (
+                                    <View key={index} style={styles.sourceTag}>
+                                        <Text style={styles.sourceText}>{source}</Text>
+                                    </View>
+                                ))}
+                            </View>
+
+                            {/* See Thread Button */}
+                            {onSeeThread && (
+                                <TouchableOpacity
+                                    style={styles.seeThreadButton}
+                                    onPress={() => {
+                                        onSeeThread();
+                                    }}
+                                >
+                                    <Text style={styles.seeThreadText}>SEE THREAD</Text>
+                                </TouchableOpacity>
+                            )}
+                        </>
                     )}
-                </>
-            )}
+                </View>
             </View>
-        </View>
-    </Modal>
-  );
+        </Modal>
+    );
 };
 
 const styles = StyleSheet.create({
@@ -159,8 +158,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: {
-        width: 0,
-        height: 4,
+            width: 0,
+            height: 4,
         },
         shadowOpacity: 0.25,
         shadowRadius: 8,

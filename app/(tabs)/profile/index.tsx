@@ -316,7 +316,6 @@ export default function ProfileScreen() {
       </View>
     );
   }
-
   return (
     <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
       {/* Header with settings */}
