@@ -26,7 +26,7 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
   // Check if user has voted in session or originally
   const userHasVotedInSession = hasUserVoted(threadId);
   const shouldShowResults = userHasVotedInSession || hasVoted || skipVoting; 
-  
+
   const [showResults, setShowResults] = useState(shouldShowResults);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
