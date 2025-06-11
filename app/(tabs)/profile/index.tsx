@@ -3,13 +3,13 @@ import { AppHeader } from '@/src/components/ui/AppHeader';
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
 import { useCollectionData } from '@/src/store/dataStore';
 import { FirebaseImageData, useImagesStore } from '@/src/store/imgStore';
+import { useNewThreadStore } from '@/src/store/newThreadStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Timestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '../../../src/store/authStore';
-import { useNewThreadStore } from '@/src/store/newThreadStore';
 
 interface ActivityData {
   id: string;
@@ -153,7 +153,8 @@ function getThreadData(uid: string, users: any[], threads: any[], topics: any[],
         threadImageUrl,
         real_ratio: thread.real_ratio,
         ai_verdict: thread.ai_verdict,
-        hasVoted: false
+        hasVoted: false,
+        sources: thread.sources,
       } as ThreadData;
     })
     .filter((thread): thread is ThreadData => thread !== null);
