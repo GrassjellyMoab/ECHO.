@@ -12,7 +12,6 @@ import { FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View }
 
 interface ThreadData {
     id: string;
-    author: string;
     title: string;
     timeAgo: string;
     dateCreated: Timestamp;
@@ -21,9 +20,7 @@ interface ThreadData {
     comments: string;
     votes: string;
     tags: string[];
-    hasImage?: boolean;
     isVerified?: boolean;
-    avatar?: string;
     threadImageUrl?: string;
     content?: string;
     real_ratio: number;
@@ -43,6 +40,9 @@ interface FlaggedCommentData {
     tid: string;
     topic_id: string;
     uid: string;
+    author: string;
+    hasImage?: boolean;
+    userImageUrl?: string;
     thread?: ThreadData; // Add thread data
 }
 
@@ -81,7 +81,7 @@ const getFlaggedComments = () => {
             const thread = threadMap.get(comment.tid);
             if (!thread) return null;
 
-            const user = userMap.get(thread.uid);
+            const user = userMap.get(comment.uid);
             if (!user) return null;
 
             const threadTopics = thread.topics?.map((topicId: string) => {
@@ -100,7 +100,7 @@ const getFlaggedComments = () => {
             const timeAgo = thread.posted_datetime
                 ? calculateTimeAgo(thread.posted_datetime.toDate())
                 : 'Unknown time';
-
+            console.log(authorUsername)
             // Return FlaggedCommentData structure
             return {
                 // Comment properties matching FlaggedCommentData interface
@@ -115,11 +115,13 @@ const getFlaggedComments = () => {
                 tid: comment.tid,
                 topic_id: comment.topic_id,
                 uid: comment.uid,
+                author: authorUsername.startsWith('@') ? authorUsername : '@' + authorUsername,
+                hasImage: Boolean(avatar),
+                userImageUrl: avatar,
 
                 // Thread info embedded
                 thread: {
                     id: thread.id,
-                    author: authorUsername.startsWith('@') ? authorUsername : '@' + authorUsername,
                     title: thread.title || 'Untitled Thread',
                     timeAgo,
                     dateCreated: thread.posted_datetime,
@@ -128,9 +130,7 @@ const getFlaggedComments = () => {
                     comments: String(thread.num_comments ?? 0),
                     votes: String(thread.num_votes ?? 0),
                     tags: threadTopics,
-                    hasImage: Boolean(threadImageUrl),
                     isVerified: user.role === 'admin' || user.role === 'moderator',
-                    avatar,
                     threadImageUrl,
                     content: thread.description,
                     real_ratio: thread.real_ratio,
@@ -250,11 +250,11 @@ export default function VerifyScreen() {
                 >
                     <View style={styles.headerLeft}>
                         <Image
-                            source={{ uri: thread?.avatar }}
+                            source={{ uri: comment.userImageUrl }}
                             style={styles.avatar}
                         />
                         <View style={styles.headerInfo}>
-                            <Text style={styles.username}>{comment.thread?.author}</Text>
+                            <Text style={styles.username}>{comment.author}</Text>
                             <TouchableOpacity
                                 onPress={() => thread && navigateToThreadPage(thread)}
                             >
