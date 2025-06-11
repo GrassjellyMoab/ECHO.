@@ -3,6 +3,7 @@ import { NavigatorScreenParams, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
+import { useNewThreadStore } from '@/src/store/newThreadStore';
 
 import {
   Alert,
@@ -171,6 +172,10 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
       hasVoted: false, // Ensure no vote recorded
       // Keep the ai_verdict to show the result
     };
+    
+    // Add to new threads store
+    const { addNewThread } = useNewThreadStore.getState();
+    addNewThread(threadDataWithSkipVoting);
     
     setSelectedThreadData(threadDataWithSkipVoting);
     setShowThreadModal(true);
