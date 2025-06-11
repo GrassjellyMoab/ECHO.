@@ -22,4 +22,6 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage();
 
+// console.log(REACT_APP_FIREBASE_API_KEY);
+
 export { auth, db, storage };

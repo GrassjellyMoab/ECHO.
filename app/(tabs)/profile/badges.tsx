@@ -4,7 +4,7 @@ import { useImagesStore } from '@/src/store/imgStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Badge {
     id: string;
@@ -122,11 +122,10 @@ export default function BadgesScreen() {
     };
 
     return (
-        <ScrollView style={styles.container} stickyHeaderIndices={[0]}>
-            {/* Header */}
-            <AppHeader />
+        <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.container} showsVerticalScrollIndicator={false} stickyHeaderIndices={[0]}>
             <TouchableOpacity style={styles.backBtn} onPress={handleBackPress}>
-                <IconSymbol name="chevron.back" size={20} color="#666" />
+                <IconSymbol name="arrow-back" size={23} color="#662D91" />
             </TouchableOpacity>
 
             {/* Badges Title */}
@@ -141,6 +140,7 @@ export default function BadgesScreen() {
                 )}
             </View>
         </ScrollView>
+        </SafeAreaView>
     );
 }
 
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     },
     titleContainer: {
         alignItems: 'center',
-        paddingVertical: 20,
+        paddingBottom: 20,
         backgroundColor: '#f5f5f5',
     },
     title: {
@@ -205,11 +205,9 @@ const styles = StyleSheet.create({
         lineHeight: 16,
     },
     backBtn: {
-        position: 'absolute',
-        top: 90,
-        left: 20,
-        zIndex: 10,
-        padding: 4,
+    paddingHorizontal: 20,
+    paddingBottom: 5,
+    backgroundColor: '#f5f5f5'
     },
     epicGlow: {
         shadowColor: '#9C27B0',

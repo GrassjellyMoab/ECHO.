@@ -3,6 +3,7 @@ import { NavigatorScreenParams, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
+import { SwipeResultModal } from '@/src/components/create/verdict';
 import {
   Alert,
   Animated,
@@ -118,7 +119,7 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
       Alert.alert('Error', 'Please add a title');
       return;
     }
-  
+
     Alert.alert('Success', 'Thread posted successfully!', [
       {
         text: 'OK',
@@ -197,117 +198,121 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
 
   return (
     <>
-      <Modal
-        visible={visible}
-        transparent
-        animationType="none"
-        statusBarTranslucent
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <Animated.View
-            style={[
-              styles.container,
-              {
-                transform: [{ translateY: slideAnim }],
-                paddingTop: insets.top - 10,
-                paddingBottom: insets.bottom,
-              }
-            ]}
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      statusBarTranslucent
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <Animated.View
+          style={[
+            styles.container,
+            {
+              transform: [{ translateY: slideAnim }],
+              paddingTop: insets.top - 10,
+              paddingBottom: insets.bottom,
+            }
+          ]}
+        >
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={0}
           >
-            <KeyboardAvoidingView
-              style={{ flex: 1 }}
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              keyboardVerticalOffset={0}
-            >
-              {/* Header */}
-              <View style={styles.header}>
-                <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-                  <IconSymbol name="close" size={28} color="#662D91" />
-                </TouchableOpacity>
+            {/* Header */}
+            <View style={styles.header}>
+              <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+                <IconSymbol name="close" size={28} color="#662D91" />
+              </TouchableOpacity>
 
+              <Text style={styles.headerTitle}>Create Thread</Text>
+
+              <View style={styles.placeholder} />
+            </View>
+
+            {/* Content */}
+            <ScrollView style={styles.scrollContainer} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <View style={styles.content}>
+                <TextInput
+                  style={styles.titleInput}
+                  placeholder="Title"
+                  value={title}
+                  onChangeText={setTitle}
+                  multiline
+                  placeholderTextColor="#777"
+                />
+                
+                <TextInput
+                  style={styles.contentInput}
+                  placeholder="body text"
+                  value={content}
+                  onChangeText={setContent}
+                  multiline
+                  placeholderTextColor="#777"
+                />
                 <TouchableOpacity
-                  style={[styles.postButton, !isPostEnabled && styles.postButtonDisabled]}
-                  onPress={handlePost}
-                  disabled={!isPostEnabled}
+                  style={[styles.imagePickerBox, imageUri && styles.imagePickerBoxWithImage]}
+                  onPress={handlePickImage}
+                  activeOpacity={0.7}
                 >
-                  <Text style={[styles.postButtonText, !isPostEnabled && styles.postButtonTextDisabled]}>
-                    Post
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Content */}
-              <ScrollView style={styles.scrollContainer} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                <View style={styles.content}>
-                  <TextInput
-                    style={styles.titleInput}
-                    placeholder="Title"
-                    value={title}
-                    onChangeText={setTitle}
-                    multiline
-                    placeholderTextColor="#777"
-                  />
-                  
-                  <TextInput
-                    style={styles.contentInput}
-                    placeholder="description"
-                    value={content}
-                    onChangeText={setContent}
-                    multiline
-                    placeholderTextColor="#777"
-                  />
-                  <TouchableOpacity
-                    style={[styles.imagePickerBox, imageUri && styles.imagePickerBoxWithImage]}
-                    onPress={handlePickImage}
-                    activeOpacity={0.7}
-                  >
-                    {imageUri ? (
-                      <View style={styles.imageContainer}>
-                        <Image source={{ uri: imageUri }} style={styles.selectedImage} />
-                        <TouchableOpacity
-                          style={styles.removeImageButton}
-                          onPress={() => setImageUri('')}
-                        >
-                          <Text style={styles.removeImageText}>✕</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <Text style={styles.imagePickerText}>+ Tap to add an image</Text>
-                    )}
-                  </TouchableOpacity>
-                  <View style={styles.topicSection}>
-                    <Text style={styles.topicTitle}>Select Topics</Text>
-                    <View style={styles.topicList}>
-                      {topics.map((item) => {
-                        const isSelected = selectedTopics.includes(item);
-                        return (
-                          <TouchableOpacity
-                            key={item}
-                            style={[styles.topicChip, isSelected && styles.topicChipSelected]}
-                            onPress={() => {
-                              if (isSelected) {
-                                setSelectedTopics(prev => prev.filter(t => t !== item));
-                              } else {
-                                setSelectedTopics(prev => [...prev, item]);
-                              }
-                            }}
-                          >
-                            <Text style={[styles.topicChipText, isSelected && styles.topicChipTextSelected]}>
-                              {item}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
+                  {imageUri ? (
+                    <View style={styles.imageContainer}>
+                      <Image source={{ uri: imageUri }} style={styles.selectedImage} />
+                      <TouchableOpacity
+                        style={styles.removeImageButton}
+                        onPress={() => setImageUri('')}
+                      >
+                        <Text style={styles.removeImageText}>✕</Text>
+                      </TouchableOpacity>
                     </View>
+                  ) : (
+                    <Text style={styles.imagePickerText}>+ Tap to add an image</Text>
+                  )}
+                </TouchableOpacity>
+                <View style={styles.topicSection}>
+                  <Text style={styles.topicTitle}>Select Topics</Text>
+                  <View style={styles.topicList}>
+                    {topics.map((item) => {
+                      const isSelected = selectedTopics.includes(item);
+                      return (
+                        <TouchableOpacity
+                          key={item}
+                          style={[styles.topicChip, isSelected && styles.topicChipSelected]}
+                          onPress={() => {
+                            if (isSelected) {
+                              setSelectedTopics(prev => prev.filter(t => t !== item));
+                            } else {
+                              setSelectedTopics(prev => [...prev, item]);
+                            }
+                          }}
+                        >
+                          <Text style={[styles.topicChipText, isSelected && styles.topicChipTextSelected]}>
+                            {item}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
                 </View>
-              </ScrollView>
-              
-            </KeyboardAvoidingView>
-          </Animated.View>
-        </TouchableWithoutFeedback>
-      </Modal>
-      {currentResult && (
+                {/*Post Button*/}
+                <TouchableOpacity
+                style={[styles.postButton, !isPostEnabled && styles.postButtonDisabled]}
+                onPress={handlePost}
+                disabled={!isPostEnabled}
+              >
+                <Text style={[styles.postButtonText, !isPostEnabled && styles.postButtonTextDisabled]}>
+                  Post
+                </Text>
+              </TouchableOpacity>
+              </View>
+            </ScrollView>
+            
+          </KeyboardAvoidingView>
+        </Animated.View>
+      </TouchableWithoutFeedback>
+    </Modal>
+    {currentResult && (
         <SwipeResultModal
           visible={showResultModal}
           onClose={handleModalClose}
@@ -408,6 +413,7 @@ const styles = StyleSheet.create({
     color: '#000',
     fontFamily: 'SpaceMono-Regular',
     marginTop:7,
+    marginBottom: 8,
     lineHeight: 17,
     minHeight: 200,
     textAlignVertical: 'top',
