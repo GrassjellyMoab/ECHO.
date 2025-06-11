@@ -30,6 +30,7 @@ interface ThreadData {
   real_ratio: number;
   ai_verdict?: string;
   hasVoted: boolean;
+  sources: string[];
 }
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -595,7 +596,8 @@ export const SwipeResultModal: React.FC<SwipeResultModalProps> = ({
                                 content: content || 'No description provided', // Full explanation as content
                                 real_ratio: 0, // No votes yet
                                 ai_verdict: explanation, // Pass the verdict result
-                                hasVoted: false
+                                hasVoted: false,
+                                sources: sources
                               };
                               onSeeThread(threadData);
                             }}

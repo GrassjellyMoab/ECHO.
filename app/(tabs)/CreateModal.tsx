@@ -67,6 +67,7 @@ interface ThreadData {
   real_ratio: number;
   ai_verdict?: string;
   hasVoted: boolean;
+  sources: string[];
 }
 
 export default function CreateModal({ visible, onClose }: CreateModalProps) {

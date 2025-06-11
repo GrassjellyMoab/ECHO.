@@ -23,7 +23,6 @@ interface Comment {
   is_pinned: boolean;
   num_likes: number;
   num_replies: number;
-  is_reviewed: boolean;
   reply_cid: string;
   text: string;
   tid: string;
