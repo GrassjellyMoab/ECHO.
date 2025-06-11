@@ -176,7 +176,6 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
       ...threadData,
       votes: '0', // Ensure votes is 0
       hasVoted: false, // Ensure no vote recorded
-      sources: threadData.sources || [],
       // Keep the ai_verdict to show the result
     };
 
