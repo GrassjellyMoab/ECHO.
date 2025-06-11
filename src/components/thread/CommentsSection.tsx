@@ -18,6 +18,7 @@ interface Comment {
   id: string;
   date: Date | string;
   is_flagged: boolean;
+  is_reviewed: boolean;
   is_pinned: boolean;
   num_likes: number;
   num_replies: number;
@@ -58,13 +59,16 @@ const CommentsSection: React.FC<CommentsProps> = ({
   const [avatarErrors, setAvatarErrors] = useState<Set<string>>(new Set()); // Track failed avatars
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  // Filter comments based on threadId
+  // Filter comments based on threadId and exclude flagged comments
   const filteredComments = React.useMemo(() => {
     if (!comments || comments.length === 0) {
       return [];
     }
 
     let filtered = comments;
+    
+    // Filter out flagged comments
+    filtered = filtered.filter(comment => comment.is_flagged === false);
     
     if (threadId) {
       filtered = filtered.filter(comment => comment.tid === threadId);
@@ -86,6 +90,7 @@ const CommentsSection: React.FC<CommentsProps> = ({
       id: `comment_${Date.now()}`,
       date: new Date(),
       is_flagged: false,
+      is_reviewed: false,
       is_pinned: false,
       num_likes: 0,
       num_replies: 0,
