@@ -1,9 +1,9 @@
 import { IconSymbol } from '@/src/components/ui/IconSymbol';
+import { useNewThreadStore } from '@/src/store/newThreadStore';
 import { NavigatorScreenParams, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
-import { useNewThreadStore } from '@/src/store/newThreadStore';
 
 import {
   Alert,
@@ -329,7 +329,7 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
                   
                   <TextInput
                     style={styles.contentInput}
-                    placeholder="body text"
+                    placeholder="Body Text"
                     value={content}
                     onChangeText={setContent}
                     multiline
