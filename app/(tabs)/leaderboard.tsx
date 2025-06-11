@@ -1,12 +1,15 @@
 import { LeaderUser, ListUser, Podium } from '@/src/components/leaderboard';
 import { AppHeader } from '@/src/components/ui/AppHeader';
 import { useCollectionData } from '@/src/store/dataStore';
-import { FirebaseImageData, useImagesStore } from '@/src/store/imgStore';
+import { useImagesStore } from '@/src/store/imgStore';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-function getData(users: any[], leaderboard: any[], userImages: FirebaseImageData[]): LeaderUser[] {
-
+function getData(
+  users: any[], 
+  leaderboard: any[], 
+  getImageByName: (name: string, folder?: 'badges' | 'threads' | 'users') => any
+): LeaderUser[] {
   if (!users || !leaderboard || users.length === 0 || leaderboard.length === 0) {
     return [];
   }
@@ -22,44 +25,84 @@ function getData(users: any[], leaderboard: any[], userImages: FirebaseImageData
     .filter((user): user is { username: string; points: number } => user !== null)
     .sort((a, b) => b.points - a.points);
 
-  const ranks: LeaderUser[] = rankedUsers.map((user, index) => ({
-    id: (index + 1).toString(),
-    rank: index + 1,
-    username: '@' + user.username,
-    points: user.points,
-    avatar: userImages.find(img => img.name === `${user.username.toLowerCase().replace("@", "")}.png`)?.url || require('@/src/assets/avatars/defaultAvatar.png'),
-  }));
+  const ranks: LeaderUser[] = rankedUsers.map((user, index) => {
+    // Try to find the user image using the store's method
+    const userImage = getImageByName(user.username, 'users');
+    
+    console.log(`[Leaderboard] Looking for image for user: ${user.username}`);
+    console.log(`[Leaderboard] Found image:`, userImage);
+    
+    return {
+      id: (index + 1).toString(),
+      rank: index + 1,
+      username: '@' + user.username,
+      points: user.points,
+      avatar: userImage?.url || require('@/src/assets/avatars/defaultAvatar.png'),
+    };
+  });
 
   return ranks;
 }
 
-
 export default function LeaderboardScreen() {
-  const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
-  const userImages = getImagesByFolder('users');
-
+  const { images, isLoading, loadImages, getImageByName } = useImagesStore();
+  
   const users = useCollectionData('users');
   const leaderboard = useCollectionData('leaderboard');
 
-  if (!users || !leaderboard || users.length === 0 || leaderboard.length === 0) {
+  // Load images when component mounts
+  React.useEffect(() => {
+    loadImages();
+  }, [loadImages]);
+
+  // Show loading state while images are loading
+  if (isLoading) {
     return (
       <View style={styles.container}>
         <AppHeader />
-        <View>
-          <Text>Please log in to view the leaderboard</Text>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading leaderboard...</Text>
         </View>
       </View>
     );
   }
 
-  const mockLeaderboard = getData(users, leaderboard, userImages);
+  // Show login prompt if no data
+  if (!users || !leaderboard || users.length === 0 || leaderboard.length === 0) {
+    return (
+      <View style={styles.container}>
+        <AppHeader />
+        <View style={styles.messageContainer}>
+          <Text style={styles.messageText}>Please log in to view the leaderboard</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const mockLeaderboard = getData(users, leaderboard, getImageByName);
+
+  // Handle case where no leaderboard data is available
+  if (mockLeaderboard.length === 0) {
+    return (
+      <View style={styles.container}>
+        <AppHeader />
+        <View style={styles.messageContainer}>
+          <Text style={styles.messageText}>No leaderboard data available</Text>
+        </View>
+      </View>
+    );
+  }
 
   const topThree = mockLeaderboard.slice(0, 3);
   const restOfUsers = mockLeaderboard.slice(3);
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false} stickyHeaderIndices={[0]}>
+      <ScrollView 
+        style={styles.scrollContainer} 
+        showsVerticalScrollIndicator={false} 
+        stickyHeaderIndices={[0]}
+      >
         <AppHeader />
         <Podium topThree={topThree} />
 
@@ -88,4 +131,26 @@ const styles = StyleSheet.create({
     paddingBottom: 50,
     backgroundColor: '#FFFFFF',
   },
-}); 
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666666',
+  },
+  messageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+  },
+  messageText: {
+    fontSize: 16,
+    color: '#666666',
+    textAlign: 'center',
+  },
+});

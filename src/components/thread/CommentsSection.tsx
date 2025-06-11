@@ -1,0 +1,566 @@
+import React, { useState, useRef } from 'react';
+import { 
+  StyleSheet, 
+  Text, 
+  TouchableOpacity, 
+  View, 
+  FlatList, 
+  TextInput,
+  Animated,
+  Image,
+  Alert
+} from 'react-native';
+import { IconSymbol } from '../ui/IconSymbol';
+import { useCollectionData } from '@/src/store/dataStore';
+import { useImagesStore } from '@/src/store/imgStore';
+
+interface Comment {
+  id: string;
+  date: Date | string;
+  is_flagged: boolean;
+  is_pinned: boolean;
+  num_likes: number;
+  num_replies: number;
+  reply_cid: string;
+  text: string;
+  tid: string;
+  topic_id: string;
+  uid: string;
+}
+
+interface User {
+  id: string;
+  username: string;
+  role?: 'admin' | 'moderator' | 'user';
+}
+
+interface CommentsProps {
+  maxHeight?: number;
+  threadId?: string;
+  getUserById?: (uid: string) => { username: string; avatar?: string; isVerified?: boolean };
+  userLikes?: string[];
+}
+
+const CommentsSection: React.FC<CommentsProps> = ({
+  maxHeight = 400,
+  threadId,
+  getUserById,
+  userLikes = []
+}) => {
+  const users = useCollectionData('users') as User[];
+  const comments = useCollectionData('comments') as Comment[];
+  const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
+  const userImages = getImagesByFolder('users');
+
+  const [newComment, setNewComment] = useState('');
+  const [likedComments, setLikedComments] = useState<string[]>(userLikes);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [avatarErrors, setAvatarErrors] = useState<Set<string>>(new Set()); // Track failed avatars
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  // Filter comments based on threadId
+  const filteredComments = React.useMemo(() => {
+    if (!comments || comments.length === 0) {
+      return [];
+    }
+
+    let filtered = comments;
+    
+    if (threadId) {
+      filtered = filtered.filter(comment => comment.tid === threadId);
+    }
+    
+    return filtered.sort((a, b) => {
+      if (a.is_pinned && !b.is_pinned) return -1;
+      if (!a.is_pinned && b.is_pinned) return 1;
+      
+      const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+      const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+      
+      return dateB.getTime() - dateA.getTime();
+    });
+  }, [comments, threadId]);
+
+  const onAddComment = (content: string) => {
+    const newCommentObj: Comment = {
+      id: `comment_${Date.now()}`,
+      date: new Date(),
+      is_flagged: false,
+      is_pinned: false,
+      num_likes: 0,
+      num_replies: 0,
+      reply_cid: '',
+      text: content,
+      tid: threadId || 'thread_1',
+      topic_id: 'topic_healthcare',
+      uid: 'user_current'
+    };
+    
+    console.log('Adding new comment:', newCommentObj);
+  };
+
+  const handleLikeComment = (commentId: string) => {
+    setLikedComments(prev => {
+      if (prev.includes(commentId)) {
+        return prev.filter(id => id !== commentId);
+      } else {
+        return [...prev, commentId];
+      }
+    });
+
+    console.log('Toggling like for comment:', commentId);
+  };
+
+  const handleAddComment = () => {
+    if (newComment.trim()) {
+      onAddComment(newComment.trim());
+      setNewComment('');
+    }
+  };
+
+  const formatTimestamp = (date: Date | string) => {
+    const now = new Date();
+    const commentDate = date instanceof Date ? date : new Date(date);
+    const diffInMs = now.getTime() - commentDate.getTime();
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'now';
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    if (diffInHours < 48) return '1 day ago';
+    return `${Math.floor(diffInHours / 24)} days ago`;
+  };
+
+  // Improved user data retrieval with better avatar handling
+const getUserFromStore = (uid: string) => {
+  if (!users || users.length === 0) {
+    return { 
+      username: `user_${uid}`, 
+      avatar: null,
+      isVerified: false 
+    };
+  }
+
+  const user = users.find(u => u.id === uid);
+  if (user) {
+    // Clean username for image matching - remove @ symbol and convert to lowercase
+    const cleanUsername = user.username.replace('@', '').toLowerCase();
+    console.log('Looking for avatar for user:', cleanUsername);
+    
+    // Try to find matching avatar image from assets/avatars folder
+    const avatarImage = userImages.find(img => {
+      // Extract filename without extension
+      const imageName = img.name.toLowerCase().replace('.png', '');
+      console.log('Checking image:', imageName, 'against username:', cleanUsername);
+      
+      // Match exact username with .png extension
+      return imageName === cleanUsername;
+    });
+
+    // Alternative: If images are stored with full path, use this instead:
+    // const avatarImage = userImages.find(img => {
+    //   const fileName = img.name.toLowerCase();
+    //   const expectedFileName = `${cleanUsername}.png`;
+    //   return fileName === expectedFileName || fileName.endsWith(`/${expectedFileName}`);
+    // });
+
+    return {
+      username: user.username,
+      avatar: avatarImage?.url || null,
+      isVerified: user.role === 'admin' || user.role === 'moderator'
+    };
+  }
+  
+  return { 
+    username: `user_${uid}`, 
+    avatar: null, 
+    isVerified: false 
+  };
+};
+
+  // Handle avatar error
+  const handleAvatarError = (userId: string) => {
+    console.log('Avatar failed to load for user:', userId);
+    setAvatarErrors(prev => new Set([...prev, userId]));
+  };
+
+  // Generate fallback avatar text
+  const getAvatarFallbackText = (username: string) => {
+    const cleanUsername = username.replace('@', '');
+    return cleanUsername.charAt(0).toUpperCase();
+  };
+
+  const renderComment = ({ item }: { item: Comment }) => {
+    console.log("Rendering comment for uid:", item.uid);
+    const user = getUserById ? getUserById(item.uid) : getUserFromStore(item.uid);
+    const isLiked = likedComments.includes(item.id);
+    const hasAvatarError = avatarErrors.has(item.uid);
+    
+    return (
+      <Animated.View style={[styles.commentContainer, { opacity: fadeAnim }]}>
+        {item.is_pinned && (
+          <View style={styles.pinnedIndicator}>
+            <IconSymbol name="pin" style={styles.pinnedIcon} />
+            <Text style={styles.pinnedText}>Pinned</Text>
+          </View>
+        )}
+        
+        <View style={styles.commentHeader}>
+          <View style={styles.userInfo}>
+            <View style={styles.avatar}>
+              {user.avatar && !hasAvatarError ? (
+                <Image 
+                  source={{ uri: user.avatar }} 
+                  style={styles.avatarImage}
+                  onError={() => handleAvatarError(item.uid)}
+                />
+              ) : (
+                // Fallback avatar with user's initial
+                <View style={styles.defaultAvatar}>
+                  <Text style={styles.avatarText}>
+                    {getAvatarFallbackText(user.username)}
+                  </Text>
+                </View>
+              )}
+            </View>
+            
+            <View style={styles.userDetails}>
+              <View style={styles.usernameRow}>
+                <Text style={styles.username}>@{user.username}</Text>
+                {user.isVerified && (
+                  <IconSymbol name="checkmark.circle.fill" style={styles.verifiedIcon} />
+                )}
+              </View>
+              <Text style={styles.timestamp}>{formatTimestamp(item.date)}</Text>
+            </View>
+          </View>
+        </View>
+
+        <Text style={styles.commentContent}>{item.text}</Text>
+
+        <View style={styles.actionBar}>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => handleLikeComment(item.id)}
+          >
+            <IconSymbol 
+              name={isLiked ? "heart.fill" : "heart"} 
+              style={[styles.actionIcon, isLiked && styles.likedIcon]}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionButton}>
+            <IconSymbol name="bubble.left" style={styles.actionIcon} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionButton}>
+            <IconSymbol name="arrowshape.turn.up.right" style={styles.actionIcon} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionButton}>
+            <IconSymbol name="exclamationmark.triangle" style={styles.actionIcon} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={styles.statCount}>{item.num_replies}</Text>
+            <Text style={styles.statLabel}>replies</Text>
+          </View>
+          <Text style={styles.statSeparator}>•</Text>
+          <View style={styles.statItem}>
+            <Text style={styles.statCount}>{item.num_likes}</Text>
+            <Text style={styles.statLabel}>Likes</Text>
+          </View>
+        </View>
+      </Animated.View>
+    );
+  };
+
+  // Show loading or empty state if no data
+  if (!comments || !users) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Comments</Text>
+        </View>
+        <Text style={styles.emptyState}>Loading comments...</Text>
+      </View>
+    );
+  }
+
+  // Show empty state if no comments match the filters
+  if (filteredComments.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Comments</Text>
+        </View>
+
+        <View style={styles.addCommentSection}>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.commentInput}
+              placeholder="join the conversation"
+              value={newComment}
+              onChangeText={setNewComment}
+              multiline
+              maxLength={280}
+              textAlignVertical="center"
+            />
+            {newComment.trim().length > 0 && (
+              <TouchableOpacity 
+                style={styles.postButton}
+                onPress={handleAddComment}
+              >
+                <IconSymbol name="arrow.up2" style={styles.postIcon} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        <Text style={styles.emptyState}>
+          {threadId 
+            ? "No comments found for this thread." 
+            : "No comments yet. Be the first to comment!"
+          }
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Comments</Text>
+      </View>
+
+      <View style={styles.addCommentSection}>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.commentInput}
+            placeholder="Join the conversation"
+            value={newComment}
+            onChangeText={setNewComment}
+            multiline
+            maxLength={280}
+            textAlignVertical="center"
+          />
+          {newComment.trim().length > 0 && (
+            <TouchableOpacity 
+              style={styles.postButton}
+              onPress={handleAddComment}
+            >
+              <IconSymbol name="arrow.up2" style={styles.postIcon} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {filteredComments.map((item, index) => (
+        <View key={item.id}>
+          {renderComment({ item })}
+          {index < filteredComments.length - 1 && <View style={styles.separator} />}
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginVertical: 10,
+  },
+  header: {
+    paddingVertical: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000',
+    fontFamily: 'AnonymousPro-Bold',
+  },
+  addCommentSection: {
+    marginBottom: 16,
+  },
+  inputContainer: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  commentInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 20,
+    paddingLeft: 16,
+    paddingRight: 50,
+    paddingVertical: 12,
+    fontSize: 16,
+    fontFamily: 'AnonymousPro',
+    color: '#666',
+    backgroundColor: '#f8f8f8',
+    minHeight: 44,
+    maxHeight: 100,
+    textAlignVertical: 'top',
+  },
+  postButton: {
+    position: 'absolute',
+    right: 6,
+    top: '50%',
+    transform: [{ translateY: -18 }],
+    backgroundColor: '#662D91',
+    borderRadius: 18,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  postIcon: {
+    color: '#fff',
+    fontSize: 18,
+  },
+  commentsList: {
+    paddingHorizontal: 20,
+  },
+  commentContainer: {
+    paddingVertical: 16,
+  },
+  pinnedIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  pinnedIcon: {
+    color: '#662D91',
+    marginRight: 4,
+    fontSize: 12,
+  },
+  pinnedText: {
+    color: '#662D91',
+    fontSize: 12,
+    fontWeight: 'bold',
+    fontFamily: 'AnonymousPro-Bold',
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatar: {
+    marginRight: 12,
+  },
+  avatarImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+  },
+  defaultAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#662D91',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+    fontFamily: 'AnonymousPro-Bold',
+  },
+  userDetails: {
+    flex: 1,
+  },
+  usernameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  username: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    fontFamily: 'AnonymousPro-Bold',
+    marginRight: 4,
+  },
+  verifiedIcon: {
+    color: '#662D91',
+    fontSize: 16,
+  },
+  timestamp: {
+    fontSize: 14,
+    color: '#999',
+    fontFamily: 'AnonymousPro',
+    marginTop: 2,
+  },
+  commentContent: {
+    fontSize: 16,
+    color: '#000',
+    lineHeight: 22,
+    marginBottom: 12,
+    fontFamily: 'AnonymousPro',
+  },
+  actionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  actionButton: {
+    marginRight: 20,
+    padding: 4,
+  },
+  actionIcon: {
+    color: '#666',
+    fontSize: 18,
+  },
+  likedIcon: {
+    color: '#C73535',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statCount: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#666',
+    fontFamily: 'AnonymousPro-Bold',
+    marginRight: 4,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'AnonymousPro',
+  },
+  statSeparator: {
+    color: '#ccc',
+    marginHorizontal: 8,
+    fontFamily: 'AnonymousPro',
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#f0f0f0',
+    marginVertical: 8,
+  },
+  emptyState: {
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 16,
+    fontFamily: 'AnonymousPro',
+    paddingVertical: 20,
+  },
+});
+
+export default CommentsSection;

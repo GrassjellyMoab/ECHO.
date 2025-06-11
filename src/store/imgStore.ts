@@ -15,12 +15,15 @@ interface ImagesState {
     isLoading: boolean;
     error: string | null;
     lastUpdated: number | null;
-    loadImages: () => Promise<void>;
-    getImageByName: (name: string) => FirebaseImageData | undefined;
+    loadImages: (forceRefresh?: boolean) => Promise<void>;
+    refreshImages: () => Promise<void>; // Add explicit refresh method
+    getImageByName: (name: string, folder?: 'badges' | 'threads' | 'users') => FirebaseImageData | undefined;
     getImagesByFolder: (folder: 'badges' | 'threads' | 'users') => FirebaseImageData[];
+    clearCache: () => void; // Add cache clearing method
 }
 
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_DURATION = 1 * 60 * 60 * 1000; // Reduced to 1 hour for testing
+// const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours for production
 
 export const useImagesStore = create<ImagesState>()(
     persist(
@@ -30,9 +33,12 @@ export const useImagesStore = create<ImagesState>()(
             error: null,
             lastUpdated: null,
 
-            loadImages: async () => {
+            loadImages: async (forceRefresh = false) => {
                 const state = get();
+                
+                // Skip cache if forceRefresh is true
                 if (
+                    !forceRefresh &&
                     state.images.length > 0 &&
                     state.lastUpdated &&
                     Date.now() - state.lastUpdated < CACHE_DURATION
@@ -41,6 +47,7 @@ export const useImagesStore = create<ImagesState>()(
                     return;
                 }
 
+                console.log('[imgStore] Loading images from Firebase...');
                 set({ isLoading: true, error: null });
 
                 try {
@@ -49,22 +56,45 @@ export const useImagesStore = create<ImagesState>()(
 
                     const allImages = await Promise.all(
                         folders.map(async (folder) => {
-                            const folderRef = ref(storage, folder);
-                            const listResult = await listAll(folderRef);
+                            try {
+                                const folderRef = ref(storage, folder);
+                                const listResult = await listAll(folderRef);
+                                
+                                console.log(`[imgStore] Found ${listResult.items.length} items in ${folder} folder`);
 
-                            return Promise.all(
-                                listResult.items.map(async (item) => ({
-                                    name: item.name,
-                                    url: await getDownloadURL(item),
-                                    path: item.fullPath,
-                                    folder: folder,
-                                }))
-                            );
+                                const folderImages = await Promise.all(
+                                    listResult.items.map(async (item) => {
+                                        try {
+                                            const url = await getDownloadURL(item);
+                                            return {
+                                                name: item.name,
+                                                url: url,
+                                                path: item.fullPath,
+                                                folder: folder,
+                                            };
+                                        } catch (error) {
+                                            console.error(`[imgStore] Error getting download URL for ${item.name}:`, error);
+                                            return null;
+                                        }
+                                    })
+                                );
+
+                                // Filter out null values (failed downloads)
+                                return folderImages.filter(img => img !== null) as FirebaseImageData[];
+                            } catch (error) {
+                                console.error(`[imgStore] Error loading ${folder} folder:`, error);
+                                return [];
+                            }
                         })
                     );
 
-                    const images = allImages.flat(); // Combine all folder arrays
-                    console.log(`[imgStore] Loaded ${images.length} images`);
+                    const images = allImages.flat();
+                    console.log(`[imgStore] Successfully loaded ${images.length} images`);
+                    
+                    // Log user images specifically
+                    const userImages = images.filter(img => img.folder === 'users');
+                    console.log(`[imgStore] User images:`, userImages.map(img => img.name));
+                    
                     set({
                         images,
                         isLoading: false,
@@ -79,13 +109,63 @@ export const useImagesStore = create<ImagesState>()(
                     });
                 }
             },
-            getImageByName: (name: string) => {
-                return get().images.find(img => img.name === name);
+
+            refreshImages: async () => {
+                console.log('[imgStore] Force refreshing images...');
+                await get().loadImages(true);
+            },
+
+            getImageByName: (name: string, folder?: 'badges' | 'threads' | 'users') => {
+                const images = get().images;
+                
+                // Try exact match first
+                let found = images.find(img => {
+                    const nameMatch = img.name === name;
+                    const folderMatch = folder ? img.folder === folder : true;
+                    return nameMatch && folderMatch;
+                });
+
+                // If not found, try case-insensitive match
+                if (!found) {
+                    found = images.find(img => {
+                        const nameMatch = img.name.toLowerCase() === name.toLowerCase();
+                        const folderMatch = folder ? img.folder === folder : true;
+                        return nameMatch && folderMatch;
+                    });
+                }
+
+                // If still not found, try with .png extension
+                if (!found && !name.includes('.')) {
+                    found = images.find(img => {
+                        const nameMatch = img.name.toLowerCase() === `${name.toLowerCase()}.png`;
+                        const folderMatch = folder ? img.folder === folder : true;
+                        return nameMatch && folderMatch;
+                    });
+                }
+
+                if (found) {
+                    console.log(`[imgStore] Found image for "${name}":`, found.name);
+                } else {
+                    console.log(`[imgStore] No image found for "${name}" in folder "${folder}"`);
+                }
+
+                return found;
             },
 
             getImagesByFolder: (folder: 'badges' | 'threads' | 'users') => {
-                return get().images.filter(img => img.folder === folder);
+                const images = get().images.filter(img => img.folder === folder);
+                console.log(`[imgStore] Retrieved ${images.length} images from ${folder} folder`);
+                return images;
             },
+
+            clearCache: () => {
+                console.log('[imgStore] Clearing cache...');
+                set({
+                    images: [],
+                    lastUpdated: null,
+                    error: null
+                });
+            }
         }),
         {
             name: 'images-storage',

@@ -2,6 +2,7 @@ import { useSessionDataStore } from '@/src/store/sessionDataStore';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { IconSymbol } from '../ui/IconSymbol';
+import CommentsSection from './CommentsSection';
 
 interface VoteData {
   real: number;
@@ -21,7 +22,6 @@ interface VotingSectionProps {
 const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVoted, aiVerdict, threadId, skipVoting = false}) => {
   // Session data store for checking vote status
   const { hasUserVoted } = useSessionDataStore();
-  
   // Check if user has voted in session or originally
   const userHasVotedInSession = hasUserVoted(threadId);
   const shouldShowResults = userHasVotedInSession || hasVoted || skipVoting; 
@@ -48,7 +48,6 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
     return true;
   };
 
-  console.log(voteData);
   const totalVotes = voteData.real + voteData.fake;
   const realPercentage = totalVotes > 0 ? (voteData.real / totalVotes) * 100 : 0;
   const fakePercentage = totalVotes > 0 ? (voteData.fake / totalVotes) * 100 : 0;
@@ -219,6 +218,9 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
           <Text style={styles.aiText}>{getAiVerdictText(aiVerdict)}</Text>
         </View>
       )}
+
+       {/* Comments Section - Only show if user has voted and aiVerdict is provided */}
+      <CommentsSection threadId= {threadId}/>
     </Animated.View>
   );
 };

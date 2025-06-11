@@ -54,6 +54,14 @@ const iconMap: Record<string, { name: IoniconsGlyph | AntDesignGlyph | MaterialI
   'cybersecurity': { name: 'security', library: 'materialicons' },
   'sort': { name: 'sort', library: 'materialicons' },
   'funnel': { name: 'funnel', library: 'ionicons' },
+  'heart': { name: 'heart-outline', library: 'ionicons' },
+  'heart.fill': { name: 'heart', library: 'ionicons' }, // solid version
+  'bubble.left': { name: 'chatbubble-outline', library: 'ionicons' },
+  'arrowshape.turn.up.right': { name: 'share-social-outline', library: 'ionicons' },
+  'exclamationmark.triangle': { name: 'warning-outline', library: 'ionicons' },
+  'checkmark.seal.fill': { name: 'checkmark-circle', library: 'ionicons' }, 
+  'pin': { name: 'pin', library: 'ionicons' },
+  'arrow.up2': { name: 'arrow-up', library: 'ionicons' }
 };
 
 export function IconSymbol({ name, size = 24, color = '#000000', style }: IconSymbolProps) {
