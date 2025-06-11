@@ -26,6 +26,7 @@ interface ThreadData {
   real_ratio: number;
   ai_verdict?: string;
   hasVoted: boolean;
+  sources: string[];  
 }
 
 interface VoteData {
@@ -197,6 +198,7 @@ export default function ThreadModal({ visible, threadData, onClose }: ThreadModa
               hasVoted={threadData.hasVoted}
               aiVerdict={threadData.ai_verdict}
               threadId={threadData.id}
+              sources={threadData.sources}
               skipVoting={threadData.votes === '0' && !threadData.hasVoted && !!threadData.ai_verdict}
             />
           </View>

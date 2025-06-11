@@ -17,9 +17,10 @@ interface VotingSectionProps {
   aiVerdict?: string;
   threadId: string;
   skipVoting?: boolean; 
+  sources: string[];
 }
 
-const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVoted, aiVerdict, threadId, skipVoting = false}) => {
+const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVoted, aiVerdict, threadId, sources, skipVoting = false}) => {
   // Session data store for checking vote status
   const { hasUserVoted } = useSessionDataStore();
   // Check if user has voted in session or originally
@@ -46,6 +47,11 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
   const shouldShowAiVerdict = (verdict?: string): boolean => {
     // Always show the AI section if there's any verdict (including fallback message)
     return true;
+  };
+
+  // Helper function to format sources
+  const formatSources = (sources: string[]): string[] => {
+    return sources.filter(source => source && source.trim() !== '');
   };
 
   const totalVotes = voteData.real + voteData.fake;
@@ -141,6 +147,20 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
               <Text style={styles.aiTitle}>AI Verdict</Text>
             </View>
             <Text style={styles.aiText}>{getAiVerdictText(aiVerdict)}</Text>
+            
+            {/* Sources Section */}
+            {formatSources(sources).length > 0 && (
+              <View style={styles.sourcesContainer}>
+                <Text style={styles.sourcesTitle}>Sources:</Text>
+                <View style={styles.sourcesWrapper}>
+                  {formatSources(sources).map((source, index) => (
+                    <View key={index} style={styles.sourceBubble}>
+                      <Text style={styles.sourceText}>{source}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
           </View>
         )}
 
@@ -216,6 +236,20 @@ const VotingSection: React.FC<VotingSectionProps> = ({ voteData, onVote, hasVote
             <Text style={styles.aiTitle}>AI Verdict</Text>
           </View>
           <Text style={styles.aiText}>{getAiVerdictText(aiVerdict)}</Text>
+          
+          {/* Sources Section */}
+          {formatSources(sources).length > 0 && (
+            <View style={styles.sourcesContainer}>
+              <Text style={styles.sourcesTitle}>Sources:</Text>
+              <View style={styles.sourcesWrapper}>
+                {formatSources(sources).map((source, index) => (
+                  <View key={index} style={styles.sourceBubble}>
+                    <Text style={styles.sourceText}>{source}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
         </View>
       )}
 
@@ -384,6 +418,37 @@ const styles = StyleSheet.create({
     color: '#000',
     lineHeight: 20,
     fontFamily: 'AnonymousPro',
+  },
+  // Sources styles
+  sourcesContainer: {
+    paddingTop: 12,
+  },
+  sourcesTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    fontFamily: 'AnonymousPro-Bold',
+    marginBottom: 8,
+  },
+  sourcesWrapper: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  sourceBubble: {
+    backgroundColor: '#662D91',
+    borderWidth: 1,
+    borderColor: 'rgba(102, 45, 145, 0.3)',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginBottom: 4,
+  },
+  sourceText: {
+    fontSize: 12,
+    color: '#FFF',
+    fontFamily: 'AnonymousPro-Bold',
+    textAlign: 'center',
   },
 });
 

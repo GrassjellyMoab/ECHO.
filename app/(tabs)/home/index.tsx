@@ -27,6 +27,7 @@ interface ThreadData {
   real_ratio : number;
   ai_verdict?: string;
   hasVoted: boolean;
+  sources: string[];  
 }
 
 export function useThreadData(): ThreadData[] {
@@ -96,7 +97,8 @@ export function useThreadData(): ThreadData[] {
           content: thread.description,
           real_ratio: thread.real_ratio,
           ai_verdict: thread.ai_verdict,
-          hasVoted: false
+          hasVoted: false,
+          sources: thread.sources  
         } as ThreadData;
       })
       .filter((thread): thread is ThreadData => thread !== null)
