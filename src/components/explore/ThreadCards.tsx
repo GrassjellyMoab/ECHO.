@@ -5,7 +5,6 @@ import { useCollectionData } from '@/src/store/dataStore';
 import { useImagesStore } from '@/src/store/imgStore';
 import { useSessionDataStore } from '@/src/store/sessionDataStore';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
   Animated,
@@ -57,6 +56,7 @@ interface ThreadData {
   real_ratio: number;
   ai_verdict?: string;
   hasVoted: boolean;
+  sources: string[];
 }
 
 interface SwipeableCardsProps {
@@ -68,7 +68,6 @@ const SWIPE_THRESHOLD = screenWidth * 0.15;
 const SWIPE_OUT_DURATION = 250;
 
 const SwipeableCards: React.FC<SwipeableCardsProps> = () => {
-  const router = useRouter();
   const threads = useCollectionData('threads');
   const topics = useCollectionData('topics');
   const users = useCollectionData('users');
