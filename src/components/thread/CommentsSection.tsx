@@ -1,18 +1,19 @@
-import React, { useState, useRef } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  TouchableOpacity, 
-  View, 
-  FlatList, 
-  TextInput,
+import { db } from '@/src/firebase/config';
+import { useAuthStore } from '@/src/store/authStore';
+import { useCollectionData, useDataStore } from '@/src/store/dataStore';
+import { useImagesStore } from '@/src/store/imgStore';
+import { addDoc, collection } from "firebase/firestore";
+import React, { useRef, useState } from 'react';
+import {
   Animated,
   Image,
-  Alert
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { IconSymbol } from '../ui/IconSymbol';
-import { useCollectionData } from '@/src/store/dataStore';
-import { useImagesStore } from '@/src/store/imgStore';
 
 interface Comment {
   id: string;
@@ -22,6 +23,7 @@ interface Comment {
   is_pinned: boolean;
   num_likes: number;
   num_replies: number;
+  is_reviewed: boolean;
   reply_cid: string;
   text: string;
   tid: string;
@@ -48,18 +50,47 @@ const CommentsSection: React.FC<CommentsProps> = ({
   getUserById,
   userLikes = []
 }) => {
+  const { user, isAuthenticated, uid } = useAuthStore();
+  const refreshCollection = useDataStore(state => state.refreshCollection);
   const users = useCollectionData('users') as User[];
   const comments = useCollectionData('comments') as Comment[];
   const getImagesByFolder = useImagesStore(state => state.getImagesByFolder);
-  const userImages = getImagesByFolder('users');
+  const userImages = React.useMemo(() => getImagesByFolder('users'), [getImagesByFolder]);
 
   const [newComment, setNewComment] = useState('');
   const [likedComments, setLikedComments] = useState<string[]>(userLikes);
   const [isExpanded, setIsExpanded] = useState(false);
   const [avatarErrors, setAvatarErrors] = useState<Set<string>>(new Set()); // Track failed avatars
+  const [refreshKey, setRefreshKey] = useState(0); // Force re-render for timestamp updates
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  // Filter comments based on threadId and exclude flagged comments
+  // Refresh comments when component mounts and periodically update timestamps
+  React.useEffect(() => {
+    // Initial refresh when component mounts
+    const refreshCommentsOnMount = async () => {
+      try {
+        console.log('🔄 Refreshing comments on component mount...');
+        await refreshCollection('comments');
+        console.log('✅ Comments refreshed on mount');
+      } catch (error) {
+        console.error('❌ Error refreshing comments on mount:', error);
+      }
+    };
+
+    refreshCommentsOnMount();
+
+    // Set up interval to update timestamps every minute
+    const timestampInterval = setInterval(() => {
+      setRefreshKey(prev => prev + 1); // Force re-render to update relative timestamps
+    }, 60000); // Update every 60 seconds
+
+    // Cleanup interval on unmount
+    return () => {
+      clearInterval(timestampInterval);
+    };
+  }, []); // Empty dependency array - only run on mount/unmount
+
+  // Filter and sort comments based on threadId and date
   const filteredComments = React.useMemo(() => {
     if (!comments || comments.length === 0) {
       return [];
@@ -74,34 +105,85 @@ const CommentsSection: React.FC<CommentsProps> = ({
       filtered = filtered.filter(comment => comment.tid === threadId);
     }
     
+    // Sort comments: pinned first, then by date (newest first)
     return filtered.sort((a, b) => {
+      // Pinned comments always come first
       if (a.is_pinned && !b.is_pinned) return -1;
       if (!a.is_pinned && b.is_pinned) return 1;
       
-      const dateA = a.date instanceof Date ? a.date : new Date(a.date);
-      const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+      // For dates, handle both Date objects and ISO strings
+      let dateA: Date;
+      let dateB: Date;
       
+      if (a.date instanceof Date) {
+        dateA = a.date;
+      } else if (typeof a.date === 'string') {
+        dateA = new Date(a.date);
+      } else {
+        dateA = new Date(); // fallback
+      }
+      
+      if (b.date instanceof Date) {
+        dateB = b.date;
+      } else if (typeof b.date === 'string') {
+        dateB = new Date(b.date);
+      } else {
+        dateB = new Date(); // fallback
+      }
+      
+      // Sort by date: newest first (dateB - dateA gives descending order)
       return dateB.getTime() - dateA.getTime();
     });
   }, [comments, threadId]);
 
-  const onAddComment = (content: string) => {
-    const newCommentObj: Comment = {
-      id: `comment_${Date.now()}`,
-      date: new Date(),
-      is_flagged: false,
-      is_reviewed: false,
-      is_pinned: false,
-      num_likes: 0,
-      num_replies: 0,
-      reply_cid: '',
-      text: content,
-      tid: threadId || 'thread_1',
-      topic_id: 'topic_healthcare',
-      uid: 'user_current'
-    };
+  const onAddComment = async (content: string) => {
+    console.log('🚀 onAddComment called with content:', content);
+    console.log('🔐 Auth status:', { isAuthenticated, uid });
     
-    console.log('Adding new comment:', newCommentObj);
+    if (!isAuthenticated || !uid) {
+      console.error('User must be authenticated to add a comment');
+      return;
+    }
+
+    console.log('✅ User is authenticated, proceeding...');
+
+    try {
+      const commentsRef = collection(db, 'comments');
+      console.log('📝 Comments collection reference created');
+      
+      const newCommentObj = {
+        date: new Date().toISOString(),
+        is_flagged: false,
+        is_pinned: false,
+        is_reviewed: false,
+        num_likes: 0,
+        num_replies: 0,
+        reply_cid: '',
+        text: content,
+        tid: threadId || 'thread_1',
+        topic_id: 'topic_healthcare',
+        uid: uid
+      };
+      
+      console.log('📦 Comment object created:', newCommentObj);
+      console.log("🔄 Attempting to add comment to Firestore...");
+      
+      const docRef = await addDoc(commentsRef, newCommentObj);
+      console.log('✅ Comment added successfully! Doc ID:', docRef.id);
+      
+      // Refresh the comments collection to ensure UI updates
+      console.log('🔄 Refreshing comments collection...');
+      await refreshCollection('comments');
+      console.log('✅ Comments collection refreshed');
+      
+    } catch (error: any) {
+      console.error('❌ Error adding comment:', error);
+      console.error('❌ Error details:', {
+        message: error?.message || 'Unknown error',
+        code: error?.code || 'No code',
+        stack: error?.stack || 'No stack'
+      });
+    }
   };
 
   const handleLikeComment = (commentId: string) => {
@@ -119,6 +201,7 @@ const CommentsSection: React.FC<CommentsProps> = ({
   const handleAddComment = () => {
     if (newComment.trim()) {
       onAddComment(newComment.trim());
+     
       setNewComment('');
     }
   };
@@ -149,14 +232,11 @@ const getUserFromStore = (uid: string) => {
   if (user) {
     // Clean username for image matching - remove @ symbol and convert to lowercase
     const cleanUsername = user.username.replace('@', '').toLowerCase();
-    console.log('Looking for avatar for user:', cleanUsername);
     
     // Try to find matching avatar image from assets/avatars folder
     const avatarImage = userImages.find(img => {
       // Extract filename without extension
-      const imageName = img.name.toLowerCase().replace('.png', '');
-      console.log('Checking image:', imageName, 'against username:', cleanUsername);
-      
+      const imageName = img.name.toLowerCase().replace('.png', '');      
       // Match exact username with .png extension
       return imageName === cleanUsername;
     });
@@ -195,11 +275,11 @@ const getUserFromStore = (uid: string) => {
   };
 
   const renderComment = ({ item }: { item: Comment }) => {
-    console.log("Rendering comment for uid:", item.uid);
     const user = getUserById ? getUserById(item.uid) : getUserFromStore(item.uid);
     const isLiked = likedComments.includes(item.id);
+
     const hasAvatarError = avatarErrors.has(item.uid);
-    
+
     return (
       <Animated.View style={[styles.commentContainer, { opacity: fadeAnim }]}>
         {item.is_pinned && (
