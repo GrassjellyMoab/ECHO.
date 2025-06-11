@@ -3,7 +3,7 @@ import { NavigatorScreenParams, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
-import { SwipeResultModal } from '@/src/components/create/verdict';
+
 import {
   Alert,
   Animated,
@@ -22,9 +22,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Image } from 'react-native';
 import { SwipeResultModal } from '@/src/components/create/verdict';
 import ThreadModal from '@/src/components/ThreadModal';
+import { Image } from 'react-native';
 
 
 type TabsParamList = {
