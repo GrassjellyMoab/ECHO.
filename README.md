@@ -23,7 +23,7 @@ We needed an app that could not only keep up with the volume and the spread of f
 
 ## Tech Stack
 
-![tech_stack](./src/assets/tech_stack.png)
+![tech_stack](./src/assets/image.png)
 ![React Native](https://img.shields.io/badge/react_native-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
 ![Expo](https://img.shields.io/badge/expo-1C1E24?style=for-the-badge&logo=expo&logoColor=#D04A37)
