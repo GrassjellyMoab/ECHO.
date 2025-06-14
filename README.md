@@ -1,6 +1,12 @@
 # ECHO.
 
-A forum dedicated to raising awareness on fake news while encouraging critical thinking.
+A forum dedicated to raising awareness about fake news while fostering critical thinking skills. Developed for Brainhack 2025 - CODE_EXP, Echo aligns with the hackathon's theme of fact-checking and verification by combining AI-powered content verification with community-driven consensus to amplify truth and combat misinformation.
+
+## The Problem
+
+7 in 10 Singaporeans have unknowingly spread fake news. 80% of Singaporeans are confident in spotting fake news, but 90% fail when tested. And our most digitally native generation, the Gen-Zs, spend over 2 Hours/Day on social media and are ironically, the most vulnerable to misinformation.
+
+We needed an app that could not only keep up with the volume and the spread of falsehoods, but also engages, not just disseminate, while helping users pause, think and verify ambiguous claims on their own.
 
 ## Features
 
@@ -8,17 +14,18 @@ A forum dedicated to raising awareness on fake news while encouraging critical t
 - Forum-style Home Feed with threads and engagement, featuring the week's highlights
 - 'Dating apps' inspired swipes for Real / Fake voting of claims
 - Search functionality alongside popular topics
-- Thread creation with media upload
+- Thread creation with media upload, with immediate AI verification (DEFAME - https://github.com/multimodal-ai-lab/DEFAME) of claims.
 - Leaderboard with user rankings
 - User profiles with activity tracking, as well as personalised badges representing achievements
 
 ## Tech Stack
 
-- **React Native** with Expo
-- **TypeScript** for type safety
-- **Expo Router** for navigation
-- **Zustand** for state management
-- **AsyncStorage** for data persistence
+![React Native](https://img.shields.io/badge/react_native-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
+![Expo](https://img.shields.io/badge/expo-1C1E24?style=for-the-badge&logo=expo&logoColor=#D04A37)
+![Firebase](https://img.shields.io/badge/firebase-%23039BE5.svg?style=for-the-badge&logo=firebase)
+
+We used **React Native** for our front-end, **Firebase Authentication** for Authentication, and **Firestore Database** as our database.
 
 ## Get started
 
@@ -43,16 +50,14 @@ In the output, you'll find options to open the app in a
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-## Learn more
+## Contributors
 
-To learn more about developing your project with Expo, look at the following resources:
+| Name                        | GitHub Username   | Role   |
+|-----------------------------|-------------------|--------|
+| Chester Chiow               | [ChesterChiow](https://github.com/ChesterChiow) 
+| Lee Jedidiah                | [jeddd77](https://github.com/jeddd77) 
+| Jun Chao                    | [GrassjellyMoab](https://github.com/GrassjellyMoab)
+| Rachel Tan                  | [Racheltmz](https://github.com/Racheltmz)
+| Winnie Koh                  | [flumbles](https://github.com/flumbles) 
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
