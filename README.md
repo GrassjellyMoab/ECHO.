@@ -52,8 +52,8 @@ You can start developing by editing the files inside the **app** directory. This
 
 ## Contributors
 
-| Name                        | GitHub Username   | Role   |
-|-----------------------------|-------------------|--------|
+| Name                        | GitHub Username   |
+|-----------------------------|-------------------|
 | Chester Chiow               | [ChesterChiow](https://github.com/ChesterChiow) 
 | Lee Jedidiah                | [jeddd77](https://github.com/jeddd77) 
 | Jun Chao                    | [GrassjellyMoab](https://github.com/GrassjellyMoab)
