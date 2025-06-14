@@ -1,5 +1,5 @@
 # ECHO.
-
+![echo_logo](./src/assets/echo_logo.png)
 A forum dedicated to raising awareness about fake news while fostering critical thinking skills. Developed for Brainhack 2025 - CODE_EXP, Echo aligns with the hackathon's theme of fact-checking and verification by combining AI-powered content verification with community-driven consensus to amplify truth and combat misinformation.
 
 ## The Problem
