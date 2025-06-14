@@ -1,4 +1,5 @@
 # ECHO.
+![logo](./src/assets/logo.png)
 A forum dedicated to raising awareness about fake news while fostering critical thinking skills. Developed for Brainhack 2025 - CODE_EXP, Echo aligns with the hackathon's theme of fact-checking and verification by combining AI-powered content verification with community-driven consensus to amplify truth and combat misinformation.
 
 ## The Problem
@@ -9,9 +10,12 @@ We needed an app that could not only keep up with the volume and the spread of f
 
 ## Features
 
+![ui](./src/assets/ui.png)
 - User Authentication (Login/Register)
 - Forum-style Home Feed with threads and engagement, featuring the week's highlights
-- 'Dating apps' inspired swipes for Real / Fake voting of claims
+- Clicking into a thread allows them to vote for whether they think a claim is real or fake. Upon voting, an AI verdict will appear alongside sources it based its justification off.
+- Comment Section for user discussion and opinions, with semantic analysis that flags out comments that contradict the AI verdict too much - flagged comments will go through the moderators first
+- 'Dating apps' inspired swipes for Real / Fake voting of claims in Explore
 - Search functionality alongside popular topics
 - Thread creation with media upload, with immediate AI verification (DEFAME - https://github.com/multimodal-ai-lab/DEFAME) of claims.
 - Leaderboard with user rankings
@@ -19,6 +23,7 @@ We needed an app that could not only keep up with the volume and the spread of f
 
 ## Tech Stack
 
+![tech_stack](./src/assets/tech_stack.png)
 ![React Native](https://img.shields.io/badge/react_native-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
 ![Expo](https://img.shields.io/badge/expo-1C1E24?style=for-the-badge&logo=expo&logoColor=#D04A37)
