@@ -4,14 +4,13 @@ A React Native Expo forum app built with TypeScript.
 
 ## Features
 
-- 🔐 User Authentication (Login/Register)
-- 🏠 Forum-style Home Feed with posts and engagement
-- 🔍 Search functionality with popular topics
-- ✏️ Thread creation with media upload
-- 🏆 Leaderboard with user rankings
-- 👤 User profiles with activity tracking
-- 🎨 Modern UI with Anonymous Pro font
-- 📱 Optimized for iPhone 16 Pro Max
+- User Authentication (Login/Register)
+- Forum-style Home Feed with threads and engagement, featuring the week's highlights
+- 'Dating apps' inspired swipes for Real / Fake voting of claims
+- Search functionality alongside popular topics
+- Thread creation with media upload
+- Leaderboard with user rankings
+- User profiles with activity tracking, as well as personalised badges representing achievements
 
 ## Tech Stack
 
