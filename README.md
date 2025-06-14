@@ -1,6 +1,6 @@
-# ECHO
+# ECHO.
 
-A React Native Expo forum app built with TypeScript.
+A forum dedicated to raising awareness on fake news while encouraging critical thinking.
 
 ## Features
 
@@ -42,20 +42,6 @@ In the output, you'll find options to open the app in a
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Project Structure
-
-```
-app/
-├── (auth)/           # Authentication screens
-├── (splash)/         # Splash screen
-├── (tabs)/           # Main app tabs (Home, Search, Create, Leaderboard, Profile)
-└── _layout.tsx       # Root layout with navigation logic
-
-src/
-├── components/       # Reusable UI components
-└── store/           # Zustand state management
-```
 
 ## Learn more
 
