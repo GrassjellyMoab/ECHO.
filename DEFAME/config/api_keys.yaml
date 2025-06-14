@@ -1,4 +1,4 @@
-deepseek_api_key: 'sk-f6e947f2b26649ccb22e30f68a75fbe9'
-huggingface_user_access_token: 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
-openai_api_key: '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'
-serper_api_key: '7bdb7f80319d8d90090b090273e8d44943f0d95b'
+deepseek_api_key: 
+huggingface_user_access_token:
+openai_api_key:
+serper_api_key: 
